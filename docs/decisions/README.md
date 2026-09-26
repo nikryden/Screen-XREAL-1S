@@ -12,6 +12,7 @@ One file per decision: `ADR-NNNN-short-title.md`. Never rewrite an accepted ADR'
 | [0006](ADR-0006-clean-room-licensing.md) | Clean-room and licensing policy | Accepted |
 | [0007](ADR-0007-head-tracking-fusion.md) | Own Madgwick fusion + gyro bias + pose prediction | Accepted |
 | [0008](ADR-0008-virtual-display-rs.md) | Virtual display provider: virtual-display-rs behind `IVirtualDisplayProvider` | Accepted |
+| [0009](ADR-0009-presenter-pacing.md) | Presenter: DWM-composed window paced by the glasses' vblank | Accepted |
 
 ## Template
 ```markdown

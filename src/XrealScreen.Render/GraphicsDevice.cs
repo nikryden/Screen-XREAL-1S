@@ -21,7 +21,6 @@ public sealed class GraphicsDevice : IDisposable
 
     /// <summary>
     /// Creates a BGRA-capable device on the default hardware adapter, or WARP for tests.
-    /// TODO(M3): pick the adapter that owns the glasses output (skill d3d11-vortice).
     /// </summary>
     public static GraphicsDevice Create(bool warp = false)
     {
@@ -33,6 +32,54 @@ public sealed class GraphicsDevice : IDisposable
             out ID3D11Device? device,
             out ID3D11DeviceContext? context).CheckError();
         return new GraphicsDevice(device!, context!);
+    }
+
+    /// <summary>Human-readable adapter name (for logs).</summary>
+    public string AdapterName
+    {
+        get
+        {
+            using var dxgi = Device.QueryInterface<Vortice.DXGI.IDXGIDevice>();
+            using var adapter = dxgi.GetAdapter();
+            return adapter.Description.Description;
+        }
+    }
+
+    /// <summary>
+    /// Creates the device on the GPU whose output drives <paramref name="hmonitor"/> (the glasses),
+    /// so presenting needs no cross-adapter copy. Falls back to the default adapter.
+    /// </summary>
+    public static GraphicsDevice CreateForMonitor(IntPtr hmonitor)
+    {
+        using var factory = Vortice.DXGI.DXGI.CreateDXGIFactory1<Vortice.DXGI.IDXGIFactory1>();
+        for (uint i = 0; factory.EnumAdapters1(i, out Vortice.DXGI.IDXGIAdapter1? adapter).Success; i++)
+        {
+            using (adapter)
+            {
+                bool owns = false;
+                for (uint o = 0; adapter!.EnumOutputs(o, out Vortice.DXGI.IDXGIOutput? output).Success; o++)
+                {
+                    using (output)
+                    {
+                        owns |= output!.Description.Monitor == hmonitor;
+                    }
+                }
+
+                if (owns)
+                {
+                    D3D11.D3D11CreateDevice(
+                        adapter,
+                        DriverType.Unknown,
+                        DeviceCreationFlags.BgraSupport,
+                        [FeatureLevel.Level_11_1, FeatureLevel.Level_11_0],
+                        out ID3D11Device? device,
+                        out ID3D11DeviceContext? context).CheckError();
+                    return new GraphicsDevice(device!, context!);
+                }
+            }
+        }
+
+        return Create();
     }
 
     public void Dispose()

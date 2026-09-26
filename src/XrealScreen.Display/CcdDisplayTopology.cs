@@ -68,6 +68,19 @@ public sealed class CcdDisplayTopology : IDisplayTopology
             .ToList();
     }
 
+    public bool TrySetMode(string gdiDeviceName, DisplayMode mode)
+    {
+        var dm = new DEVMODEW
+        {
+            Size = 220,
+            Fields = CcdNative.DM_PELSWIDTH | CcdNative.DM_PELSHEIGHT | CcdNative.DM_DISPLAYFREQUENCY,
+            PelsWidth = (uint)mode.Resolution.Width,
+            PelsHeight = (uint)mode.Resolution.Height,
+            DisplayFrequency = (uint)mode.RefreshHz,
+        };
+        return CcdNative.ChangeDisplaySettingsEx(gdiDeviceName, ref dm, IntPtr.Zero, 0, IntPtr.Zero) == CcdNative.DISP_CHANGE_SUCCESSFUL;
+    }
+
     public DisplayLayout CaptureLayout() => new(
         DateTimeOffset.Now,
         GetActiveMonitors()

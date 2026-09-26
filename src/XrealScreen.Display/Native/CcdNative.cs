@@ -122,6 +122,7 @@ internal unsafe struct DISPLAYCONFIG_TARGET_DEVICE_NAME
 internal struct DEVMODEW
 {
     [FieldOffset(68)] public ushort Size;
+    [FieldOffset(72)] public uint Fields;
     [FieldOffset(168)] public uint BitsPerPel;
     [FieldOffset(172)] public uint PelsWidth;
     [FieldOffset(176)] public uint PelsHeight;
@@ -138,6 +139,10 @@ internal static partial class CcdNative
     public const uint DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME = 2;
     public const uint DISPLAYCONFIG_PATH_ACTIVE = 0x1;
     public const int ENUM_CURRENT_SETTINGS = -1;
+    public const uint DM_PELSWIDTH = 0x80000;
+    public const uint DM_PELSHEIGHT = 0x100000;
+    public const uint DM_DISPLAYFREQUENCY = 0x400000;
+    public const int DISP_CHANGE_SUCCESSFUL = 0;
     public const uint SDC_USE_SUPPLIED_DISPLAY_CONFIG = 0x20;
     public const uint SDC_VALIDATE = 0x40;
     public const uint SDC_APPLY = 0x80;
@@ -169,6 +174,9 @@ internal static partial class CcdNative
 
     [LibraryImport("user32.dll")]
     public static partial int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_TARGET_DEVICE_NAME requestPacket);
+
+    [LibraryImport("user32.dll", EntryPoint = "ChangeDisplaySettingsExW", StringMarshalling = StringMarshalling.Utf16)]
+    public static partial int ChangeDisplaySettingsEx(string deviceName, ref DEVMODEW devMode, IntPtr hwnd, uint flags, IntPtr param);
 
     [LibraryImport("user32.dll", EntryPoint = "EnumDisplaySettingsW", StringMarshalling = StringMarshalling.Utf16)]
     [return: MarshalAs(UnmanagedType.Bool)]

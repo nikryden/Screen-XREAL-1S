@@ -12,7 +12,55 @@ internal static class DisplayCommands
         display.Subcommands.Add(CreateModes());
         display.Subcommands.Add(CreateSave());
         display.Subcommands.Add(CreateRestore());
+        display.Subcommands.Add(CreateSet());
+        display.Subcommands.Add(CreateVblank());
         return display;
+    }
+
+    private static string? GlassesOr(string? gdi) =>
+        gdi ?? GlassesDisplayLocator.FindGlasses(new CcdDisplayTopology().GetActiveMonitors())?.GdiDeviceName;
+
+    private static Command CreateSet()
+    {
+        var mode = new Argument<string>("mode") { Description = "e.g. 1920x1200@120" };
+        var device = new Option<string?>("--gdi") { Description = "Monitor (default: glasses)." };
+        var command = new Command("set", "Set a monitor mode for this session (not saved).") { mode, device };
+        command.SetAction(parse =>
+        {
+            string? gdi = GlassesOr(parse.GetValue(device));
+            var parts = parse.GetValue(mode)!.Split('x', '@');
+            if (gdi is null || parts.Length != 3)
+            {
+                Console.Error.WriteLine("usage: xrs display set 1920x1200@120 [--gdi <monitor>]");
+                return 2;
+            }
+
+            var m = new XrealScreen.Core.Abstractions.DisplayMode(new XrealScreen.Core.Workspace.Resolution(int.Parse(parts[0], System.Globalization.CultureInfo.InvariantCulture), int.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture)), int.Parse(parts[2], System.Globalization.CultureInfo.InvariantCulture), 32);
+            bool ok = new CcdDisplayTopology().TrySetMode(gdi, m);
+            Console.WriteLine($"{gdi} → {m}: {(ok ? "ok" : "rejected")}");
+            return ok ? 0 : 3;
+        });
+        return command;
+    }
+
+    private static Command CreateVblank()
+    {
+        var device = new Argument<string?>("gdi") { Arity = ArgumentArity.ZeroOrOne, Description = "Monitor (default: glasses)." };
+        var seconds = new Option<double>("--seconds") { DefaultValueFactory = _ => 2 };
+        var command = new Command("vblank", "Measure a monitor's real refresh rate by waiting on its vertical blanks (DXGI).") { device, seconds };
+        command.SetAction(parse =>
+        {
+            string? gdi = GlassesOr(parse.GetValue(device));
+            if (gdi is null)
+            {
+                return 2;
+            }
+
+            double? hz = XrealScreen.Render.OutputTiming.MeasureVblankHz(gdi, TimeSpan.FromSeconds(parse.GetValue(seconds)));
+            Console.WriteLine(hz is null ? $"{gdi}: no DXGI output found" : $"{gdi}: {hz:F2} Hz measured from vblanks");
+            return 0;
+        });
+        return command;
     }
 
     private static Command CreateSave()

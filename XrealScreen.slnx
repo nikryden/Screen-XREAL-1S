@@ -18,5 +18,6 @@
     <Project Path="tests/XrealScreen.Core.Tests/XrealScreen.Core.Tests.csproj" />
     <Project Path="tests/XrealScreen.Device.Tests/XrealScreen.Device.Tests.csproj" />
     <Project Path="tests/XrealScreen.Display.Tests/XrealScreen.Display.Tests.csproj" />
+    <Project Path="tests/XrealScreen.Render.Tests/XrealScreen.Render.Tests.csproj" />
   </Folder>
 </Solution>

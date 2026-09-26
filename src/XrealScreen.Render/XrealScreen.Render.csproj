@@ -6,6 +6,7 @@
   <ItemGroup>
     <PackageReference Include="Vortice.Direct3D11" />
     <PackageReference Include="Vortice.DXGI" />
+    <PackageReference Include="Vortice.D3DCompiler" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\XrealScreen.Core\XrealScreen.Core.csproj" />

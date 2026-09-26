@@ -58,4 +58,10 @@ public interface IDisplayTopology
     /// Monitors not in the layout (e.g. our virtual monitors) are left as they are.
     /// </summary>
     LayoutApplyResult ApplyLayout(DisplayLayout layout, bool validateOnly = false);
+
+    /// <summary>
+    /// Sets resolution and refresh rate of one monitor for this session only (not saved; reverts on
+    /// reboot or when Windows re-enumerates the monitor). Returns false when Windows rejects the mode.
+    /// </summary>
+    bool TrySetMode(string gdiDeviceName, DisplayMode mode);
 }
