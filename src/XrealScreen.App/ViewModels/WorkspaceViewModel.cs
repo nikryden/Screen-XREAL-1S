@@ -26,7 +26,24 @@ public sealed partial class WorkspaceViewModel : ObservableObject
 
     public bool IsAppTracking => KindIndex == 1;
 
-    partial void OnKindIndexChanged(int value) => OnPropertyChanged(nameof(IsAppTracking));
+    partial void OnKindIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(IsAppTracking));
+        OnPropertyChanged(nameof(IsGlassesAnchor));
+        RefreshGlassesSignal();
+    }
+
+    public bool IsGlassesAnchor => KindIndex == 0;
+
+    /// <summary>What the glasses send right now (glasses-anchor mode), e.g. "32:9 (3840×1080) → 2 screens".</summary>
+    [ObservableProperty]
+    public partial string GlassesSignal { get; set; } = string.Empty;
+
+    public void RefreshGlassesSignal()
+    {
+        int count = double.IsNaN(ScreenCount) ? 1 : (int)Math.Clamp(Math.Round(ScreenCount), 1, XrealScreen.Core.Workspace.AnchorSplit.MaxScreens);
+        GlassesSignal = XrealScreen.Host.GlassesSignal.Describe(count);
+    }
 
     [ObservableProperty]
     public partial double ScreenCount { get; set; } = 3;
@@ -48,7 +65,14 @@ public sealed partial class WorkspaceViewModel : ObservableObject
 
     public UltrawideMode UltrawideMode => UltrawideModes.All[Math.Clamp(UltrawideModeIndex, 0, UltrawideModes.All.Count - 1)];
 
-    partial void OnScreenCountChanged(double value) => Recompute();
+    partial void OnScreenCountChanged(double value)
+    {
+        Recompute();
+        if (IsGlassesAnchor)
+        {
+            RefreshGlassesSignal();
+        }
+    }
 
     partial void OnUltrawideModeIndexChanged(int value) => Recompute();
 

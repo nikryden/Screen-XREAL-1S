@@ -23,6 +23,17 @@ public enum WorkspaceState
     Faulted,
 }
 
+/// <summary>Why the last session ended.</summary>
+public enum WorkspaceStopReason
+{
+    None,
+    UserStopped,
+    Error,
+
+    /// <summary>The glasses changed resolution (e.g. OSD UltraWide switched) or were disconnected.</summary>
+    GlassesDisplayChanged,
+}
+
 /// <summary>Summary of a finished session.</summary>
 public sealed record WorkspaceSummary(PresenterStats? Render, long CapturedFrames, long ImuSamples, HeadPose FinalPose, Vector3 GyroBias);
 
@@ -62,6 +73,8 @@ public sealed class WorkspaceEngine : IAsyncDisposable
 
     public WorkspaceSummary? LastSummary { get; private set; }
 
+    public WorkspaceStopReason LastStopReason { get; private set; }
+
     public Exception? LastError { get; private set; }
 
     /// <summary>Completes when the current session ends (Stop, Ctrl+Alt+Q, error).</summary>
@@ -95,6 +108,7 @@ public sealed class WorkspaceEngine : IAsyncDisposable
         }
 
         LastError = null;
+        LastStopReason = WorkspaceStopReason.None;
         _stopCts = new CancellationTokenSource();
         _running = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         SetState(WorkspaceState.Starting);
@@ -219,11 +233,7 @@ public sealed class WorkspaceEngine : IAsyncDisposable
             SetState(WorkspaceState.Running);
             _running?.TrySetResult();
 
-            var stopped = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            using (stop.Register(() => stopped.TrySetResult()))
-            {
-                await Task.WhenAny(presenter.Completion, stopped.Task).ConfigureAwait(false);
-            }
+            await WaitWhileRunningAsync(presenter, topology, glasses, stop).ConfigureAwait(false);
 
             SetState(WorkspaceState.Stopping);
             presenter.Stop();
@@ -243,10 +253,12 @@ public sealed class WorkspaceEngine : IAsyncDisposable
         {
             Info("start cancelled");
         }
-        catch (Exception ex) when (ex is InvalidOperationException or IOException or TimeoutException or SharpGen.Runtime.SharpGenException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
+        catch (Exception ex)
         {
+            // Never let a session failure escape to the caller (it crashed the app, [verified-hw]).
             LastError = ex;
-            Info($"error: {ex.Message}");
+            LastStopReason = WorkspaceStopReason.Error;
+            Info($"error: {ex.GetType().Name}: {ex.Message}");
         }
         finally
         {
@@ -457,11 +469,7 @@ public sealed class WorkspaceEngine : IAsyncDisposable
             SetState(WorkspaceState.Running);
             _running?.TrySetResult();
 
-            var stopped = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            using (stop.Register(() => stopped.TrySetResult()))
-            {
-                await Task.WhenAny(presenter.Completion, stopped.Task).ConfigureAwait(false);
-            }
+            await WaitWhileRunningAsync(presenter, topology, glasses, stop).ConfigureAwait(false);
 
             SetState(WorkspaceState.Stopping);
             presenter.Stop();
@@ -481,10 +489,12 @@ public sealed class WorkspaceEngine : IAsyncDisposable
         {
             Info("start cancelled");
         }
-        catch (Exception ex) when (ex is InvalidOperationException or IOException or TimeoutException or SharpGen.Runtime.SharpGenException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
+        catch (Exception ex)
         {
+            // Never let a session failure escape to the caller (it crashed the app, [verified-hw]).
             LastError = ex;
-            Info($"error: {ex.Message}");
+            LastStopReason = WorkspaceStopReason.Error;
+            Info($"error: {ex.GetType().Name}: {ex.Message}");
         }
         finally
         {
@@ -517,6 +527,44 @@ public sealed class WorkspaceEngine : IAsyncDisposable
             _setDistance = null;
             SetState(LastError is null ? WorkspaceState.Stopped : WorkspaceState.Faulted);
             _running?.TrySetResult(); // unblock StartAsync if we failed before running
+        }
+    }
+
+    /// <summary>
+    /// Waits until the presenter ends, a stop is requested, or the glasses change resolution / disappear
+    /// (switching the OSD UltraWide mode re-enumerates the glasses monitor).
+    /// </summary>
+    private async Task WaitWhileRunningAsync(GlassesPresenter presenter, CcdDisplayTopology topology, DisplayMonitor glasses, CancellationToken stop)
+    {
+        while (!stop.IsCancellationRequested && !presenter.Completion.IsCompleted)
+        {
+            await Task.WhenAny(presenter.Completion, Task.Delay(1000, CancellationToken.None)).ConfigureAwait(false);
+            if (stop.IsCancellationRequested || presenter.Completion.IsCompleted)
+            {
+                break;
+            }
+
+            DisplayMonitor? now;
+            try
+            {
+                now = GlassesDisplayLocator.FindGlasses(topology.GetActiveMonitors());
+            }
+            catch (System.ComponentModel.Win32Exception)
+            {
+                continue; // topology changing right now; look again next second
+            }
+
+            if (now is null || now.Resolution != glasses.Resolution)
+            {
+                Info(now is null ? "glasses disconnected — stopping" : $"glasses changed to {now.Resolution} — stopping");
+                LastStopReason = WorkspaceStopReason.GlassesDisplayChanged;
+                return;
+            }
+        }
+
+        if (LastStopReason == WorkspaceStopReason.None)
+        {
+            LastStopReason = WorkspaceStopReason.UserStopped;
         }
     }
 

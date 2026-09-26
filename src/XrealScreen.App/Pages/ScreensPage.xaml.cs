@@ -8,7 +8,10 @@ public sealed partial class ScreensPage : Page
     public ScreensPage()
     {
         InitializeComponent();
+        Workspace.RefreshGlassesSignal();
     }
 
     public WorkspaceViewModel Workspace => App.Workspace;
+
+    private void RefreshSignal_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) => Workspace.RefreshGlassesSignal();
 }

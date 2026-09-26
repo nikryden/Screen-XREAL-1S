@@ -11,6 +11,17 @@ public partial class App : Application
     public App()
     {
         InitializeComponent();
+        UnhandledException += (_, e) =>
+        {
+            CrashLog.Write("UI", e.Exception);
+            e.Handled = true; // keep running; the session engine restores the desktop on its own
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => CrashLog.Write("AppDomain", e.ExceptionObject as Exception);
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            CrashLog.Write("Task", e.Exception);
+            e.SetObserved();
+        };
     }
 
     /// <summary>App-wide view models (single window app; a DI container arrives with XrealScreen.Host in M5).</summary>

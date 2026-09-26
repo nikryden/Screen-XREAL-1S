@@ -300,8 +300,9 @@ public sealed unsafe class GlassesPresenter : IDisposable
             _gd.Context.ClearState();
             _gd.Context.Flush();
         }
-        catch (Exception ex) when (ex is SharpGen.Runtime.SharpGenException or COMException)
+        catch (Exception ex)
         {
+            // Any failure (device removed, display re-enumerated, ...) ends the session instead of the process.
             _renderError = ex;
             Win32.PostMessage(_hwnd, Win32.WM_CLOSE, 0, 0);
         }

@@ -88,8 +88,13 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         {
             await Task.Run(() => _engine.StartAsync(options, CancellationToken.None)).ConfigureAwait(true);
         }
-        catch (Exception ex) when (ex is InvalidOperationException or OperationCanceledException or IOException or TimeoutException)
+        catch (Exception ex)
         {
+            if (ex is not (InvalidOperationException or OperationCanceledException or IOException or TimeoutException))
+            {
+                CrashLog.Write("Start", ex);
+            }
+
             StatusTitle = "Could not start";
             StatusMessage = ex.Message;
             Severity = InfoBarSeverity.Error;
@@ -97,7 +102,20 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand(CanExecute = nameof(IsRunning))]
-    private Task StopAsync() => Task.Run(_engine.StopAsync);
+    private async Task StopAsync()
+    {
+        try
+        {
+            await Task.Run(_engine.StopAsync).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write("Stop", ex);
+            StatusTitle = "Stop reported an error";
+            StatusMessage = ex.Message;
+            Severity = InfoBarSeverity.Warning;
+        }
+    }
 
     [RelayCommand(CanExecute = nameof(IsRunning))]
     private void Recenter() => _engine.Recenter();
@@ -128,6 +146,13 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         {
             _poseTimer.Stop();
             _tracking.ClearExternalPose();
+            _workspace.RefreshGlassesSignal();
+            if (_engine.LastStopReason == WorkspaceStopReason.GlassesDisplayChanged)
+            {
+                _ = RestartAfterGlassesChangeAsync();
+                return;
+            }
+
             if (state == WorkspaceState.Faulted)
             {
                 StatusTitle = "Workspace stopped with an error";
@@ -140,6 +165,20 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
                 StatusMessage = "Your monitor layout and refresh rates were restored.";
                 Severity = InfoBarSeverity.Informational;
             }
+        }
+    }
+
+    /// <summary>The glasses re-enumerate when their UltraWide mode changes: start again with the new split.</summary>
+    private async Task RestartAfterGlassesChangeAsync()
+    {
+        StatusTitle = "Glasses display changed";
+        StatusMessage = "Restarting the workspace for the new glasses mode…";
+        Severity = InfoBarSeverity.Informational;
+        await Task.Delay(2500).ConfigureAwait(true); // let Windows finish re-enumerating the glasses
+        _workspace.RefreshGlassesSignal();
+        if (IsIdle)
+        {
+            await StartAsync().ConfigureAwait(true);
         }
     }
 
