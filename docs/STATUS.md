@@ -3,34 +3,36 @@
 > Read this first. Update it at the end of every task (see skill `docs-handoff`).
 
 ## Current
-- **Milestone:** M4/M5 — workspace in the WinUI app — **in progress** (2026-09-26).
-- **Last updated:** 2026-09-26
+- **Milestone:** M4/M5 (workspace in the app) — **mostly done**; M6 started (crash-safe restore). Last updated 2026-09-27.
+- The app is usable end to end: Start menu → **XrealScreen** → Home → **Start workspace**.
 
 ## Done
-- M0–M3 (see ROADMAP): 1S protocol, virtual monitors, capture, head-tracked rendering verified in the glasses.
-- `XrealScreen.Host.WorkspaceEngine`: the whole session in one class; `xrs render` and the app both use it.
-- App: Home → **Start workspace / Stop / Recenter**, status + log; Tracking → stabilizer choice (default Strong); settings persisted to `%LOCALAPPDATA%\XrealScreen\settings.json`; closing the app stops the session and restores the desktop.
-- Manifest: `graphicsCaptureProgrammatic`, `graphicsCaptureWithoutBorder`.
-- Verified via UI automation: start → 3 virtual monitors + desk 120 Hz + glasses 120 Hz; stop → desktop restored.
-- 57/57 tests.
+- M0–M3: protocol, virtual monitors, capture, head-tracked rendering (see ROADMAP).
+- **Two workspace types** (Screens page, ADR-0010):
+  - **Glasses anchor** (user's preferred): glasses OSD Anchor + UltraWide; app splits the glasses image into 1–3 pixel-exact virtual screens with a gap (default 10 px) and aspect (16:9 default); preview picture + **Apply screen settings** button; auto-restart when the glasses UltraWide changes.
+  - **App head tracking**: curved screens, stabilizer presets (default Strong), tracking axes (default Turning + level; Full is most comfortable per user), neck model, Ctrl+Alt+Plus/Minus distance, desk refresh sync.
+- Engine hardening: no NaN before the first IMU sample, watchdog for glasses re-enumeration, catch-all session errors, forced virtual-monitor resolutions (fixes SetDisplayConfig 87), crash log `%LOCALAPPDATA%\XrealScreen\crash.log`.
+- **Crash-safe restore**: at app start (and `xrs recover`) leftover virtual monitors are removed and layout + refresh rates restored ([verified-local] hard-kill test).
+- 81/81 tests.
 
 ## Next 3 steps
-1. User test: start/stop the workspace from the app in the glasses.
-2. M6: tray icon + start with Windows; app-level hotkeys; crash-safe restore on next start (snapshot file present → offer restore).
-3. ADR-0009 follow-up: independent flip / DirectComposition (desk keeps 144 Hz); pose trace logging.
+1. M6: tray icon + start with Windows + global hotkey to start/stop the workspace without opening the app.
+2. M7: installer (bootstrapper installs/checks virtual-display-rs, then the MSIX); signed test package so the app runs outside `dotnet run`.
+3. App head tracking latency (ADR-0009 follow-up: independent flip / DirectComposition) and a comfort re-test of Full vs Turning+level.
 
 ## Blockers
-- None. Glasses PC: `C:\GIT\Screen-XREAL-1S` on "Garage_1".
+- None.
 
 ## Open questions / known gaps
-- Virtual-display-rs install/signing for end users: decide in M7 (self-signed today; 0.4.0 not in a GitHub release).
-- Control port 52999 not implemented (M4).
-- `missed` frame counter in presenter stats is noisy (heuristic vs moving average); p99 frame time is the reliable number.
-- Layout restore covers position/resolution only; refresh rate and primary selection come with native mode (M4).
-- Workspace settings not persisted (M5); no tray/startup (M6); trimming decided in M7.
+- virtual-display-rs is installed on this PC by VertoXR (self-signed); distribution/signing for other PCs → M7 (ADR-0008).
+- In App head tracking, partial axis modes (YawRoll/YawPitch) can cause motion sickness; Full felt best but with some lag. Glasses anchor avoids this.
+- `missed` frame counter in presenter stats is noisy; p99 frame time is the reliable number.
+- Control port 52999 not implemented (glasses-side recenter/UltraWide switching from the app would need it).
+- Real lean tracking needs a camera (roadmap "Later").
 
 ## Last hardware verification
 - **2026-09-26 · XREAL 1S · PID 0x043E · fw 15.01.03.522** — NCM link, ports, IMU framing/units/axes, live tracking in app. Details: `docs/findings/xreal-one-protocol.md`, `docs/findings/xreal-1s-hardware.md`.
+- **2026-09-26/27 · XREAL 1S · fw 15.01.03.522** — both workspace types in the glasses with the user: anchor split 2×/3× screens with gap in 32:9 and 21:9, UltraWide auto-restart, app head tracking comfort A/B, mouse, crash recovery.
 
 ## Session log
 | Date | Agent | Summary |
@@ -42,3 +44,4 @@
 | 2026-09-26 | Claude | M3: renderer in the glasses; user A/B tests → tracker tuning, stabilizer presets, desktop refresh sync (ADR-0009 update). |
 | 2026-09-26 | Claude | M3 done: drift test 5 min OK, mouse fixed (desktop order), all verified with the user in the glasses. |
 | 2026-09-26 | Claude | M4/M5 start: WorkspaceEngine (Host), app Start/Stop workspace, stabilizer UI, settings persistence. |
+| 2026-09-26/27 | Claude | M4/M5: engine + app Start/Stop; user feedback → axes modes, neck model, stabilizer, NaN fix, glasses-anchor workspace (ADR-0010) with gap/aspect/preview/apply, crash-safe restore. |

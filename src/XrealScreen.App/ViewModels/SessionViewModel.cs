@@ -49,6 +49,28 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
             }
         };
         ApplySettings(_store.Load());
+        _ = RecoverAsync();
+    }
+
+    /// <summary>Crash-safe restore: clean up a session that did not end normally (app crash, power loss).</summary>
+    private async Task RecoverAsync()
+    {
+        try
+        {
+            string? message = await Task.Run(() => WorkspaceRecovery.RecoverAsync(CancellationToken.None)).ConfigureAwait(true);
+            if (message is not null)
+            {
+                StatusTitle = "Monitors restored";
+                StatusMessage = message;
+                Severity = InfoBarSeverity.Warning;
+                AddLog(message);
+            }
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write("Recovery", ex);
+            AddLog($"recovery failed: {ex.Message} — run `xrs vdd clear` and `xrs display restore`");
+        }
     }
 
     public ObservableCollection<string> Log { get; } = [];

@@ -12,7 +12,7 @@ Windows 11 app (.NET 10, WinUI 3) that turns XREAL 1S / One / One Pro glasses in
 dotnet build XrealScreen.slnx -p:Platform=x64      # everything incl. WinUI app
 dotnet test --solution XrealScreen.slnx            # xUnit v3 on Microsoft.Testing.Platform (global.json)
 dotnet build src/XrealScreen.App -p:Platform=x64         # build the APP PROJECT before running it: the solution build writes bin\Debug\…, but
-dotnet run --project src/XrealScreen.App -p:Platform=x64   # `dotnet run -p:Platform=x64` launches bind\Debug\… (stale app otherwise!)
+dotnet run --project src/XrealScreen.App -p:Platform=x64   # `dotnet run -p:Platform=x64` launches bin\x64\Debug\… (stale app otherwise!)
 dotnet run --project tools/XrealScreen.Cli -- --help       # xrs: devices | probe | imu … | display … | vdd … | capture test | render
 ```
 WinUI templates: `dotnet new install Microsoft.WindowsAppSDK.WinUI.CSharp.Templates`.
@@ -35,7 +35,8 @@ WinUI templates: `dotnet new install Microsoft.WindowsAppSDK.WinUI.CSharp.Templa
 
 Planned projects (Contracts/Service M6) are created when their milestone starts — see `docs/ARCHITECTURE.md`.
 
-Glasses setup for the workspace: OSD UltraWide **Off**, **Follow** mode, **Stabilizer off** (see `docs/findings/xreal-1s-hardware.md`).
+Glasses setup depends on the workspace type (ADR-0010): **Glasses anchor** = OSD **Anchor** + UltraWide 32:9/16:18/21:9; **App head tracking** = UltraWide **Off**, **Follow**, **Stabilizer off** (see `docs/findings/xreal-1s-hardware.md`).
+The packaged app appears in the Start menu as **XrealScreen** after `dotnet run`; starting `XrealScreen.App.exe` directly crashes (no package identity).
 
 ## Rules
 - **Clean room (ADR-0006):** never copy code from GPL projects, the XREAL SDK (no license) or VertoXR (proprietary; no decompiling). MIT code may be ported with attribution in `THIRD-PARTY-NOTICES.md` and `docs/legal/SOURCES.md`.

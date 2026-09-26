@@ -26,18 +26,18 @@ Deliverables: fullscreen swapchain on glasses output, captured monitor on pose-d
 - [x] No visible drift over 5 min (user, glasses test 2026-09-26)
 - [x] Mouse usable on the virtual monitors (desktop order desk → virtual → glasses)
 
-## M4 Native mode MVP
-Deliverables: Device page, control-port 52999 client (glasses-side recenter, display mode, brightness - capture the request format first), recenter button + hotkey, correct resolution/refresh, ultrawide guidance/control.
-- [ ] Recenter works from app and hotkey
-- [ ] Glasses output set to correct mode via CCD
+## M4 Native mode MVP — superseded by the glasses-anchor workspace (ADR-0010), done 2026-09-27
+- [x] Glasses keep the image still (OSD Anchor); app splits the UltraWide image into 1–3 pixel-exact screens
+- [x] Gap + aspect-preserving fill; preview; Apply button; auto-restart on UltraWide change
+- [ ] Control port 52999 (glasses-side recenter / UltraWide switching from the app) — optional
 
-## M5 Virtual workspace MVP
-Deliverables: 1–6 screens, presets (arc/grid/stacked), ultrawide Off/21:9/32:9/16:18, curvature/distance, Auto center (manual / follow with dead-zone+smoothing / glasses key), stabilizer-conflict warning, settings persistence.
-- [ ] All presets and ultrawide modes render correctly
-- [ ] Auto center modes behave as specified
-- [ ] Settings survive restart
+## M5 Virtual workspace MVP — mostly done 2026-09-27
+- [x] App: Start/Stop/Recenter, screen count, ultrawide, layout, distance (live), stabilizer presets, tracking axes, neck model
+- [x] Settings persisted (`%LOCALAPPDATA%\XrealScreen\settings.json`)
+- [x] Mouse usable (desktop order desk → virtual → glasses)
+- [ ] Comfort: Full mode with less lag (see ADR-0009 follow-up)
 
-## M6 Background & service
+## M6 (in progress: crash-safe restore done) Background & service
 Deliverables: tray, StartupTask, helper service + ACL'd pipe, crash-safe topology restore, sleep/resume + hot-plug state machines.
 - [ ] Kill app mid-session → topology restored
 - [ ] Sleep/resume and unplug/replug recover without restart
