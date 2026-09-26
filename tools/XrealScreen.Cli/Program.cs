@@ -7,5 +7,6 @@ root.Subcommands.Add(DeviceCommands.CreateProbe());
 root.Subcommands.Add(ImuCommands.Create());
 root.Subcommands.Add(DisplayCommands.Create());
 root.Subcommands.Add(VddCommands.Create());
+root.Subcommands.Add(CaptureCommands.Create());
 
 return await root.Parse(args).InvokeAsync().ConfigureAwait(false);

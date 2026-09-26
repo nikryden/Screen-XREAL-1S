@@ -3,8 +3,11 @@
 ## Capture
 | Fact | Tag |
 |------|-----|
-| Windows.Graphics.Capture (WGC) works on IDD monitors (VertoXR does this) | [hypothesis] until M2 |
-| WGC adds ~1 frame latency | [hypothesis] — measure in M3 |
+| WGC works on virtual-display-rs monitors: 3840×1080 frames with real desktop content via `CreateForMonitor` interop, free-threaded pool, D3D11 device (Vortice). Implemented in `src/XrealScreen.Render/Capture/`, test `xrs capture test` | [verified-hw] 2026-09-26 |
+| Borderless capture: `GraphicsCaptureAccess.RequestAccessAsync(Borderless)` returned Allowed for the unpackaged CLI; `IsBorderRequired = false` accepted | [verified-local] |
+| WGC delivers frames **only when content changes** (static virtual desktop: ~8 fps, busy monitor ~21 fps in a 3 s test). The renderer must keep and reuse the last texture per monitor. | [verified-hw] |
+| `Direct3D11CaptureFrame.SystemRelativeTime` is 6–9 ms **ahead** of QPC-now in the callback, so it is probably the DWM target present time, not a capture timestamp. Measure capture latency another way in M3 (e.g. PresentMon, or a timestamp drawn into the captured content). | [hypothesis] |
+| WGC adds ~1 frame latency | [hypothesis] — measure in M3 (see SystemRelativeTime note above) |
 | Yellow capture border removable: `GraphicsCaptureSession.IsBorderRequired = false` + `graphicsCaptureWithoutBorder` capability | documented by Microsoft |
 | Programmatic capture without picker: `GraphicsCaptureItem.TryCreateFromDisplayId` / `CreateForMonitor` interop + `graphicsCaptureProgrammatic` capability | documented by Microsoft |
 | Alternative: DXGI Desktop Duplication (`IDXGIOutput1.DuplicateOutput`) — lower-level, per output, no border | documented by Microsoft |

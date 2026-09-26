@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Capture (Windows.Graphics.Capture) and D3D11 rendering to the glasses (M2 capture, M3 render). -->
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Vortice.Direct3D11" />
+    <PackageReference Include="Vortice.DXGI" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\XrealScreen.Core\XrealScreen.Core.csproj" />
+  </ItemGroup>
+</Project>

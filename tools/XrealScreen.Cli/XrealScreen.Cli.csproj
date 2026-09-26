@@ -3,6 +3,7 @@
     <OutputType>Exe</OutputType>
     <AssemblyName>xrs</AssemblyName>
     <RootNamespace>XrealScreen.Cli</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.CommandLine" />
@@ -12,5 +13,6 @@
     <ProjectReference Include="..\..\src\XrealScreen.Device.XrealOne\XrealScreen.Device.XrealOne.csproj" />
     <ProjectReference Include="..\..\src\XrealScreen.Device.Simulated\XrealScreen.Device.Simulated.csproj" />
     <ProjectReference Include="..\..\src\XrealScreen.Display\XrealScreen.Display.csproj" />
+    <ProjectReference Include="..\..\src\XrealScreen.Render\XrealScreen.Render.csproj" />
   </ItemGroup>
 </Project>
