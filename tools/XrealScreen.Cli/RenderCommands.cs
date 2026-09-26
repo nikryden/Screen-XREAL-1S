@@ -20,10 +20,11 @@ internal static class RenderCommands
         var beta = new Option<float>("--beta") { Description = "Madgwick tilt-correction gain.", DefaultValueFactory = _ => 0.02f };
         var gate = new Option<float>("--accel-gate") { Description = "Skip tilt correction when | |a| - g | exceeds this (m/s²); 0 = off.", DefaultValueFactory = _ => 0.6f };
         var stabilize = new Option<string>("--stabilize") { Description = "Pose stabilizer: off | balanced | strong | ultra.", DefaultValueFactory = _ => "strong" };
+        var neck = new Option<bool>("--neck-model") { Description = "Neck model: screens come closer when you lean/nod in.", DefaultValueFactory = _ => true };
         var syncDesktop = new Option<bool>("--sync-desktop") { Description = "Set other monitors to the glasses refresh for the session (avoids judder; restored on exit).", DefaultValueFactory = _ => true };
-        var command = new Command("render", "Show virtual monitors fixed in space in the glasses (Ctrl+Alt+R = recenter, Ctrl+Alt+Q = stop).")
+        var command = new Command("render", "Show virtual monitors fixed in space in the glasses (Ctrl+Alt+R recenter, Ctrl+Alt+Up/Down closer/farther, Ctrl+Alt+Q stop).")
         {
-            screens, mode, source, seconds, follow, hz, predict, beta, gate, stabilize, syncDesktop,
+            screens, mode, source, seconds, follow, hz, predict, beta, gate, stabilize, syncDesktop, neck,
         };
         command.SetAction(async (parse, ct) =>
         {
@@ -39,6 +40,7 @@ internal static class RenderCommands
                 AccelGate = parse.GetValue(gate),
                 Stabilizer = parse.GetValue(stabilize)!,
                 SyncDesktopRefresh = parse.GetValue(syncDesktop),
+                NeckModel = parse.GetValue(neck),
             };
             return await RunAsync(options, parse.GetValue(seconds), ct).ConfigureAwait(false);
         });

@@ -47,6 +47,10 @@ public sealed partial class TrackingViewModel : ObservableObject, IDisposable
 
     public string StabilizerPreset => StabilizerIndex switch { 0 => "off", 1 => "balanced", 3 => "ultra", _ => "strong" };
 
+    /// <summary>Screens come closer when you lean or nod in (the 1S measures rotation only).</summary>
+    [ObservableProperty]
+    public partial bool NeckModel { get; set; } = true;
+
     /// <summary>True while a pose is shown: the preview runs, or a workspace session feeds poses.</summary>
     public bool HasPose => IsRunning || _externalPose;
 

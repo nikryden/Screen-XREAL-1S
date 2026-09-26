@@ -38,6 +38,7 @@ public class VirtualDisplayRsProviderTests
 
         Assert.Equal("15", added.ProviderId);
         Assert.True(VirtualDisplayRsProvider.IsOwned(added));
+        await WaitForAsync(() => server.Monitors.Count == 2);
         Assert.Equal([1u, 15u], server.Monitors.Select(m => m.Id).Order());
         Assert.All(server.Monitors, m => Assert.InRange(m.Id, 0u, VirtualDisplayRsProvider.MaxId));
     }
@@ -57,6 +58,7 @@ public class VirtualDisplayRsProviderTests
 
         await provider.RemoveAllOwnedAsync(ct);
 
+        await WaitForAsync(() => server.Monitors.Count == 2);
         Assert.Equal([1u, 2u], server.Monitors.Select(m => m.Id).Order());
     }
 
@@ -84,6 +86,15 @@ public class VirtualDisplayRsProviderTests
         Assert.False(await provider.IsAvailableAsync(TestContext.Current.CancellationToken));
     }
 
+    /// <summary>The fake server applies commands asynchronously after the client disconnects.</summary>
+    private static async Task WaitForAsync(Func<bool> condition)
+    {
+        for (int i = 0; i < 100 && !condition(); i++)
+        {
+            await Task.Delay(20, TestContext.Current.CancellationToken);
+        }
+    }
+
     /// <summary>Minimal in-process stand-in for the driver's pipe server.</summary>
     private sealed class FakeVdrsServer : IAsyncDisposable
     {
@@ -100,7 +111,7 @@ public class VirtualDisplayRsProviderTests
 
         public string PipeName { get; } = $"xrs-test-{Guid.NewGuid():N}";
 
-        public IReadOnlyList<VdrsMonitor> Monitors
+        public List<VdrsMonitor> Monitors
         {
             get
             {

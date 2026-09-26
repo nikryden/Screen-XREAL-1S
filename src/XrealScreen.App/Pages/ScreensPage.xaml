@@ -37,7 +37,7 @@
                         SelectedIndex="{x:Bind Workspace.PresetIndex, Mode=TwoWay}" />
 
                     <Slider
-                        Header="Viewing distance (m)"
+                        Header="Viewing distance (m) — also live while running, or Ctrl+Alt+Up/Down"
                         MaxWidth="480"
                         HorizontalAlignment="Left"
                         MinWidth="320"

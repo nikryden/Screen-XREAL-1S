@@ -21,6 +21,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
     private readonly WorkspaceViewModel _workspace;
     private readonly TrackingViewModel _tracking;
     private readonly DispatcherQueueTimer _poseTimer;
+    private bool _applyingEngineDistance;
 
     public SessionViewModel(DispatcherQueue dispatcher, WorkspaceViewModel workspace, TrackingViewModel tracking)
     {
@@ -32,6 +33,21 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         _poseTimer.Tick += (_, _) => _tracking.ApplyExternalPose(_engine.CurrentPose);
         _engine.StateChanged += (_, state) => _dispatcher.TryEnqueue(() => OnEngineState(state));
         _engine.Log += (_, message) => _dispatcher.TryEnqueue(() => AddLog(message));
+
+        // Distance: hotkeys (Ctrl+Alt+Up/Down) update the slider; the slider moves the screens live.
+        _engine.DistanceChanged += (_, meters) => _dispatcher.TryEnqueue(() =>
+        {
+            _applyingEngineDistance = true;
+            _workspace.DistanceMeters = Math.Round(meters, 2);
+            _applyingEngineDistance = false;
+        });
+        _workspace.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(WorkspaceViewModel.DistanceMeters) && IsRunning && !_applyingEngineDistance)
+            {
+                _engine.SetDistance((float)_workspace.DistanceMeters);
+            }
+        };
         ApplySettings(_store.Load());
     }
 
@@ -103,7 +119,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         {
             _poseTimer.Start();
             StatusTitle = "Workspace running";
-            StatusMessage = "Move the mouse right from your desk monitor onto the virtual screens. Ctrl+Alt+R recenters, Ctrl+Alt+Q stops.";
+            StatusMessage = "Move the mouse right from your desk monitor onto the virtual screens. Ctrl+Alt+R recenter · Ctrl+Alt+↑/↓ closer/farther · Ctrl+Alt+Q stop.";
             Severity = InfoBarSeverity.Success;
         }
         else if (state is WorkspaceState.Stopped or WorkspaceState.Faulted)
@@ -142,6 +158,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         DistanceMeters = (float)_workspace.DistanceMeters,
         Source = _tracking.SourceIndex switch { 0 => TrackingSource.Simulated, 2 => TrackingSource.Fixed, _ => TrackingSource.Glasses },
         Stabilizer = _tracking.StabilizerPreset,
+        NeckModel = _tracking.NeckModel,
         AutoCenter = new AutoCenterSettings
         {
             Policy = _tracking.PolicyIndex == 1 ? RecenterPolicy.Follow : RecenterPolicy.Manual,
@@ -159,6 +176,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         _workspace.DistanceMeters = o.DistanceMeters;
         _tracking.SourceIndex = o.Source switch { TrackingSource.Simulated => 0, TrackingSource.Fixed => 2, _ => 1 };
         _tracking.StabilizerIndex = o.Stabilizer switch { "off" => 0, "balanced" => 1, "ultra" => 3, _ => 2 };
+        _tracking.NeckModel = o.NeckModel;
         _tracking.PolicyIndex = o.AutoCenter.Policy == RecenterPolicy.Follow ? 1 : 0;
         _tracking.DeadZoneDegrees = o.AutoCenter.DeadZoneDegrees;
         _tracking.SmoothingSeconds = o.AutoCenter.SmoothingSeconds;

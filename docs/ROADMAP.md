@@ -58,3 +58,4 @@ Deliverables: HDR tone-map, DPI, hybrid GPU, One/One Pro regression, accessibili
 - Air-series HID support
 - SBS stereo
 - 6DoF (Eye camera)
+- **Lean tracking (6DoF-lite)**: the 1S measures rotation only; real lean-in parallax needs head position, e.g. from a webcam (face tracking) or the XREAL Eye camera. Today: neck model + Ctrl+Alt+Up/Down distance (user request 2026-09-26).

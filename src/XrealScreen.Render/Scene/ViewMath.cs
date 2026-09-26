@@ -24,11 +24,24 @@ public static class ViewMath
         0, 1, 0, 0,   // z (up)      → y
         0, 0, 0, 1);
 
+    /// <summary>
+    /// Typical offset from the neck pivot to the eyes in the head frame (FLU, metres): 8 cm forward, 11 cm up.
+    /// The 1S only measures rotation; this neck model turns nodding/leaning rotations into a small eye
+    /// translation so the screens come closer when you lean in ([verified-hw] user request 2026-09-26).
+    /// </summary>
+    public static readonly Vector3 DefaultNeckToEye = new(0.08f, 0f, 0.11f);
+
+    /// <summary>Eye position (world FLU, relative to the eye position when looking straight ahead) for a head orientation.</summary>
+    public static Vector3 EyeOffset(Quaternion headRelative, Vector3 neckToEye) =>
+        Vector3.Transform(neckToEye, Quaternion.Normalize(headRelative)) - neckToEye;
+
     /// <summary>World → clip transform for a head orientation (relative to the workspace center).</summary>
-    public static Matrix4x4 ViewProjection(Quaternion headRelative, GlassesOptics optics, float near = 0.05f, float far = 100f)
+    /// <param name="neckToEye">Neck-model offset; <see cref="Vector3.Zero"/> = rotate about the eyes (no parallax).</param>
+    public static Matrix4x4 ViewProjection(Quaternion headRelative, GlassesOptics optics, float near = 0.05f, float far = 100f, Vector3 neckToEye = default)
     {
         ArgumentNullException.ThrowIfNull(optics);
-        var worldToHead = Matrix4x4.CreateFromQuaternion(Quaternion.Conjugate(Quaternion.Normalize(headRelative)));
+        var eye = EyeOffset(headRelative, neckToEye);
+        var worldToHead = Matrix4x4.CreateTranslation(-eye) * Matrix4x4.CreateFromQuaternion(Quaternion.Conjugate(Quaternion.Normalize(headRelative)));
         float vfov = optics.VerticalFovDegrees * MathF.PI / 180f;
         float aspect = MathF.Tan(optics.HorizontalFovDegrees * MathF.PI / 360f) / MathF.Tan(vfov / 2f);
         var projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(vfov, aspect, near, far);

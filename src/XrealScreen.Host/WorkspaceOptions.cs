@@ -41,6 +41,9 @@ public sealed record WorkspaceOptions
 
     public float AccelGate { get; init; } = 0.6f;
 
+    /// <summary>Neck model: leaning/nodding moves the eyes, so screens come closer when you lean in.</summary>
+    public bool NeckModel { get; init; } = true;
+
     /// <summary>Run other monitors at the glasses refresh during the session (ADR-0009).</summary>
     public bool SyncDesktopRefresh { get; init; } = true;
 }

@@ -41,6 +41,16 @@ public sealed class WorkspaceEngine : IAsyncDisposable
     private PoseStabilizer? _stabilizer;
     private HeadPose _latest;
     private WorkspaceState _state = WorkspaceState.Stopped;
+    private Action<float>? _setDistance;
+
+    /// <summary>Current viewing distance in metres (changes with Ctrl+Alt+Up/Down or <see cref="SetDistance"/>).</summary>
+    public float DistanceMeters { get; private set; }
+
+    /// <summary>Raised when the viewing distance changes (any thread).</summary>
+    public event EventHandler<float>? DistanceChanged;
+
+    /// <summary>Moves the screens closer/farther while running (0.5–4 m).</summary>
+    public void SetDistance(float meters) => _setDistance?.Invoke(meters);
 
     public event EventHandler<WorkspaceState>? StateChanged;
 
@@ -290,8 +300,19 @@ public sealed class WorkspaceEngine : IAsyncDisposable
             // Present until stopped.
             using var presenter = new GlassesPresenter(gd, scene, GlassesOptics.Xreal1S, Latch, glasses.X, glasses.Y, glasses.Resolution.Width, glasses.Resolution.Height);
             presenter.RecenterRequested += Recenter;
+            presenter.NeckToEye = o.NeckModel ? ViewMath.DefaultNeckToEye : Vector3.Zero;
+            DistanceMeters = o.DistanceMeters;
+            var layoutSpecs = specs.Take(captures.Count).ToList();
+            _setDistance = meters =>
+            {
+                DistanceMeters = Math.Clamp(meters, 0.5f, 4f);
+                scene.SetPlacements(WorkspaceLayout.Compute(layoutSpecs, new WorkspaceSettings { Preset = o.Preset, DistanceMeters = DistanceMeters }));
+                Info($"distance {DistanceMeters:F2} m");
+                DistanceChanged?.Invoke(this, DistanceMeters);
+            };
+            presenter.DistanceStepRequested += step => _setDistance?.Invoke(DistanceMeters + step * 0.1f);
             presenter.Start();
-            Info($"running: {captures.Count} screen(s), stabilizer {o.Stabilizer}, prediction {o.PredictMs} ms — Ctrl+Alt+R recenters, Ctrl+Alt+Q stops");
+            Info($"running: {captures.Count} screen(s), stabilizer {o.Stabilizer}, neck model {(o.NeckModel ? "on" : "off")} — Ctrl+Alt+R recenter, Ctrl+Alt+↑/↓ closer/farther, Ctrl+Alt+Q stop");
             SetState(WorkspaceState.Running);
             _running?.TrySetResult();
 
@@ -352,6 +373,7 @@ public sealed class WorkspaceEngine : IAsyncDisposable
 
             _tracker = null;
             _stabilizer = null;
+            _setDistance = null;
             SetState(LastError is null ? WorkspaceState.Stopped : WorkspaceState.Faulted);
             _running?.TrySetResult(); // unblock StartAsync if we failed before running
         }

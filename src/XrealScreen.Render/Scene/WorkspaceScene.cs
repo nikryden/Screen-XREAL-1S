@@ -65,9 +65,25 @@ public sealed class WorkspaceScene : IDisposable
         return surface;
     }
 
+    private IReadOnlyList<ScreenPlacement>? _pendingPlacements;
+
+    /// <summary>
+    /// Moves the panels (e.g. new viewing distance). Thread-safe; applied at the start of the next
+    /// <see cref="Render"/> call on the render thread. Placements match screens by index.
+    /// </summary>
+    public void SetPlacements(IReadOnlyList<ScreenPlacement> placements) => Volatile.Write(ref _pendingPlacements, placements);
+
     public void Render(ID3D11RenderTargetView target, int width, int height, Matrix4x4 viewProjection)
     {
         ArgumentNullException.ThrowIfNull(target);
+        if (Interlocked.Exchange(ref _pendingPlacements, null) is { } placements)
+        {
+            for (int i = 0; i < Math.Min(placements.Count, _screens.Count); i++)
+            {
+                _screens[i].SetPlacement(placements[i]);
+            }
+        }
+
         var ctx = _gd.Context;
         ctx.UpdateSubresource(in viewProjection, _frameBuffer);
         ctx.OMSetRenderTargets(target);
@@ -123,7 +139,7 @@ public sealed class ScreenSurface : IDisposable
         ShaderView = gd.Device.CreateShaderResourceView(Texture);
     }
 
-    public ScreenPlacement Placement { get; }
+    public ScreenPlacement Placement { get; private set; }
 
     public int Width { get; }
 
@@ -131,11 +147,21 @@ public sealed class ScreenSurface : IDisposable
 
     public ID3D11Texture2D Texture { get; }
 
-    internal ID3D11Buffer Vertices { get; }
+    internal ID3D11Buffer Vertices { get; private set; }
 
     internal uint VertexCount { get; }
 
     internal ID3D11ShaderResourceView ShaderView { get; }
+
+    /// <summary>Rebuilds the mesh for a new placement (render thread).</summary>
+    internal void SetPlacement(ScreenPlacement placement)
+    {
+        float[] mesh = ViewMath.BuildScreenMesh(placement);
+        var old = Vertices;
+        Vertices = _gd.Device.CreateBuffer(mesh, BindFlags.VertexBuffer);
+        old.Dispose();
+        Placement = placement;
+    }
 
     /// <summary>Copies a captured frame (any thread; the device is multithread-protected).</summary>
     public void Update(ID3D11Texture2D source, int sourceWidth, int sourceHeight)

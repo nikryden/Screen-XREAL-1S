@@ -20,6 +20,10 @@ internal static unsafe partial class Win32
     public const uint MOD_NOREPEAT = 0x4000;
     public const int HotkeyRecenter = 1;
     public const int HotkeyStop = 2;
+    public const int HotkeyCloser = 3;
+    public const int HotkeyFarther = 4;
+    public const int VK_UP = 0x26;
+    public const int VK_DOWN = 0x28;
     public const int IDC_ARROW = 32512;
     public const uint WM_SETCURSOR = 0x0020;
     public const int HTCLIENT = 1;
