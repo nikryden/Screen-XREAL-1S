@@ -13,12 +13,13 @@
   - **App head tracking**: curved screens, stabilizer presets (default Strong), tracking axes (default Turning + level; Full is most comfortable per user), neck model, Ctrl+Alt+Plus/Minus distance, desk refresh sync.
 - Engine hardening: no NaN before the first IMU sample, watchdog for glasses re-enumeration, catch-all session errors, forced virtual-monitor resolutions (fixes SetDisplayConfig 87), crash log `%LOCALAPPDATA%\XrealScreen\crash.log`.
 - **Tray + background (M6)**: tray icon (Open / Start / Stop / Recenter / Exit), close-to-tray, Ctrl+Alt+W toggles the workspace, Start with Windows (MSIX StartupTask, starts hidden in tray); app preferences in `%LOCALAPPDATA%\XrealScreen\app.json`.
+- **Installer phase 1 (M7)**: `installer\\Build-Package.ps1` → `artifacts\\installer\\` (signed self-contained MSIX 105 MB, `Install-XrealScreen.ps1` checks the driver). New app icon.
 - **Crash-safe restore**: at app start (and `xrs recover`) leftover virtual monitors are removed and layout + refresh rates restored ([verified-local] hard-kill test).
 - 81/81 tests.
 
 ## Next 3 steps
 1. M6: user test of tray icon / start with Windows / Ctrl+Alt+W (implemented 2026-09-27); then optional "start workspace when glasses connect".
-2. M7: installer (bootstrapper installs/checks virtual-display-rs, then the MSIX); signed test package so the app runs outside `dotnet run`.
+2. M7 phase 2: build/sign virtual-display-rs ourselves and bundle it; clean-VM install test. (Phase 1 done: signed self-contained MSIX + scripts in `installer/`, new app icon.)
 3. App head tracking latency (ADR-0009 follow-up: independent flip / DirectComposition) and a comfort re-test of Full vs Turning+level.
 
 ## Blockers
@@ -46,3 +47,4 @@
 | 2026-09-26 | Claude | M3 done: drift test 5 min OK, mouse fixed (desktop order), all verified with the user in the glasses. |
 | 2026-09-26 | Claude | M4/M5 start: WorkspaceEngine (Host), app Start/Stop workspace, stabilizer UI, settings persistence. |
 | 2026-09-26/27 | Claude | M4/M5: engine + app Start/Stop; user feedback → axes modes, neck model, stabilizer, NaN fix, glasses-anchor workspace (ADR-0010) with gap/aspect/preview/apply, crash-safe restore. |
+| 2026-09-27 | Claude | M6 tray/autostart/hotkey; M7 phase 1: icon, signed self-contained MSIX, install scripts. |

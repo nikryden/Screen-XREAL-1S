@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
@@ -50,7 +50,7 @@
       </uap:VisualElements>
       <Extensions>
         <!-- Start with Windows (Settings page toggle; the user can also control it in Task Manager). -->
-        <uap5:Extension Category="windows.startupTask" Executable="$targetnametoken$.exe" EntryPoint="Windows.FullTrustApplication">
+        <uap5:Extension Category="windows.startupTask" Executable="XrealScreen.App.exe" EntryPoint="Windows.FullTrustApplication">
           <uap5:StartupTask TaskId="XrealScreenStartup" Enabled="false" DisplayName="XrealScreen" />
         </uap5:Extension>
       </Extensions>

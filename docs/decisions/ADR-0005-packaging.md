@@ -20,3 +20,10 @@ We want clean install/update/uninstall (MSIX), but MSIX cannot install kernel or
 ## Alternatives
 - MSI/WiX only — can install drivers but loses MSIX lifecycle and packaged identity (needed for some capture capabilities).
 - Unpackaged + winget script — fragile, no identity.
+
+## Update 2026-09-27 — phase 1 implemented (user decision: "step 1 now, driver later")
+- `installer/Build-Package.ps1` builds a **self-contained** MSIX (x64; .NET + Windows App SDK inside, no framework package dependency) signed with a self-signed test certificate `CN=Niklas Ryden` (private key in git-ignored `installer/.signing/`).
+- `installer/Install-XrealScreen.ps1` (admin): trusts the certificate (LocalMachine\TrustedPeople), **checks** for the virtual-display-rs driver and explains if missing, removes a developer registration, installs the MSIX. `Uninstall-XrealScreen.ps1` removes it.
+- The driver is **not bundled yet** (ADR-0008: 0.4.0 has no official release; building it needs Rust + WDK). Phase 2: build and sign virtual-display-rs ourselves and let the bootstrapper install it.
+- Trimming stays off (WinUI + reflection risk); ReadyToRun on in Release.
+

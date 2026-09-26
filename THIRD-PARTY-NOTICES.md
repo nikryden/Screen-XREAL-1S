@@ -13,7 +13,8 @@ one-xr MIT License: Permission is hereby granted, free of charge, to any person 
 ## Planned dependencies
 | Component | License | Distribution |
 |-----------|---------|--------------|
-| Windows App SDK | MIT | NuGet / framework package |
+| Windows App SDK | MIT | Bundled in the self-contained MSIX |
+| .NET runtime | MIT | Bundled in the self-contained MSIX |
 | CommunityToolkit.Mvvm (and other CommunityToolkit packages) | MIT | NuGet |
 | Vortice.Windows (Direct3D11, DXGI, …) | MIT | NuGet |
 | System.CommandLine | MIT | NuGet (tools only) |
