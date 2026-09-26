@@ -23,3 +23,14 @@ Virtual workspace mode needs a stable, low-latency 3DoF orientation from raw gyr
 - Fusion (xioTechnologies, MIT) library port — viable fallback; would add attribution.
 - EKF — more complex, unnecessary for 3DoF.
 - Glasses onboard 3DoF (native mode) — used in native mode, not controllable enough for the workspace.
+
+## Update 2026-09-27 — rotation gate for the tilt correction
+- [verified-hw] 2026-09-27, 1S fw 15.01.03.522: in App head tracking the screens were "shaky when tilting up and down".
+  The nod recording (`tests/fixtures/1s-nod-fw15.01.03.522.xrimu` + cues) shows why: nodding swings the direction of the
+  measured acceleration but barely its size, so the `| |a| − g |` gate lets it through and Madgwick's fixed-rate
+  (β) correction pushes pitch up and down with every nod (≈35 px bob).
+- Decision addition: **`MadgwickFilter.RateGate`** (default 0.09 rad/s ≈ 5°/s) — the accelerometer correction only runs
+  while the head is nearly still. Nod fixture (NodShakeTests): bob 35 → 14 px (slow nods), 34 → 22 px (fast nods); still
+  shake unchanged. Glasses A/B with the user: gated "by far the best, very little shaking".
+- Remaining bob is mostly the stabilizer's smoothing lag (Balanced 10–17 px, Off 6–8 px offline). A speed-hold in the
+  stabilizer (keep smoothing released through nod reversals) was tried and did not help.

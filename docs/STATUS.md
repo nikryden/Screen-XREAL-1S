@@ -14,26 +14,28 @@
 - Engine hardening: no NaN before the first IMU sample, watchdog for glasses re-enumeration, catch-all session errors, forced virtual-monitor resolutions (fixes SetDisplayConfig 87), crash log `%LOCALAPPDATA%\XrealScreen\crash.log`.
 - **Tray + background (M6)**: tray icon (Open / Start / Stop / Recenter / Exit), close-to-tray, Ctrl+Alt+W toggles the workspace, Start with Windows (MSIX StartupTask, starts hidden in tray); app preferences in `%LOCALAPPDATA%\XrealScreen\app.json`.
 - **Installer phase 1 (M7)**: `installer\\Build-Package.ps1` → `artifacts\\installer\\` (signed self-contained MSIX 105 MB, `Install-XrealScreen.ps1` checks the driver). New app icon.
+- **Less lag + no nod bobbing (App head tracking)**: gyro-speed stabilizer, late latch 1.5 ms, 20 ms prediction (ADR-0009), tilt correction only when the head is nearly still (ADR-0007 `RateGate`) — verified with the user in the glasses.
 - **Crash-safe restore**: at app start (and `xrs recover`) leftover virtual monitors are removed and layout + refresh rates restored ([verified-local] hard-kill test).
-- 81/81 tests.
+- 85/85 tests.
 
 ## Next 3 steps
 1. M6: user test of tray icon / start with Windows / Ctrl+Alt+W (implemented 2026-09-27); then optional "start workspace when glasses connect".
 2. M7 phase 2: build/sign virtual-display-rs ourselves and bundle it; clean-VM install test. (Phase 1 done: signed self-contained MSIX + scripts in `installer/`, new app icon.)
-3. App head tracking latency (ADR-0009 follow-up: independent flip / DirectComposition) and a comfort re-test of Full vs Turning+level.
+3. App head tracking: remaining small lag = DWM frame (ADR-0009 follow-up: independent flip / DirectComposition); optional A/B Strong vs Balanced for the last nod bob.
 
 ## Blockers
 - None.
 
 ## Open questions / known gaps
 - virtual-display-rs is installed on this PC by VertoXR (self-signed); distribution/signing for other PCs → M7 (ADR-0008).
-- In App head tracking, partial axis modes (YawRoll/YawPitch) can cause motion sickness; Full felt best but with some lag. Glasses anchor avoids this.
+- In App head tracking, partial axis modes (YawRoll/YawPitch) can cause motion sickness; Full felt best; lag is now "a little" (2026-09-27). Glasses anchor avoids this.
 - `missed` frame counter in presenter stats is noisy; p99 frame time is the reliable number.
 - Control port 52999 not implemented (glasses-side recenter/UltraWide switching from the app would need it).
 - Real lean tracking needs a camera (roadmap "Later").
 
 ## Last hardware verification
 - **2026-09-26 · XREAL 1S · PID 0x043E · fw 15.01.03.522** — NCM link, ports, IMU framing/units/axes, live tracking in app. Details: `docs/findings/xreal-one-protocol.md`, `docs/findings/xreal-1s-hardware.md`.
+- **2026-09-27 · XREAL 1S · fw 15.01.03.522** — App head tracking lag A/B (latch/prediction) and nod A/B (tilt-correction rate gate); nod IMU fixture recorded.
 - **2026-09-26/27 · XREAL 1S · fw 15.01.03.522** — both workspace types in the glasses with the user: anchor split 2×/3× screens with gap in 32:9 and 21:9, UltraWide auto-restart, app head tracking comfort A/B, mouse, crash recovery.
 
 ## Session log
@@ -48,3 +50,4 @@
 | 2026-09-26 | Claude | M4/M5 start: WorkspaceEngine (Host), app Start/Stop workspace, stabilizer UI, settings persistence. |
 | 2026-09-26/27 | Claude | M4/M5: engine + app Start/Stop; user feedback → axes modes, neck model, stabilizer, NaN fix, glasses-anchor workspace (ADR-0010) with gap/aspect/preview/apply, crash-safe restore. |
 | 2026-09-27 | Claude | M6 tray/autostart/hotkey; M7 phase 1: icon, signed self-contained MSIX, install scripts. |
+| 2026-09-27 | Claude | Lag work: gyro-speed stabilizer, late latch, 20 ms prediction; nod bobbing fixed with Madgwick rate gate (glasses A/B). |

@@ -35,7 +35,8 @@ Deliverables: fullscreen swapchain on glasses output, captured monitor on pose-d
 - [x] App: Start/Stop/Recenter, screen count, ultrawide, layout, distance (live), stabilizer presets, tracking axes, neck model
 - [x] Settings persisted (`%LOCALAPPDATA%\XrealScreen\settings.json`)
 - [x] Mouse usable (desktop order desk → virtual → glasses)
-- [ ] Comfort: Full mode with less lag (see ADR-0009 follow-up)
+- [x] Comfort: Full mode with less lag — late latch, 20 ms prediction, gyro-speed stabilizer, nod rate gate (ADR-0009/0007 updates)
+- [ ] Remove the DWM frame from the glasses path (ADR-0009 follow-up)
 
 ## M6 Background & service (in progress: crash-safe restore done)
 Deliverables: tray, StartupTask, helper service + ACL'd pipe, crash-safe topology restore, sleep/resume + hot-plug state machines.
