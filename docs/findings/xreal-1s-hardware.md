@@ -49,5 +49,3 @@ Source: XREAL One-series user guide and tutorials (apply to "One/1S"); see `docs
 - **"No anchor" for our virtual workspace mode = Follow + Stabilizer off** (ADR-0003). There is no separate "off / 0DoF" menu item.
 - **UltraWide:** Spatial Screen → UltraWide Mode: 16:18, 21:9, 32:9; **Laboratory** sets the default. Requires Windows extended display mode.
 - Exact ultrawide signal resolution on 1S: unknown. One Pro reportedly 3840×1080 for 32:9. [hypothesis]
-
-## Open questions (M2)
