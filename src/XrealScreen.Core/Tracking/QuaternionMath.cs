@@ -12,6 +12,18 @@ public static class QuaternionMath
         a.W * b.Z + a.X * b.Y - a.Y * b.X + a.Z * b.W,
         a.W * b.W - a.X * b.X - a.Y * b.Y - a.Z * b.Z);
 
+    /// <summary>
+    /// Rotation angle (radians) between two orientations. Uses the vector part of the relative
+    /// rotation, which stays accurate for tiny angles (acos of a float dot product cannot resolve
+    /// angles below ~0.04°).
+    /// </summary>
+    public static float AngleBetween(Quaternion a, Quaternion b)
+    {
+        var r = Multiply(Quaternion.Conjugate(a), b);
+        float v = MathF.Sqrt(r.X * r.X + r.Y * r.Y + r.Z * r.Z);
+        return 2f * MathF.Atan2(v, MathF.Abs(r.W));
+    }
+
     /// <summary>Heading around world Z, radians, range (-π, π].</summary>
     public static float Yaw(Quaternion q) =>
         MathF.Atan2(2f * (q.W * q.Z + q.X * q.Y), 1f - 2f * (q.Y * q.Y + q.Z * q.Z));

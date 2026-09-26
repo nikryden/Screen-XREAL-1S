@@ -27,18 +27,19 @@ internal static class RenderCommands
         var hz = new Option<int>("--hz") { Description = "Glasses refresh to request (UltraWide Off offers 60/90/120).", DefaultValueFactory = _ => 120 };
         var predict = new Option<double>("--predict-ms") { Description = "Pose prediction ahead of the late latch.", DefaultValueFactory = _ => 12 };
         var beta = new Option<float>("--beta") { Description = "Madgwick tilt-correction gain.", DefaultValueFactory = _ => 0.02f };
+        var stabilize = new Option<string>("--stabilize") { Description = "Pose stabilizer: off | balanced | strong.", DefaultValueFactory = _ => "balanced" };
         var gate = new Option<float>("--accel-gate") { Description = "Skip tilt correction when | |a| - g | exceeds this (m/s²); 0 = off.", DefaultValueFactory = _ => 0.6f };
         var command = new Command("render", "Show virtual monitors fixed in space in the glasses (Ctrl+Alt+R = recenter, Ctrl+Alt+Q = stop).")
         {
-            screens, mode, source, seconds, follow, hz, predict, beta, gate,
+            screens, mode, source, seconds, follow, hz, predict, beta, gate, stabilize,
         };
         command.SetAction(async (parse, ct) => await RunAsync(
             parse.GetValue(screens), parse.GetValue(mode), parse.GetValue(source)!, parse.GetValue(seconds),
-            parse.GetValue(follow), parse.GetValue(hz), parse.GetValue(predict), parse.GetValue(beta), parse.GetValue(gate), ct).ConfigureAwait(false));
+            parse.GetValue(follow), parse.GetValue(hz), parse.GetValue(predict), parse.GetValue(beta), parse.GetValue(gate), parse.GetValue(stabilize)!, ct).ConfigureAwait(false));
         return command;
     }
 
-    private static async Task<int> RunAsync(int screenCount, UltrawideMode mode, string source, double seconds, bool follow, int hz, double predictMs, float beta, float accelGate, CancellationToken ct)
+    private static async Task<int> RunAsync(int screenCount, UltrawideMode mode, string source, double seconds, bool follow, int hz, double predictMs, float beta, float accelGate, string stabilize, CancellationToken ct)
     {
         GlassesPresenter.EnablePerMonitorDpi();
         var topology = new CcdDisplayTopology();
@@ -142,18 +143,30 @@ internal static class RenderCommands
         }, stopTracking.Token);
 
         float predictSeconds = (float)(predictMs / 1000.0);
+        var stabilizer = new PoseStabilizer(StabilizerSettings.FromName(stabilize));
+        long lastLatch = 0;
+
+        // Called once per frame on the render thread: predict, then stabilize.
         Quaternion Latch()
         {
+            Quaternion predicted;
             lock (poseLock)
             {
-                return latest.PredictRelative(predictSeconds);
+                predicted = latest.PredictRelative(predictSeconds);
             }
+
+            long now = System.Diagnostics.Stopwatch.GetTimestamp();
+            float dt = lastLatch == 0 ? 0f : (float)System.Diagnostics.Stopwatch.GetElapsedTime(lastLatch, now).TotalSeconds;
+            lastLatch = now;
+            return stabilizer.Filter(predicted, dt);
         }
 
         // 5. Present on the glasses until Esc / timeout.
         using var presenter = new GlassesPresenter(gd, scene, GlassesOptics.Xreal1S, Latch, glasses.X, glasses.Y, glasses.Resolution.Width, glasses.Resolution.Height);
         presenter.RecenterRequested += tracker.RequestRecenter;
+        presenter.RecenterRequested += stabilizer.Reset;
         presenter.Start();
+        Console.WriteLine($"stabilizer: {stabilize}; prediction {predictMs} ms");
         Console.WriteLine($"rendering {captures.Count} screen(s) on the glasses for {seconds:F0} s — Ctrl+Alt+R recenters, Ctrl+Alt+Q stops");
         await Task.WhenAny(presenter.Completion, Task.Delay(TimeSpan.FromSeconds(seconds), ct)).ConfigureAwait(false);
         presenter.Stop();

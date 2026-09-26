@@ -103,8 +103,7 @@ public class HardwareJitterTests(ITestOutputHelper output)
 
             var shown = poses[i].Pose.PredictRelative(predictMs / 1000f);
             var actual = poses[j].Pose.Relative;
-            float dot = MathF.Min(1f, MathF.Abs(Quaternion.Dot(shown, actual)));
-            errors.Add(2 * Math.Acos(dot) * 180 / Math.PI);
+            errors.Add(QuaternionMath.AngleBetween(shown, actual) * 180 / Math.PI);
         }
 
         errors.Sort();
@@ -141,5 +140,94 @@ public class HardwareJitterTests(ITestOutputHelper output)
         // Prediction must matter, and the tuned defaults must clearly beat the original filter.
         Assert.True(results["tuned (defaults) @ 0 ms"] > 5 * results["tuned (defaults) @ 12 ms"]);
         Assert.True(results["tuned (defaults) @ 12 ms"] < 0.7 * results["original (beta .05, no gate, raw rate) @ 12 ms"]);
+    }
+}
+
+public class StabilizerTuningTests(ITestOutputHelper output)
+{
+    /// <summary>
+    /// Replays the real rotation fixture at 120 Hz frames with 12 ms prediction and returns
+    /// (p95 frame-to-frame change while nominally still, p95 error vs the true pose 12 ms later over the whole run).
+    /// </summary>
+    private static async Task<(double StillJitter, double TrackingError)> MeasureAsync(StabilizerSettings settings, CancellationToken ct)
+    {
+        var tracker = new HeadTracker();
+        var poses = new List<(long T, HeadPose Pose)>();
+        await foreach (var s in XrimuFile.ReadAsync(Path.Combine(AppContext.BaseDirectory, "fixtures", "1s-rotate-fw15.01.03.522.xrimu"), ct))
+        {
+            poses.Add((s.TimestampNs, tracker.Update(s)));
+        }
+
+        var stabilizer = new PoseStabilizer(settings);
+        long t0 = poses[0].T, next = t0 + 500_000_000;
+        var jitter = new List<double>();
+        var error = new List<double>();
+        Quaternion? previous = null;
+        int j = 0;
+        for (int i = 0; i < poses.Count; i++)
+        {
+            if (poses[i].T < next)
+            {
+                continue;
+            }
+
+            next = poses[i].T + 8_333_333;
+            var shown = stabilizer.Filter(poses[i].Pose.PredictRelative(0.012f), 1f / 120f);
+            double t = (poses[i].T - t0) / 1e9;
+            if (previous is { } p && t < 4.5)
+            {
+                jitter.Add(Angle(p, shown));
+            }
+
+            previous = shown;
+            while (j < poses.Count && poses[j].T < poses[i].T + 12_000_000)
+            {
+                j++;
+            }
+
+            if (j < poses.Count)
+            {
+                error.Add(Angle(shown, poses[j].Pose.Relative));
+            }
+        }
+
+        return (P95(jitter), P95(error));
+
+        static double Angle(Quaternion a, Quaternion b) => QuaternionMath.AngleBetween(a, b) * 180 / Math.PI;
+        static double P95(List<double> v)
+        {
+            v.Sort();
+            return v[(int)(v.Count * 0.95)];
+        }
+    }
+
+    [Fact]
+    public async Task Stabilizer_ReducesStillJitter_WithBoundedTrackingError()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var candidates = new (string Name, StabilizerSettings Settings)[]
+        {
+            ("off", StabilizerSettings.Off),
+            ("min 0.3 Hz, k 0.05", new(0.3f, 0.05f)),
+            ("min 0.5 Hz, k 0.1", new(0.5f, 0.1f)),
+            ("min 0.5 Hz, k 0.3", new(0.5f, 0.3f)),
+            ("min 1.0 Hz, k 0.1", new(1.0f, 0.1f)),
+            ("min 1.0 Hz, k 0.3", new(1.0f, 0.3f)),
+            ("balanced (default)", new()),
+            ("min 0.5 Hz, k 1.0", new(0.5f, 1.0f)),
+        };
+
+        var results = new Dictionary<string, (double Jitter, double Error)>();
+        foreach (var (name, settings) in candidates)
+        {
+            var r = await MeasureAsync(settings, ct);
+            results[name] = r;
+            output.WriteLine($"{name,-28} still jitter p95 {r.StillJitter:F4}° ({r.StillJitter / 0.0234:F2} px)   tracking error p95 {r.TrackingError:F3}°");
+        }
+
+        var off = results["off"];
+        var def = results["balanced (default)"];
+        Assert.True(def.Jitter < off.Jitter * 0.8, "balanced must cut still shake by at least 20%");
+        Assert.True(def.Error < 0.5, "balanced must keep world-lock error under 0.5° p95 while turning");
     }
 }
