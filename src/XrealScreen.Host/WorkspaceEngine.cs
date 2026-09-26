@@ -39,7 +39,8 @@ public sealed class WorkspaceEngine : IAsyncDisposable
     private TaskCompletionSource? _running;
     private HeadTracker? _tracker;
     private PoseStabilizer? _stabilizer;
-    private HeadPose _latest;
+    // Straight ahead until the first IMU sample arrives (a default HeadPose has a zero quaternion).
+    private HeadPose _latest = new(0, Quaternion.Identity, Quaternion.Identity, Vector3.Zero);
     private WorkspaceState _state = WorkspaceState.Stopped;
     private Action<float>? _setDistance;
 
@@ -252,6 +253,11 @@ public sealed class WorkspaceEngine : IAsyncDisposable
             }
 
             // Tracking.
+            lock (_poseLock)
+            {
+                _latest = new HeadPose(0, Quaternion.Identity, Quaternion.Identity, Vector3.Zero);
+            }
+
             _tracker = new HeadTracker(new MadgwickFilter(o.FilterBeta) { AccelGate = o.AccelGate });
             _tracker.AutoCenter.Settings = o.AutoCenter;
             _stabilizer = new PoseStabilizer(StabilizerSettings.FromName(o.Stabilizer));

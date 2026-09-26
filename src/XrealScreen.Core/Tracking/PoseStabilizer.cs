@@ -56,6 +56,22 @@ public sealed class PoseStabilizer
 
     public Quaternion Filter(Quaternion input, float dt)
     {
+        // Never let an invalid sample poison the filter state (it would stay NaN forever).
+        if (!QuaternionMath.IsValidRotation(input))
+        {
+            return _initialized && QuaternionMath.IsValidRotation(_filtered) ? _filtered : Quaternion.Identity;
+        }
+
+        if (_initialized && (!QuaternionMath.IsValidRotation(_filtered) || !float.IsFinite(_speed)))
+        {
+            _initialized = false;
+        }
+
+        if (!float.IsFinite(dt))
+        {
+            dt = 0f;
+        }
+
         input = Quaternion.Normalize(input);
         if (!Settings.Enabled || !_initialized || dt <= 0f)
         {

@@ -24,6 +24,10 @@ public static class QuaternionMath
         return 2f * MathF.Atan2(v, MathF.Abs(r.W));
     }
 
+    /// <summary>True when all components are finite and the quaternion is not (near) zero.</summary>
+    public static bool IsValidRotation(Quaternion q) =>
+        float.IsFinite(q.X) && float.IsFinite(q.Y) && float.IsFinite(q.Z) && float.IsFinite(q.W) && q.LengthSquared() > 1e-6f;
+
     /// <summary>Heading around world Z, radians, range (-π, π].</summary>
     public static float Yaw(Quaternion q) =>
         MathF.Atan2(2f * (q.W * q.Z + q.X * q.Y), 1f - 2f * (q.Y * q.Y + q.Z * q.Z));

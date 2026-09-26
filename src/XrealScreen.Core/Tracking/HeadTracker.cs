@@ -21,7 +21,21 @@ public readonly record struct HeadPose(long TimestampNs, Quaternion World, Quate
     public float RollDegrees => QuaternionMath.Roll(Relative) * 180f / MathF.PI;
 
     /// <summary>Extrapolates the relative pose <paramref name="seconds"/> ahead (render latency compensation).</summary>
-    public Quaternion PredictRelative(float seconds) => QuaternionMath.Integrate(Relative, AngularVelocity, seconds);
+    /// <remarks>
+    /// A default <see cref="HeadPose"/> has an all-zero quaternion; it is treated as "straight ahead" so a
+    /// renderer that latches before the first IMU sample never produces NaN ([verified-hw] 2026-09-26:
+    /// the NaN poisoned the stabilizer and the screens vanished in every other session).
+    /// </remarks>
+    public Quaternion PredictRelative(float seconds)
+    {
+        if (!QuaternionMath.IsValidRotation(Relative))
+        {
+            return Quaternion.Identity;
+        }
+
+        var predicted = QuaternionMath.Integrate(Relative, AngularVelocity, seconds);
+        return QuaternionMath.IsValidRotation(predicted) ? predicted : Relative;
+    }
 }
 
 /// <summary>
