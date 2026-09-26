@@ -7,7 +7,7 @@ Windows control helper for XREAL One S glasses.
 Run the PowerShell helper to quickly switch display modes when the glasses are connected:
 
 ```powershell
-.\windows-control-xreal-one-s.ps1 -Mode second-screen-only
+.\windows-control-xreal-one-s.ps1 -Mode "second-screen-only"
 ```
 
 Supported modes:
