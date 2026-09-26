@@ -24,6 +24,8 @@ Frames are never written to disk (privacy).
 | Visible shake while holding still came mainly from the 144 Hz (desk) vs 120 Hz (glasses) DWM mismatch; fixed pose showed no shake; desk at 120 Hz was calmer | [verified-hw] user A/B |
 | Head micro-motion while "still" ≈ 3–4 °/s → ~1.3 px/frame; One Euro stabilizer presets reduce it (strong 0.75 px, ultra 0.43 px); user preferred strong | [verified-hw] fixture + user A/B |
 | XREAL OSD must be **Follow + Stabilizer off**; Anchor during a test made the image wobble (double correction) | [verified-hw] |
+| Mouse: with the glasses area between desk and virtual monitors the pointer was head-locked and clicks were swallowed by the 3D window. Desktop order **[desk][virtual 1..n][glasses]** + hidden pointer over the glasses window fixed it; the captured pointer is world-locked and clicks/drag work | [verified-hw] user test |
+| 5-minute test: no visible drift (user). Learned gyro bias varies between runs (up to 0.02 rad/s on one axis in the mouse test) — watch; consider factory bias from the control port | [verified-hw] / [hypothesis] |
 
 ## Render (design)
 - Fullscreen D3D11 **flip-model** swapchain (`FLIP_DISCARD`, waitable object) on the glasses output, in a borderless window positioned on that monitor.

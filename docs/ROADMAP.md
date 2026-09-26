@@ -19,11 +19,12 @@ Deliverables: CCD enumeration - **done**; EDID glasses identification - **done**
 - [x] Monitors created, captured and removed cleanly; topology restored (2026-09-26)
 - [x] Driver needs no admin at runtime; pipe protocol documented from source and verified
 
-## M3 Render spike (in progress)
+## M3 Render spike — done 2026-09-26
 Deliverables: fullscreen swapchain on glasses output, captured monitor on pose-driven quad, latency stats.
-- [ ] 120 fps sustained
-- [ ] < 20 ms pose→present
-- [ ] No visible drift over 5 min
+- [x] 120 fps sustained (119.9 fps over 5 min, vblank-paced, ADR-0009)
+- [x] < 20 ms pose→present (latch→present ≈ 0.2 ms; true motion-to-photon not measured yet)
+- [x] No visible drift over 5 min (user, glasses test 2026-09-26)
+- [x] Mouse usable on the virtual monitors (desktop order desk → virtual → glasses)
 
 ## M4 Native mode MVP
 Deliverables: Device page, control-port 52999 client (glasses-side recenter, display mode, brightness - capture the request format first), recenter button + hotkey, correct resolution/refresh, ultrawide guidance/control.
