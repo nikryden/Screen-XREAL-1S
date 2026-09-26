@@ -65,6 +65,17 @@ public sealed class WorkspaceScene : IDisposable
         return surface;
     }
 
+    /// <summary>
+    /// Adds a flat screen covering a pixel rectangle of the render target (glasses-anchor mode).
+    /// Render it with <see cref="System.Numerics.Matrix4x4.Identity"/> as view-projection.
+    /// </summary>
+    public ScreenSurface AddFlatScreen(PixelRect rect, int targetWidth, int targetHeight, int textureWidth, int textureHeight)
+    {
+        var surface = new ScreenSurface(_gd, ViewMath.BuildFlatQuad(rect, targetWidth, targetHeight), textureWidth, textureHeight);
+        _screens.Add(surface);
+        return surface;
+    }
+
     private IReadOnlyList<ScreenPlacement>? _pendingPlacements;
 
     /// <summary>
@@ -127,12 +138,16 @@ public sealed class ScreenSurface : IDisposable
     private readonly GraphicsDevice _gd;
 
     internal ScreenSurface(GraphicsDevice gd, ScreenPlacement placement, int width, int height)
+        : this(gd, ViewMath.BuildScreenMesh(placement), width, height)
+    {
+        Placement = placement;
+    }
+
+    internal ScreenSurface(GraphicsDevice gd, float[] mesh, int width, int height)
     {
         _gd = gd;
-        Placement = placement;
         Width = width;
         Height = height;
-        float[] mesh = ViewMath.BuildScreenMesh(placement);
         VertexCount = (uint)(mesh.Length / 5);
         Vertices = gd.Device.CreateBuffer(mesh, BindFlags.VertexBuffer);
         Texture = gd.Device.CreateTexture2D(new Texture2DDescription(Format.B8G8R8A8_UNorm, (uint)width, (uint)height, 1, 1, BindFlags.ShaderResource));

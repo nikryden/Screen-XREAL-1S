@@ -55,6 +55,9 @@ public sealed unsafe class GlassesPresenter : IDisposable
         (_x, _y, _width, _height) = (x, y, width, height);
     }
 
+    /// <summary>Flat mode: screens are drawn pixel-exact without head tracking (glasses-anchor workspace).</summary>
+    public bool Flat { get; init; }
+
     /// <summary>Raised on the window thread when the user presses R.</summary>
     public event Action? RecenterRequested;
 
@@ -267,7 +270,7 @@ public sealed unsafe class GlassesPresenter : IDisposable
             {
                 glassesOutput.WaitForVBlank();
                 long latch = Stopwatch.GetTimestamp();
-                var viewProjection = ViewMath.ViewProjection(_latchPose(), _optics); // late latch
+                var viewProjection = Flat ? Matrix4x4.Identity : ViewMath.ViewProjection(_latchPose(), _optics); // late latch
                 _scene.Render(rtv, _width, _height, viewProjection);
                 swapChain.Present(0, PresentFlags.None);
                 long now = Stopwatch.GetTimestamp();

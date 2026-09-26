@@ -14,6 +14,20 @@ public sealed partial class WorkspaceViewModel : ObservableObject
 
     public IReadOnlyList<string> PresetNames { get; } = ["Arc", "Grid"];
 
+    /// <summary>0 = glasses anchor, 1 = app head tracking.</summary>
+    public IReadOnlyList<string> KindNames { get; } =
+    [
+        "Glasses anchor — most stable. Glasses menu: Anchor mode + UltraWide 32:9, 16:18 or 21:9. 1–3 screens.",
+        "App head tracking — curved screens, up to 6. Glasses menu: Follow mode, UltraWide Off, Stabilizer off.",
+    ];
+
+    [ObservableProperty]
+    public partial int KindIndex { get; set; }
+
+    public bool IsAppTracking => KindIndex == 1;
+
+    partial void OnKindIndexChanged(int value) => OnPropertyChanged(nameof(IsAppTracking));
+
     [ObservableProperty]
     public partial double ScreenCount { get; set; } = 3;
 

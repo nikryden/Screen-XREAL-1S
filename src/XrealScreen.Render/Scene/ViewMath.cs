@@ -57,6 +57,22 @@ public static class ViewMath
     }
 
     /// <summary>
+    /// Two triangles covering <paramref name="rect"/> of a <paramref name="targetWidth"/>×<paramref name="targetHeight"/>
+    /// render target, in clip space (use an identity view-projection). Pixel-exact: 1 texel = 1 pixel.
+    /// </summary>
+    public static float[] BuildFlatQuad(PixelRect rect, int targetWidth, int targetHeight)
+    {
+        float x0 = rect.X * 2f / targetWidth - 1f, x1 = (rect.X + rect.Width) * 2f / targetWidth - 1f;
+        float y0 = 1f - rect.Y * 2f / targetHeight, y1 = 1f - (rect.Y + rect.Height) * 2f / targetHeight;
+        const float z = 0.5f;
+        return
+        [
+            x0, y0, z, 0, 0,  x1, y0, z, 1, 0,  x0, y1, z, 0, 1,
+            x0, y1, z, 0, 1,  x1, y0, z, 1, 0,  x1, y1, z, 1, 1,
+        ];
+    }
+
+    /// <summary>
     /// Builds a curved (cylinder segment) screen mesh in world FLU coordinates.
     /// Vertex = position (xyz) + texcoord (uv). Triangle list, <paramref name="columns"/> segments.
     /// </summary>

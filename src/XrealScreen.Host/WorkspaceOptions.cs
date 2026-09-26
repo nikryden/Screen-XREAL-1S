@@ -15,9 +15,23 @@ public enum TrackingSource
     Fixed,
 }
 
+public enum WorkspaceKind
+{
+    /// <summary>The app tracks the head and renders curved screens (more screens; some latency).</summary>
+    AppTracking,
+
+    /// <summary>
+    /// The glasses world-lock their own ultrawide image (OSD Anchor + UltraWide); the app splits it into
+    /// 1–3 pixel-exact virtual screens. Most stable (ADR-0010).
+    /// </summary>
+    GlassesAnchor,
+}
+
 /// <summary>Everything a workspace session needs. Defaults = what was verified in the glasses on 2026-09-26.</summary>
 public sealed record WorkspaceOptions
 {
+    public WorkspaceKind Kind { get; init; } = WorkspaceKind.AppTracking;
+
     public int ScreenCount { get; init; } = 3;
 
     public UltrawideMode Mode { get; init; } = UltrawideMode.Off;

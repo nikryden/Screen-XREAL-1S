@@ -122,6 +122,37 @@ public sealed class WorkspaceSceneTests : IDisposable
         Assert.Equal(Green, At(p, 0.5f, 0.6f));
     }
 
+    [Fact]
+    public void FlatScreens_FillTheirPixelRects()
+    {
+        var rects = XrealScreen.Core.Workspace.AnchorSplit.Split(new XrealScreen.Core.Workspace.Resolution(W, H), 2);
+        uint[] colors = [Red, Green];
+        for (int i = 0; i < 2; i++)
+        {
+            var s = _scene.AddFlatScreen(rects[i], W, H, rects[i].Width, rects[i].Height);
+            _gd.Context.UpdateSubresource(Enumerable.Repeat(colors[i], rects[i].Width * rects[i].Height).ToArray(), s.Texture, 0, (uint)(rects[i].Width * 4), 0);
+        }
+
+        _scene.Render(_rtv, W, H, Matrix4x4.Identity);
+        _gd.Context.CopyResource(_staging, _target);
+        var map = _gd.Context.Map(_staging, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
+        try
+        {
+            unsafe
+            {
+                uint Px(int x, int y) => ((uint*)((byte*)map.DataPointer + y * map.RowPitch))[x];
+                Assert.Equal(Red, Px(0, 0));
+                Assert.Equal(Red, Px(W / 2 - 1, H - 1));
+                Assert.Equal(Green, Px(W / 2, 0));
+                Assert.Equal(Green, Px(W - 1, H - 1));
+            }
+        }
+        finally
+        {
+            _gd.Context.Unmap(_staging, 0);
+        }
+    }
+
     public void Dispose()
     {
         _staging.Dispose();

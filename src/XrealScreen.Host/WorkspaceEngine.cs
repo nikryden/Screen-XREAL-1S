@@ -138,7 +138,134 @@ public sealed class WorkspaceEngine : IAsyncDisposable
 
     private void Info(string message) => Log?.Invoke(this, message);
 
-    private async Task RunAsync(WorkspaceOptions o, CancellationToken stop)
+    private Task RunAsync(WorkspaceOptions o, CancellationToken stop) =>
+        o.Kind == WorkspaceKind.GlassesAnchor ? RunAnchorAsync(o, stop) : RunTrackingAsync(o, stop);
+
+    /// <summary>
+    /// Glasses-anchor workspace (ADR-0010): the glasses hold their ultrawide image still (X1 chip);
+    /// we split it into 1–3 virtual monitors drawn pixel-exact. No head tracking, no refresh changes.
+    /// </summary>
+    private async Task RunAnchorAsync(WorkspaceOptions o, CancellationToken stop)
+    {
+        GlassesPresenter.EnablePerMonitorDpi();
+        var topology = new CcdDisplayTopology();
+        var store = new LayoutSnapshotStore();
+        using var provider = new VirtualDisplayRsProvider(topology);
+        var captures = new List<MonitorCapture>();
+        long capturedFrames = 0;
+        bool changedDesktop = false;
+        try
+        {
+            var glasses = GlassesDisplayLocator.FindGlasses(topology.GetActiveMonitors())
+                ?? throw new InvalidOperationException("Glasses monitor not found. Connect the glasses and use an extended display.");
+            if (!AnchorSplit.IsUltrawideSignal(glasses.Resolution))
+            {
+                throw new InvalidOperationException(
+                    $"The glasses send {glasses.Resolution}. In the glasses menu set Spatial Screen → UltraWide Mode to 32:9, 21:9 or 16:18, and single-click X for Anchor mode.");
+            }
+
+            if (!store.Exists)
+            {
+                await store.SaveAsync(topology.CaptureLayout(), stop).ConfigureAwait(false);
+            }
+
+            changedDesktop = true;
+            var rects = AnchorSplit.Split(glasses.Resolution, o.ScreenCount);
+            var virtuals = new List<VirtualDisplay>();
+            foreach (var rect in rects)
+            {
+                var vd = await provider.AddAsync(new Resolution(rect.Width, rect.Height), 60, stop).ConfigureAwait(false);
+                virtuals.Add(vd);
+                Info($"virtual screen {virtuals.Count}: {vd.Resolution} → {vd.GdiDeviceName ?? "(not attached)"}");
+            }
+
+            await Task.Delay(1000, stop).ConfigureAwait(false);
+            topology.ApplyLayout(WorkspaceArrangement.Arrange(
+                topology.GetActiveMonitors(),
+                virtuals.Where(v => v.GdiDeviceName is not null).Select(v => v.GdiDeviceName!).ToList(),
+                glasses.GdiDeviceName));
+            await Task.Delay(1000, stop).ConfigureAwait(false);
+
+            var monitors = topology.GetActiveMonitors();
+            glasses = GlassesDisplayLocator.FindGlasses(monitors) ?? glasses;
+            Info($"glasses: {glasses.Resolution} @ {glasses.RefreshHz} Hz — held still by the glasses (Anchor mode)");
+
+            using var gd = GraphicsDevice.CreateForMonitor(MonitorCapture.MonitorAt(glasses.X, glasses.Y));
+            using var scene = new WorkspaceScene(gd) { ClearColor = new Vortice.Mathematics.Color4(0f, 0f, 0f, 1f) };
+            await MonitorCapture.RequestBorderlessAsync().ConfigureAwait(false);
+            for (int i = 0; i < virtuals.Count; i++)
+            {
+                var m = monitors.FirstOrDefault(x => x.GdiDeviceName == virtuals[i].GdiDeviceName);
+                if (m is null)
+                {
+                    Info($"virtual screen {i + 1} not attached; skipped");
+                    continue;
+                }
+
+                var surface = scene.AddFlatScreen(rects[i], glasses.Resolution.Width, glasses.Resolution.Height, m.Resolution.Width, m.Resolution.Height);
+                var capture = new MonitorCapture(gd.Device, MonitorCapture.MonitorAt(m.X, m.Y));
+                capture.FrameArrived += f =>
+                {
+                    surface.Update(f.Texture, f.Width, f.Height);
+                    Interlocked.Increment(ref capturedFrames);
+                };
+                capture.Start();
+                captures.Add(capture);
+            }
+
+            using var presenter = new GlassesPresenter(gd, scene, GlassesOptics.Xreal1S, static () => default, glasses.X, glasses.Y, glasses.Resolution.Width, glasses.Resolution.Height) { Flat = true };
+            presenter.Start();
+            Info($"running: {captures.Count} screen(s) in the glasses' own anchored image. Recenter: long-press X on the glasses. Ctrl+Alt+Q stops.");
+            SetState(WorkspaceState.Running);
+            _running?.TrySetResult();
+
+            var stopped = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (stop.Register(() => stopped.TrySetResult()))
+            {
+                await Task.WhenAny(presenter.Completion, stopped.Task).ConfigureAwait(false);
+            }
+
+            SetState(WorkspaceState.Stopping);
+            presenter.Stop();
+            try
+            {
+                await presenter.Completion.ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is SharpGen.Runtime.SharpGenException or System.Runtime.InteropServices.COMException)
+            {
+                Info($"render error: {ex.Message}");
+            }
+
+            LastSummary = new WorkspaceSummary(presenter.GetStats(), Interlocked.Read(ref capturedFrames), 0, default, Vector3.Zero);
+            Info($"render: {presenter.GetStats()}");
+        }
+        catch (OperationCanceledException) when (stop.IsCancellationRequested)
+        {
+            Info("start cancelled");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or TimeoutException or SharpGen.Runtime.SharpGenException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
+        {
+            LastError = ex;
+            Info($"error: {ex.Message}");
+        }
+        finally
+        {
+            foreach (var c in captures)
+            {
+                c.Dispose();
+            }
+
+            if (changedDesktop)
+            {
+                await RestoreDesktopAsync(provider, topology, store, []).ConfigureAwait(false);
+            }
+
+            SetState(LastError is null ? WorkspaceState.Stopped : WorkspaceState.Faulted);
+            _running?.TrySetResult();
+        }
+    }
+
+    private async Task RunTrackingAsync(WorkspaceOptions o, CancellationToken stop)
     {
         GlassesPresenter.EnablePerMonitorDpi();
         var topology = new CcdDisplayTopology();

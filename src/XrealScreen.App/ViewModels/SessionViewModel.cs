@@ -62,7 +62,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
     public partial string StatusTitle { get; set; } = "Workspace stopped";
 
     [ObservableProperty]
-    public partial string StatusMessage { get; set; } = "Glasses: UltraWide Off, Follow mode, Stabilizer off. Then select Start workspace.";
+    public partial string StatusMessage { get; set; } = "Choose the workspace type on the Screens page, set the glasses menu as described there, then select Start workspace.";
 
     [ObservableProperty]
     public partial InfoBarSeverity Severity { get; set; } = InfoBarSeverity.Informational;
@@ -119,7 +119,9 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         {
             _poseTimer.Start();
             StatusTitle = "Workspace running";
-            StatusMessage = "Move the mouse right from your desk monitor onto the virtual screens. Ctrl+Alt+R recenter · Ctrl+Alt+Plus/Minus closer/farther · Ctrl+Alt+Q stop.";
+            StatusMessage = _workspace.KindIndex == 0
+                ? "Move the mouse right from your desk monitor onto the virtual screens. Recenter: long-press X on the glasses. Ctrl+Alt+Q stops."
+                : "Move the mouse right from your desk monitor onto the virtual screens. Ctrl+Alt+R recenter · Ctrl+Alt+Plus/Minus closer/farther · Ctrl+Alt+Q stop.";
             Severity = InfoBarSeverity.Success;
         }
         else if (state is WorkspaceState.Stopped or WorkspaceState.Faulted)
@@ -152,6 +154,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
 
     private WorkspaceOptions BuildOptions() => new()
     {
+        Kind = _workspace.KindIndex == 0 ? WorkspaceKind.GlassesAnchor : WorkspaceKind.AppTracking,
         ScreenCount = (int)Math.Clamp(Math.Round(double.IsNaN(_workspace.ScreenCount) ? 1 : _workspace.ScreenCount), 1, WorkspaceLayout.MaxScreens),
         Mode = _workspace.UltrawideMode,
         Preset = _workspace.PresetIndex == 1 ? LayoutPreset.Grid : LayoutPreset.Arc,
@@ -171,6 +174,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
 
     private void ApplySettings(WorkspaceOptions o)
     {
+        _workspace.KindIndex = o.Kind == WorkspaceKind.GlassesAnchor ? 0 : 1;
         _workspace.ScreenCount = o.ScreenCount;
         _workspace.UltrawideModeIndex = Math.Max(0, UltrawideModes.All.ToList().IndexOf(o.Mode));
         _workspace.PresetIndex = o.Preset == LayoutPreset.Grid ? 1 : 0;
