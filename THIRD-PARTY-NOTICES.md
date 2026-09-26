@@ -19,7 +19,7 @@ one-xr MIT License: Permission is hereby granted, free of charge, to any person 
 | Vortice.Windows (Direct3D11, DXGI, …) | MIT | NuGet |
 | System.CommandLine | MIT | NuGet (tools only) |
 | xUnit | Apache-2.0 | NuGet (tests only, not distributed) |
-| VirtualDrivers/Virtual-Display-Driver | MIT | Installed by the bootstrapper; **not bundled in the MSIX** |
+| MolotovCherry/virtual-display-rs (driver 0.4) | MIT | Installed separately (not bundled yet; ADR-0008, M7 phase 2) |
 
 ## Development-only content
 | Component | License | Location |
