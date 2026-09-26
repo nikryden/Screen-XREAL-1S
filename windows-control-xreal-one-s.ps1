@@ -22,7 +22,6 @@ $displaySwitchArg = switch ($Mode) {
     "extend" { "/extend" }
     "duplicate" { "/clone" }
     "second-screen-only" { "/external" }
-    default { throw "Unsupported mode: $Mode" }
 }
 
 Start-Process -FilePath "DisplaySwitch.exe" -ArgumentList $displaySwitchArg -NoNewWindow -Wait
