@@ -53,14 +53,16 @@
 
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel Spacing="12">
-                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Stabilizer" />
+                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Which head movements move the screens" />
+                    <RadioButtons ItemsSource="{x:Bind Tracking.AxesNames}" SelectedIndex="{x:Bind Tracking.AxesIndex, Mode=TwoWay}" />
+                    <TextBlock Margin="0,12,0,0" Style="{StaticResource SubtitleTextBlockStyle}" Text="Stabilizer" />
                     <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Smooths tiny head movements so the screens look calm when you hold still. Stronger settings trail a little behind fast turns. Used when the workspace starts." />
                     <RadioButtons ItemsSource="{x:Bind Tracking.StabilizerNames}" SelectedIndex="{x:Bind Tracking.StabilizerIndex, Mode=TwoWay}" />
                     <ToggleSwitch
                         Margin="0,8,0,0"
                         Header="Neck model — screens come closer when you lean in"
                         IsOn="{x:Bind Tracking.NeckModel, Mode=TwoWay}" />
-                    <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="The glasses measure rotation only. The neck model assumes you lean by bending the neck, so leaning in moves your eyes forward. Use Ctrl+Alt+Up / Down to move the screens closer or farther at any time." />
+                    <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="The glasses measure rotation only. The neck model assumes you lean by bending the neck, so leaning in moves your eyes forward. Use Ctrl+Alt+Plus / Minus to move the screens closer or farther at any time." />
                     <TextBlock Margin="0,12,0,0" Style="{StaticResource SubtitleTextBlockStyle}" Text="Auto center" />
                     <RadioButtons ItemsSource="{x:Bind Tracking.PolicyNames}" SelectedIndex="{x:Bind Tracking.PolicyIndex, Mode=TwoWay}" />
                     <Slider

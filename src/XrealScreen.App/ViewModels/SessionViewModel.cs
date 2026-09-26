@@ -119,7 +119,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         {
             _poseTimer.Start();
             StatusTitle = "Workspace running";
-            StatusMessage = "Move the mouse right from your desk monitor onto the virtual screens. Ctrl+Alt+R recenter · Ctrl+Alt+↑/↓ closer/farther · Ctrl+Alt+Q stop.";
+            StatusMessage = "Move the mouse right from your desk monitor onto the virtual screens. Ctrl+Alt+R recenter · Ctrl+Alt+Plus/Minus closer/farther · Ctrl+Alt+Q stop.";
             Severity = InfoBarSeverity.Success;
         }
         else if (state is WorkspaceState.Stopped or WorkspaceState.Faulted)
@@ -159,6 +159,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         Source = _tracking.SourceIndex switch { 0 => TrackingSource.Simulated, 2 => TrackingSource.Fixed, _ => TrackingSource.Glasses },
         Stabilizer = _tracking.StabilizerPreset,
         NeckModel = _tracking.NeckModel,
+        Axes = (TrackingAxes)Math.Clamp(_tracking.AxesIndex, 0, 2),
         AutoCenter = new AutoCenterSettings
         {
             Policy = _tracking.PolicyIndex == 1 ? RecenterPolicy.Follow : RecenterPolicy.Manual,
@@ -177,6 +178,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         _tracking.SourceIndex = o.Source switch { TrackingSource.Simulated => 0, TrackingSource.Fixed => 2, _ => 1 };
         _tracking.StabilizerIndex = o.Stabilizer switch { "off" => 0, "balanced" => 1, "ultra" => 3, _ => 2 };
         _tracking.NeckModel = o.NeckModel;
+        _tracking.AxesIndex = (int)o.Axes;
         _tracking.PolicyIndex = o.AutoCenter.Policy == RecenterPolicy.Follow ? 1 : 0;
         _tracking.DeadZoneDegrees = o.AutoCenter.DeadZoneDegrees;
         _tracking.SmoothingSeconds = o.AutoCenter.SmoothingSeconds;

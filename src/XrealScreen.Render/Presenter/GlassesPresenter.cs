@@ -19,7 +19,8 @@ public sealed record PresenterStats(long Frames, double Seconds, double FrameMsP
 /// <summary>
 /// Borderless fullscreen window on the glasses monitor with a flip-model swapchain.
 /// A dedicated render thread waits for the glasses' vblank, late-latches the head pose, renders and presents.
-/// Global hotkeys: Ctrl+Alt+R = recenter, Ctrl+Alt+Q = stop, Ctrl+Alt+Up/Down = screens closer/farther.
+/// Global hotkeys: Ctrl+Alt+R = recenter, Ctrl+Alt+Q = stop, Ctrl+Alt+Plus/Minus = screens closer/farther
+/// (Ctrl+Alt+arrows are usually taken by the graphics driver for screen rotation, [verified-hw]).
 /// When the window has focus also Esc / R.
 /// </summary>
 public sealed unsafe class GlassesPresenter : IDisposable
@@ -29,7 +30,7 @@ public sealed unsafe class GlassesPresenter : IDisposable
     private readonly GraphicsDevice _gd;
     private readonly WorkspaceScene _scene;
     private readonly GlassesOptics _optics;
-    private readonly Func<Quaternion> _latchPose;
+    private readonly Func<HeadView> _latchPose;
     private readonly int _x, _y, _width, _height;
     private readonly TaskCompletionSource _stopped = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly List<double> _frameMs = new(1 << 16);
@@ -45,7 +46,7 @@ public sealed unsafe class GlassesPresenter : IDisposable
     private double _seconds;
     private Exception? _renderError;
 
-    public GlassesPresenter(GraphicsDevice graphics, WorkspaceScene scene, GlassesOptics optics, Func<Quaternion> latchPose, int x, int y, int width, int height)
+    public GlassesPresenter(GraphicsDevice graphics, WorkspaceScene scene, GlassesOptics optics, Func<HeadView> latchPose, int x, int y, int width, int height)
     {
         _gd = graphics;
         _scene = scene;
@@ -57,11 +58,14 @@ public sealed unsafe class GlassesPresenter : IDisposable
     /// <summary>Raised on the window thread when the user presses R.</summary>
     public event Action? RecenterRequested;
 
-    /// <summary>Raised for Ctrl+Alt+Up (-1 = closer) / Ctrl+Alt+Down (+1 = farther).</summary>
+    /// <summary>Raised for Ctrl+Alt+Plus (-1 = closer) / Ctrl+Alt+Minus (+1 = farther).</summary>
     public event Action<int>? DistanceStepRequested;
 
-    /// <summary>Neck-model offset used for the view (Zero = no parallax). Can change while running.</summary>
-    public Vector3 NeckToEye { get; set; } = ViewMath.DefaultNeckToEye;
+    /// <summary>Hotkeys that could not be registered (already taken by another program).</summary>
+    public IReadOnlyList<string> UnavailableHotkeys => _unavailableHotkeys;
+
+    private readonly List<string> _unavailableHotkeys = [];
+
 
     /// <summary>Completes when the window closes (Esc, <see cref="Stop"/> or error).</summary>
     public Task Completion => _stopped.Task;
@@ -136,10 +140,13 @@ public sealed unsafe class GlassesPresenter : IDisposable
         }
 
         // Global hotkeys: the glasses window usually does not have focus while the user works.
-        Win32.RegisterHotKey(_hwnd, Win32.HotkeyRecenter, Win32.MOD_CONTROL | Win32.MOD_ALT | Win32.MOD_NOREPEAT, Win32.VK_R);
-        Win32.RegisterHotKey(_hwnd, Win32.HotkeyStop, Win32.MOD_CONTROL | Win32.MOD_ALT | Win32.MOD_NOREPEAT, Win32.VK_Q);
-        Win32.RegisterHotKey(_hwnd, Win32.HotkeyCloser, Win32.MOD_CONTROL | Win32.MOD_ALT, Win32.VK_UP);
-        Win32.RegisterHotKey(_hwnd, Win32.HotkeyFarther, Win32.MOD_CONTROL | Win32.MOD_ALT, Win32.VK_DOWN);
+        const uint ctrlAlt = Win32.MOD_CONTROL | Win32.MOD_ALT;
+        Register(Win32.HotkeyRecenter, ctrlAlt | Win32.MOD_NOREPEAT, Win32.VK_R, "Ctrl+Alt+R");
+        Register(Win32.HotkeyStop, ctrlAlt | Win32.MOD_NOREPEAT, Win32.VK_Q, "Ctrl+Alt+Q");
+        Register(Win32.HotkeyCloser, ctrlAlt, Win32.VK_OEM_PLUS, "Ctrl+Alt+Plus");
+        Register(Win32.HotkeyFarther, ctrlAlt, Win32.VK_OEM_MINUS, "Ctrl+Alt+Minus");
+        Register(Win32.HotkeyCloserNumpad, ctrlAlt, Win32.VK_ADD, "Ctrl+Alt+Numpad Plus");
+        Register(Win32.HotkeyFartherNumpad, ctrlAlt, Win32.VK_SUBTRACT, "Ctrl+Alt+Numpad Minus");
 
         Win32.MSG msg;
         while (Win32.GetMessage(&msg, IntPtr.Zero, 0, 0) > 0)
@@ -161,6 +168,14 @@ public sealed unsafe class GlassesPresenter : IDisposable
         }
     }
 
+    private void Register(int id, uint modifiers, int vk, string name)
+    {
+        if (!Win32.RegisterHotKey(_hwnd, id, modifiers, (uint)vk))
+        {
+            _unavailableHotkeys.Add(name);
+        }
+    }
+
     [UnmanagedCallersOnly(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvStdcall)])]
     private static IntPtr WndProc(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam)
     {
@@ -174,10 +189,10 @@ public sealed unsafe class GlassesPresenter : IDisposable
             case Win32.WM_HOTKEY when wParam == Win32.HotkeyRecenter:
                 self?.RecenterRequested?.Invoke();
                 return 0;
-            case Win32.WM_HOTKEY when wParam == Win32.HotkeyCloser:
+            case Win32.WM_HOTKEY when wParam == Win32.HotkeyCloser || wParam == Win32.HotkeyCloserNumpad:
                 self?.DistanceStepRequested?.Invoke(-1);
                 return 0;
-            case Win32.WM_HOTKEY when wParam == Win32.HotkeyFarther:
+            case Win32.WM_HOTKEY when wParam == Win32.HotkeyFarther || wParam == Win32.HotkeyFartherNumpad:
                 self?.DistanceStepRequested?.Invoke(+1);
                 return 0;
             case Win32.WM_HOTKEY when wParam == Win32.HotkeyStop:
@@ -197,8 +212,10 @@ public sealed unsafe class GlassesPresenter : IDisposable
 
                 Win32.UnregisterHotKey(hwnd, Win32.HotkeyRecenter);
                 Win32.UnregisterHotKey(hwnd, Win32.HotkeyStop);
-                Win32.UnregisterHotKey(hwnd, Win32.HotkeyCloser);
-                Win32.UnregisterHotKey(hwnd, Win32.HotkeyFarther);
+                for (int id = Win32.HotkeyRecenter; id <= Win32.HotkeyFartherNumpad; id++)
+                {
+                    Win32.UnregisterHotKey(hwnd, id);
+                }
                 Win32.DestroyWindow(hwnd);
                 return 0;
             case Win32.WM_DESTROY:
@@ -250,7 +267,7 @@ public sealed unsafe class GlassesPresenter : IDisposable
             {
                 glassesOutput.WaitForVBlank();
                 long latch = Stopwatch.GetTimestamp();
-                var viewProjection = ViewMath.ViewProjection(_latchPose(), _optics, neckToEye: NeckToEye); // late latch
+                var viewProjection = ViewMath.ViewProjection(_latchPose(), _optics); // late latch
                 _scene.Render(rtv, _width, _height, viewProjection);
                 swapChain.Present(0, PresentFlags.None);
                 long now = Stopwatch.GetTimestamp();

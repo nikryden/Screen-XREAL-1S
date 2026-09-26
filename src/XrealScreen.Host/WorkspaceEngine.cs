@@ -278,11 +278,12 @@ public sealed class WorkspaceEngine : IAsyncDisposable
             var stabilizer = _stabilizer;
             bool fixedPose = o.Source == TrackingSource.Fixed;
             long lastLatch = 0;
-            Quaternion Latch()
+            var neckToEye = o.NeckModel ? ViewMath.DefaultNeckToEye : Vector3.Zero;
+            HeadView Latch()
             {
                 if (fixedPose)
                 {
-                    return Quaternion.Identity;
+                    return new HeadView(Quaternion.Identity, Vector3.Zero);
                 }
 
                 Quaternion predicted;
@@ -294,13 +295,15 @@ public sealed class WorkspaceEngine : IAsyncDisposable
                 long now = Stopwatch.GetTimestamp();
                 float dt = lastLatch == 0 ? 0f : (float)Stopwatch.GetElapsedTime(lastLatch, now).TotalSeconds;
                 lastLatch = now;
-                return stabilizer.Filter(predicted, dt);
+                var full = stabilizer.Filter(predicted, dt);
+                // Eye position from the full head rotation (lean-in still brings screens closer),
+                // view orientation limited to the axes the user wants the screens to follow.
+                return new HeadView(o.Axes.Constrain(full), ViewMath.EyeOffset(full, neckToEye));
             }
 
             // Present until stopped.
             using var presenter = new GlassesPresenter(gd, scene, GlassesOptics.Xreal1S, Latch, glasses.X, glasses.Y, glasses.Resolution.Width, glasses.Resolution.Height);
             presenter.RecenterRequested += Recenter;
-            presenter.NeckToEye = o.NeckModel ? ViewMath.DefaultNeckToEye : Vector3.Zero;
             DistanceMeters = o.DistanceMeters;
             var layoutSpecs = specs.Take(captures.Count).ToList();
             _setDistance = meters =>
@@ -312,7 +315,12 @@ public sealed class WorkspaceEngine : IAsyncDisposable
             };
             presenter.DistanceStepRequested += step => _setDistance?.Invoke(DistanceMeters + step * 0.1f);
             presenter.Start();
-            Info($"running: {captures.Count} screen(s), stabilizer {o.Stabilizer}, neck model {(o.NeckModel ? "on" : "off")} — Ctrl+Alt+R recenter, Ctrl+Alt+↑/↓ closer/farther, Ctrl+Alt+Q stop");
+            if (presenter.UnavailableHotkeys.Count > 0)
+            {
+                Info($"hotkeys taken by another program: {string.Join(", ", presenter.UnavailableHotkeys)}");
+            }
+
+            Info($"running: {captures.Count} screen(s), stabilizer {o.Stabilizer}, axes {o.Axes}, neck model {(o.NeckModel ? "on" : "off")} — Ctrl+Alt+R recenter, Ctrl+Alt+Plus/Minus closer/farther, Ctrl+Alt+Q stop");
             SetState(WorkspaceState.Running);
             _running?.TrySetResult();
 

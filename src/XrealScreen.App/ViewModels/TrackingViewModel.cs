@@ -47,6 +47,12 @@ public sealed partial class TrackingViewModel : ObservableObject, IDisposable
 
     public string StabilizerPreset => StabilizerIndex switch { 0 => "off", 1 => "balanced", 3 => "ultra", _ => "strong" };
 
+    public IReadOnlyList<string> AxesNames { get; } = ["Turning left/right only (recommended)", "Turning and nodding (no tilt)", "Full: turning, nodding and tilting"];
+
+    /// <summary>0 YawOnly, 1 YawPitch, 2 Full.</summary>
+    [ObservableProperty]
+    public partial int AxesIndex { get; set; }
+
     /// <summary>Screens come closer when you lean or nod in (the 1S measures rotation only).</summary>
     [ObservableProperty]
     public partial bool NeckModel { get; set; } = true;

@@ -3,6 +3,11 @@ using XrealScreen.Core.Workspace;
 
 namespace XrealScreen.Render.Scene;
 
+/// <summary>What the renderer needs per frame: view orientation and eye position (neck model).</summary>
+/// <param name="Orientation">Orientation the screens are viewed with (possibly constrained to yaw only).</param>
+/// <param name="EyeOffset">Eye position relative to the rest position, world FLU metres.</param>
+public readonly record struct HeadView(Quaternion Orientation, Vector3 EyeOffset);
+
 /// <summary>Optics of the glasses (per-eye image; the 2D signal is shown to both eyes).</summary>
 /// <param name="HorizontalFovDegrees">XREAL 1S: 52° diagonal on 16:10 ≈ 45° × 29° (vendor spec, [hypothesis] exact).</param>
 public sealed record GlassesOptics(float HorizontalFovDegrees = 45f, float VerticalFovDegrees = 29f)
@@ -37,11 +42,14 @@ public static class ViewMath
 
     /// <summary>World → clip transform for a head orientation (relative to the workspace center).</summary>
     /// <param name="neckToEye">Neck-model offset; <see cref="Vector3.Zero"/> = rotate about the eyes (no parallax).</param>
-    public static Matrix4x4 ViewProjection(Quaternion headRelative, GlassesOptics optics, float near = 0.05f, float far = 100f, Vector3 neckToEye = default)
+    public static Matrix4x4 ViewProjection(Quaternion headRelative, GlassesOptics optics, float near = 0.05f, float far = 100f, Vector3 neckToEye = default) =>
+        ViewProjection(new HeadView(headRelative, EyeOffset(headRelative, neckToEye)), optics, near, far);
+
+    /// <summary>World → clip transform for a prepared <see cref="HeadView"/>.</summary>
+    public static Matrix4x4 ViewProjection(HeadView view, GlassesOptics optics, float near = 0.05f, float far = 100f)
     {
         ArgumentNullException.ThrowIfNull(optics);
-        var eye = EyeOffset(headRelative, neckToEye);
-        var worldToHead = Matrix4x4.CreateTranslation(-eye) * Matrix4x4.CreateFromQuaternion(Quaternion.Conjugate(Quaternion.Normalize(headRelative)));
+        var worldToHead = Matrix4x4.CreateTranslation(-view.EyeOffset) * Matrix4x4.CreateFromQuaternion(Quaternion.Conjugate(Quaternion.Normalize(view.Orientation)));
         float vfov = optics.VerticalFovDegrees * MathF.PI / 180f;
         float aspect = MathF.Tan(optics.HorizontalFovDegrees * MathF.PI / 360f) / MathF.Tan(vfov / 2f);
         var projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(vfov, aspect, near, far);
