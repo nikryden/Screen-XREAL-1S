@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Hardware-free IMU sources: synthetic motion and .xrimu replay. -->
+  <ItemGroup>
+    <ProjectReference Include="..\XrealScreen.Core\XrealScreen.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Pure model/math library: no WinUI, no device I/O. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="XrealScreen.Core.Tests" />
+  </ItemGroup>
+</Project>

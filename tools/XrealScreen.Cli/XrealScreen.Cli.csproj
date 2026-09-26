@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>xrs</AssemblyName>
+    <RootNamespace>XrealScreen.Cli</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\XrealScreen.Core\XrealScreen.Core.csproj" />
+    <ProjectReference Include="..\..\src\XrealScreen.Device.XrealOne\XrealScreen.Device.XrealOne.csproj" />
+    <ProjectReference Include="..\..\src\XrealScreen.Device.Simulated\XrealScreen.Device.Simulated.csproj" />
+  </ItemGroup>
+</Project>

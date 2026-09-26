@@ -1,0 +1,18 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="ARM64" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/XrealScreen.Core/XrealScreen.Core.csproj" />
+    <Project Path="src/XrealScreen.Device.XrealOne/XrealScreen.Device.XrealOne.csproj" />
+    <Project Path="src/XrealScreen.Device.Simulated/XrealScreen.Device.Simulated.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/XrealScreen.Cli/XrealScreen.Cli.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/XrealScreen.Core.Tests/XrealScreen.Core.Tests.csproj" />
+    <Project Path="tests/XrealScreen.Device.Tests/XrealScreen.Device.Tests.csproj" />
+  </Folder>
+</Solution>
