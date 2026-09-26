@@ -19,7 +19,7 @@ public sealed record PresenterStats(long Frames, double Seconds, double FrameMsP
 /// <summary>
 /// Borderless fullscreen window on the glasses monitor with a flip-model swapchain.
 /// A dedicated render thread waits for the glasses' vblank, late-latches the head pose, renders and presents.
-/// Keys (window focused): Esc = stop, R = recenter.
+/// Global hotkeys: Ctrl+Alt+R = recenter, Ctrl+Alt+Q = stop. When the window has focus also Esc / R.
 /// </summary>
 public sealed unsafe class GlassesPresenter : IDisposable
 {
@@ -115,6 +115,7 @@ public sealed unsafe class GlassesPresenter : IDisposable
                 cbSize = (uint)sizeof(Win32.WNDCLASSEXW),
                 lpfnWndProc = &WndProc,
                 hInstance = Win32.GetModuleHandle(IntPtr.Zero),
+                hCursor = Win32.LoadCursor(IntPtr.Zero, Win32.IDC_ARROW),
                 lpszClassName = className,
             };
             Win32.RegisterClassEx(&wc); // returns 0 if already registered — fine
@@ -127,6 +128,10 @@ public sealed unsafe class GlassesPresenter : IDisposable
         {
             return;
         }
+
+        // Global hotkeys: the glasses window usually does not have focus while the user works.
+        Win32.RegisterHotKey(_hwnd, Win32.HotkeyRecenter, Win32.MOD_CONTROL | Win32.MOD_ALT | Win32.MOD_NOREPEAT, Win32.VK_R);
+        Win32.RegisterHotKey(_hwnd, Win32.HotkeyStop, Win32.MOD_CONTROL | Win32.MOD_ALT | Win32.MOD_NOREPEAT, Win32.VK_Q);
 
         Win32.MSG msg;
         while (Win32.GetMessage(&msg, IntPtr.Zero, 0, 0) > 0)
@@ -158,7 +163,11 @@ public sealed unsafe class GlassesPresenter : IDisposable
                 Win32.PostMessage(hwnd, Win32.WM_CLOSE, 0, 0);
                 return 0;
             case Win32.WM_KEYDOWN when wParam == Win32.VK_R:
+            case Win32.WM_HOTKEY when wParam == Win32.HotkeyRecenter:
                 self?.RecenterRequested?.Invoke();
+                return 0;
+            case Win32.WM_HOTKEY when wParam == Win32.HotkeyStop:
+                Win32.PostMessage(hwnd, Win32.WM_CLOSE, 0, 0);
                 return 0;
             case Win32.WM_CLOSE:
                 if (self is not null)
@@ -167,6 +176,8 @@ public sealed unsafe class GlassesPresenter : IDisposable
                     self._renderThread?.Join(); // release the swapchain before the window goes away
                 }
 
+                Win32.UnregisterHotKey(hwnd, Win32.HotkeyRecenter);
+                Win32.UnregisterHotKey(hwnd, Win32.HotkeyStop);
                 Win32.DestroyWindow(hwnd);
                 return 0;
             case Win32.WM_DESTROY:

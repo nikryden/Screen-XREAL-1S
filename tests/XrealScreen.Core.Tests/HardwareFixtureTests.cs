@@ -1,3 +1,4 @@
+using System.Numerics;
 using XrealScreen.Core.Recording;
 using XrealScreen.Core.Tracking;
 
@@ -54,5 +55,91 @@ public class HardwareFixtureTests
         var poses = await ReplayAsync("1s-still-11s-fw15.01.03.522.xrimu", TestContext.Current.CancellationToken);
         float drift = MathF.Abs(poses[^1].Pose.YawDegrees - poses[0].Pose.YawDegrees);
         Assert.True(drift < 2f, $"yaw drift over 11 s on a table: {drift:F2}°");
+    }
+}
+
+public class HardwareJitterTests(ITestOutputHelper output)
+{
+    private const string Fixture = "1s-rotate-fw15.01.03.522.xrimu";
+
+    /// <summary>Assumed pose-latch → photon delay (vblank pacing + DWM + scan-out ≈ 1.5 frames at 120 Hz).</summary>
+    private const float DisplayLatencyMs = 12f;
+
+    /// <summary>
+    /// p95 angle (deg) between the pose drawn for a frame (predicted <paramref name="predictMs"/> ahead)
+    /// and the pose the head actually has when the frame is seen (<see cref="DisplayLatencyMs"/> later), over the whole rotation recording
+    /// sampled at 120 Hz. This is what the wearer perceives as the image swimming/correcting.
+    /// </summary>
+    private static async Task<double> PredictionErrorAsync(Func<HeadTracker> create, float predictMs, CancellationToken ct)
+    {
+        var tracker = create();
+        var poses = new List<(long T, HeadPose Pose)>();
+        await foreach (var s in XrimuFile.ReadAsync(Path.Combine(AppContext.BaseDirectory, "fixtures", Fixture), ct))
+        {
+            poses.Add((s.TimestampNs, tracker.Update(s)));
+        }
+
+        long horizon = (long)(DisplayLatencyMs * 1e6);
+        var errors = new List<double>();
+        int j = 0;
+        long next = poses[0].T + 500_000_000;
+        for (int i = 0; i < poses.Count; i++)
+        {
+            if (poses[i].T < next)
+            {
+                continue;
+            }
+
+            next = poses[i].T + 8_333_333;
+            while (j < poses.Count && poses[j].T < poses[i].T + horizon)
+            {
+                j++;
+            }
+
+            if (j >= poses.Count)
+            {
+                break;
+            }
+
+            var shown = poses[i].Pose.PredictRelative(predictMs / 1000f);
+            var actual = poses[j].Pose.Relative;
+            float dot = MathF.Min(1f, MathF.Abs(Quaternion.Dot(shown, actual)));
+            errors.Add(2 * Math.Acos(dot) * 180 / Math.PI);
+        }
+
+        errors.Sort();
+        return errors[(int)(errors.Count * 0.95)];
+    }
+
+    [Fact]
+    public async Task TunedTracker_PredictsBetterThanOriginal()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        HeadTracker Original() => new(new MadgwickFilter(0.05f) { AccelGate = 0 }) { PredictionSmoothingSeconds = 0 };
+        var variants = new (string Name, Func<HeadTracker> Create)[]
+        {
+            ("original (beta .05, no gate, raw rate)", Original),
+            ("+ smoothed rate 20 ms only", () => new(new MadgwickFilter(0.05f) { AccelGate = 0 }) { PredictionSmoothingSeconds = 0.02f }),
+            ("+ accel gate only", () => new(new MadgwickFilter(0.05f)) { PredictionSmoothingSeconds = 0 }),
+            ("+ beta .02 only", () => new(new MadgwickFilter(0.02f) { AccelGate = 0 }) { PredictionSmoothingSeconds = 0 }),
+            ("beta .02 + gate + smoothing 5 ms", () => new(new MadgwickFilter(0.02f)) { PredictionSmoothingSeconds = 0.005f }),
+            ("beta .02 + gate + smoothing 10 ms", () => new(new MadgwickFilter(0.02f)) { PredictionSmoothingSeconds = 0.01f }),
+            ("tuned (defaults)", () => new HeadTracker()),
+        };
+
+        var results = new Dictionary<string, double>();
+        foreach (var (name, create) in variants)
+        {
+            foreach (float ms in new[] { 0f, 12f })
+            {
+                double e = await PredictionErrorAsync(create, ms, ct);
+                results[$"{name} @ {ms} ms"] = e;
+                output.WriteLine($"{name,-40} predict {ms,2} ms: p95 error {e:F3}°");
+            }
+        }
+
+        // Prediction must matter, and the tuned defaults must clearly beat the original filter.
+        Assert.True(results["tuned (defaults) @ 0 ms"] > 5 * results["tuned (defaults) @ 12 ms"]);
+        Assert.True(results["tuned (defaults) @ 12 ms"] < 0.7 * results["original (beta .05, no gate, raw rate) @ 12 ms"]);
     }
 }

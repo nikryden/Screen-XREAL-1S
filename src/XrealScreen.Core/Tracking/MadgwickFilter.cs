@@ -13,9 +13,20 @@ public sealed class MadgwickFilter
     /// <summary>Accelerometer correction gain. Higher = faster tilt correction, more noise.</summary>
     public float Beta { get; set; }
 
+    /// <summary>
+    /// Accelerometer correction is skipped while |accel| differs from <see cref="GravityMagnitude"/>
+    /// by more than this (head is accelerating, so the reading is not "down"). [verified-hw] without
+    /// the gate the 1S image wobbled ("corrects itself") during head motion. 0 disables the gate.
+    /// </summary>
+    public float AccelGate { get; set; } = 0.6f;
+
+    /// <summary>Expected |accel| at rest (m/s² for XREAL One-series glasses).</summary>
+    public float GravityMagnitude { get; set; } = 9.81f;
+
     public Quaternion Orientation { get; private set; } = Quaternion.Identity;
 
-    public MadgwickFilter(float beta = 0.05f) => Beta = beta;
+    /// <param name="beta">Tilt correction gain; 0.02 ≈ 1°/s max correction rate (was 0.05 before hardware tuning).</param>
+    public MadgwickFilter(float beta = 0.02f) => Beta = beta;
 
     public void Reset(Quaternion? orientation = null) => Orientation = orientation ?? Quaternion.Identity;
 
@@ -39,7 +50,8 @@ public sealed class MadgwickFilter
         float qDot3 = 0.5f * (q0 * gz + q1 * gy - q2 * gx);
 
         float aNorm = accel.Length();
-        if (aNorm > 1e-6f && float.IsFinite(aNorm))
+        bool trustAccel = AccelGate <= 0f || MathF.Abs(aNorm - GravityMagnitude) <= AccelGate;
+        if (trustAccel && aNorm > 1e-6f && float.IsFinite(aNorm))
         {
             float ax = accel.X / aNorm, ay = accel.Y / aNorm, az = accel.Z / aNorm;
 

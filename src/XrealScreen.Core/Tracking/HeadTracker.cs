@@ -35,6 +35,14 @@ public sealed class HeadTracker
     private readonly GyroBiasEstimator _bias;
     private long _lastTimestampNs = long.MinValue;
     private bool _recenterPending = true;
+    private Vector3 _smoothedRate;
+
+    /// <summary>
+    /// Optional low-pass time constant for the angular velocity used in prediction. Default 0 (raw):
+    /// on the 1S rotation fixture any smoothing lagged and raised the prediction error
+    /// (0.040° raw vs 0.056° at 5 ms, 0.088° at 20 ms; see HardwareJitterTests).
+    /// </summary>
+    public float PredictionSmoothingSeconds { get; set; }
 
     public HeadTracker(MadgwickFilter? filter = null, GyroBiasEstimator? bias = null, AutoCenter? autoCenter = null)
     {
@@ -90,7 +98,9 @@ public sealed class HeadTracker
         // Remove the reference yaw, keep pitch/roll untouched (horizon locked).
         var relative = QuaternionMath.Multiply(QuaternionMath.FromYaw(relativeYaw - headYaw), world);
 
-        Current = new HeadPose(sample.TimestampNs, world, Quaternion.Normalize(relative), gyro);
+        float alpha = PredictionSmoothingSeconds <= 0 || dt <= 0 ? 1f : 1f - MathF.Exp(-(float)dt / PredictionSmoothingSeconds);
+        _smoothedRate = SampleCount == 1 ? gyro : Vector3.Lerp(_smoothedRate, gyro, alpha);
+        Current = new HeadPose(sample.TimestampNs, world, Quaternion.Normalize(relative), _smoothedRate);
         return Current;
     }
 

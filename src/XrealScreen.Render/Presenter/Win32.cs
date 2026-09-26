@@ -13,6 +13,14 @@ internal static unsafe partial class Win32
     public const uint WM_KEYDOWN = 0x0100;
     public const int VK_ESCAPE = 0x1B;
     public const int VK_R = 0x52;
+    public const int VK_Q = 0x51;
+    public const uint WM_HOTKEY = 0x0312;
+    public const uint MOD_ALT = 0x0001;
+    public const uint MOD_CONTROL = 0x0002;
+    public const uint MOD_NOREPEAT = 0x4000;
+    public const int HotkeyRecenter = 1;
+    public const int HotkeyStop = 2;
+    public const int IDC_ARROW = 32512;
 
     [StructLayout(LayoutKind.Sequential)]
     public struct WNDCLASSEXW
@@ -72,6 +80,17 @@ internal static unsafe partial class Win32
 
     [LibraryImport("user32.dll")]
     public static partial void PostQuitMessage(int exitCode);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool RegisterHotKey(IntPtr hwnd, int id, uint modifiers, uint vk);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool UnregisterHotKey(IntPtr hwnd, int id);
+
+    [LibraryImport("user32.dll", EntryPoint = "LoadCursorW")]
+    public static partial IntPtr LoadCursor(IntPtr instance, IntPtr cursorName);
 
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
