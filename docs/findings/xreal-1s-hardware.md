@@ -47,5 +47,4 @@ Source: XREAL One-series user guide and tutorials (apply to "One/1S"); see `docs
 - **Two screen modes:** **Anchor** (screen fixed in mid-air, glasses' own 3DoF) and **Follow** (screen fixed in front of the eyes). **Single-click X** toggles; saved until next use. Long-press X recenters in Anchor.
 - **Stabilizer** ("smooth follow"): only in Follow, **on by default**; the glasses compensate small head movements. Double-click X → **Spatial Screen → Stabilizer**; +/− navigate, X toggles.
 - **"No anchor" for our virtual workspace mode = Follow + Stabilizer off** (ADR-0003). There is no separate "off / 0DoF" menu item.
-- **UltraWide:** Spatial Screen → UltraWide Mode: 16:18, 21:9, 32:9; **Laboratory** sets the default. Requires Windows extended display mode.
-- Exact ultrawide signal resolution on 1S: unknown. One Pro reportedly 3840×1080 for 32:9. [hypothesis]
+- **UltraWide:** Spatial Screen → UltraWide Mode: 16:18, 21:9, 32:9; **Laboratory** sets the default. Requires Windows extended display mode. Resulting Windows signal per setting: see the Display table above.
