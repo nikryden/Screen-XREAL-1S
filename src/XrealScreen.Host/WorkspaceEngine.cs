@@ -193,12 +193,7 @@ public sealed class WorkspaceEngine : IAsyncDisposable
                 Info($"virtual screen {virtuals.Count}: {vd.Resolution} → {vd.GdiDeviceName ?? "(not attached)"}");
             }
 
-            await Task.Delay(1000, stop).ConfigureAwait(false);
-            topology.ApplyLayout(WorkspaceArrangement.Arrange(
-                topology.GetActiveMonitors(),
-                virtuals.Where(v => v.GdiDeviceName is not null).Select(v => v.GdiDeviceName!).ToList(),
-                glasses.GdiDeviceName));
-            await Task.Delay(1000, stop).ConfigureAwait(false);
+            await PrepareDesktopAsync(topology, virtuals, glasses, stop).ConfigureAwait(false);
 
             var monitors = topology.GetActiveMonitors();
             glasses = GlassesDisplayLocator.FindGlasses(monitors) ?? glasses;
@@ -322,14 +317,7 @@ public sealed class WorkspaceEngine : IAsyncDisposable
                 Info($"virtual monitor {spec.Id}: {vd.Resolution} → {vd.GdiDeviceName ?? "(not attached)"}");
             }
 
-            await Task.Delay(1000, stop).ConfigureAwait(false);
-
-            // Desktop order [desk][virtual 1..n][glasses] so the pointer never crosses the glasses area.
-            topology.ApplyLayout(WorkspaceArrangement.Arrange(
-                topology.GetActiveMonitors(),
-                virtuals.Where(v => v.GdiDeviceName is not null).Select(v => v.GdiDeviceName!).ToList(),
-                glasses.GdiDeviceName));
-            await Task.Delay(1000, stop).ConfigureAwait(false);
+            await PrepareDesktopAsync(topology, virtuals, glasses, stop).ConfigureAwait(false);
 
             // Other monitors to the glasses refresh (DWM clock, ADR-0009).
             if (o.SyncDesktopRefresh)
@@ -566,6 +554,46 @@ public sealed class WorkspaceEngine : IAsyncDisposable
         {
             LastStopReason = WorkspaceStopReason.UserStopped;
         }
+    }
+
+    /// <summary>
+    /// After creating virtual monitors: force their exact resolution, then order the desktop
+    /// [desk][virtual 1..n][glasses]. Windows remembers a mode per monitor identity and our virtual
+    /// monitors reuse ids, so a new 1280×1080 monitor came up at an old 1920×1080 mode and the
+    /// reorder failed with ERROR_INVALID_PARAMETER (87) ([verified-hw] 2026-09-26). The order is a
+    /// convenience (mouse path), so failing to apply it is logged, not fatal.
+    /// </summary>
+    private async Task PrepareDesktopAsync(CcdDisplayTopology topology, List<VirtualDisplay> virtuals, DisplayMonitor glasses, CancellationToken stop)
+    {
+        await Task.Delay(1000, stop).ConfigureAwait(false);
+        foreach (var vd in virtuals.Where(v => v.GdiDeviceName is not null))
+        {
+            var current = topology.GetActiveMonitors().FirstOrDefault(m => m.GdiDeviceName == vd.GdiDeviceName);
+            if (current is not null && current.Resolution != vd.Resolution)
+            {
+                bool ok = topology.TrySetMode(vd.GdiDeviceName!, new DisplayMode(vd.Resolution, vd.RefreshHz, 32));
+                Info($"{vd.GdiDeviceName}: Windows restored {current.Resolution}; set {vd.Resolution}: {(ok ? "ok" : "rejected")}");
+            }
+        }
+
+        await Task.Delay(800, stop).ConfigureAwait(false);
+        var names = virtuals.Where(v => v.GdiDeviceName is not null).Select(v => v.GdiDeviceName!).ToList();
+        for (int attempt = 1; attempt <= 3; attempt++)
+        {
+            try
+            {
+                topology.ApplyLayout(WorkspaceArrangement.Arrange(topology.GetActiveMonitors(), names, glasses.GdiDeviceName));
+                await Task.Delay(1000, stop).ConfigureAwait(false);
+                return;
+            }
+            catch (System.ComponentModel.Win32Exception ex)
+            {
+                Info($"desktop order attempt {attempt} failed: {ex.Message}");
+                await Task.Delay(700, stop).ConfigureAwait(false);
+            }
+        }
+
+        Info("could not reorder the desktop; the workspace runs anyway (the mouse may need to cross the glasses area)");
     }
 
     private async Task RestoreDesktopAsync(VirtualDisplayRsProvider provider, CcdDisplayTopology topology, LayoutSnapshotStore store, List<(string Gdi, DisplayMode Mode)> desktopRestore)
