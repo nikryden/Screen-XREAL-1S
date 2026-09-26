@@ -1,3 +1,11 @@
+<#
+.SYNOPSIS
+Switches Windows display modes for XREAL One S glasses.
+.PARAMETER Mode
+Display mode to apply: extend, duplicate, or second-screen-only.
+.PARAMETER RevertToInternal
+Switch back to the internal display.
+#>
 param(
     [ValidateSet("extend", "duplicate", "second-screen-only")]
     [string]$Mode = "second-screen-only",
@@ -13,7 +21,8 @@ if ($RevertToInternal) {
 $displaySwitchArg = switch ($Mode) {
     "extend" { "/extend" }
     "duplicate" { "/clone" }
-    default { "/external" }
+    "second-screen-only" { "/external" }
+    default { throw "Unsupported mode: $Mode" }
 }
 
 Start-Process -FilePath "DisplaySwitch.exe" -ArgumentList $displaySwitchArg -NoNewWindow -Wait
