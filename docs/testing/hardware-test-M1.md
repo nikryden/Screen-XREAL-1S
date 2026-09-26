@@ -4,6 +4,8 @@ Goal: confirm the 1S exposes the One-series network protocol (see `docs/findings
 Time: ~20 min. Run commands in PowerShell from the repo root.
 
 ## Before you start
+- [ ] New PC setup: Windows 11, `git clone git@github.com:nikryden/Screen-XREAL-1S.git`, .NET SDK 10.0.401+ (`winget install Microsoft.DotNet.SDK.10`), Windows SDK 10.0.26100 (comes with VS 2022/2026 "Windows application development" workload; only needed for the WinUI app, not the CLI)
+- [ ] Record the PC's GPU / USB-C port (DP-alt capable?) in the report
 - [ ] Build works: `dotnet build XrealScreen.slnx -c Debug -p:Platform=x64`
 - [ ] Glasses charged/powered; firmware not updated during the test
 
