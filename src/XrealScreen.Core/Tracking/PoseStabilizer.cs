@@ -8,9 +8,11 @@ namespace XrealScreen.Core.Tracking;
 /// <param name="SpeedCutoffHz">Low-pass for the speed estimate itself.</param>
 /// <remarks>
 /// Presets measured on the 1S rotation fixture (p95 still shake / p95 world-lock error while turning):
-/// Off 1.31 px / 0.06°, Balanced 0.96 px / 0.40°, Strong 0.75 px / 0.77° (StabilizerTuningTests).
+/// Off 1.31 px / 0.06°, Balanced 0.96 px / 0.40°, Strong 0.75 px / 0.77°, Ultra 0.43 px / 1.55°
+/// (StabilizerTuningTests). In the glasses the user rated Strong best of off/balanced/strong
+/// (2026-09-26) and asked for an extra "ultra steady" option.
 /// </remarks>
-public sealed record StabilizerSettings(float MinCutoffHz = 1.0f, float SpeedCoefficient = 0.3f, float SpeedCutoffHz = 2f)
+public sealed record StabilizerSettings(float MinCutoffHz = 0.5f, float SpeedCoefficient = 0.1f, float SpeedCutoffHz = 2f)
 {
     public static StabilizerSettings Off { get; } = new(0f);
 
@@ -18,12 +20,16 @@ public sealed record StabilizerSettings(float MinCutoffHz = 1.0f, float SpeedCoe
 
     public static StabilizerSettings Strong { get; } = new(0.5f, 0.1f);
 
+    /// <summary>Calmest; screens trail noticeably behind fast head turns.</summary>
+    public static StabilizerSettings Ultra { get; } = new(0.2f, 0.03f);
+
     public static StabilizerSettings FromName(string name) => name.ToLowerInvariant() switch
     {
         "off" => Off,
         "balanced" => Balanced,
         "strong" => Strong,
-        _ => throw new ArgumentException($"Unknown stabilizer preset '{name}' (off | balanced | strong).", nameof(name)),
+        "ultra" => Ultra,
+        _ => throw new ArgumentException($"Unknown stabilizer preset '{name}' (off | balanced | strong | ultra).", nameof(name)),
     };
 
     public bool Enabled => MinCutoffHz > 0f;

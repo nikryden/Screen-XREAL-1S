@@ -213,8 +213,14 @@ public class StabilizerTuningTests(ITestOutputHelper output)
             ("min 0.5 Hz, k 0.3", new(0.5f, 0.3f)),
             ("min 1.0 Hz, k 0.1", new(1.0f, 0.1f)),
             ("min 1.0 Hz, k 0.3", new(1.0f, 0.3f)),
-            ("balanced (default)", new()),
+            ("balanced", StabilizerSettings.Balanced),
+            ("strong (default)", new()),
+            ("ultra", StabilizerSettings.Ultra),
             ("min 0.5 Hz, k 1.0", new(0.5f, 1.0f)),
+            ("min 0.2 Hz, k 0.05", new(0.2f, 0.05f)),
+            ("min 0.2 Hz, k 0.03", new(0.2f, 0.03f)),
+            ("min 0.15 Hz, k 0.02", new(0.15f, 0.02f)),
+            ("min 0.3 Hz, k 0.03", new(0.3f, 0.03f)),
         };
 
         var results = new Dictionary<string, (double Jitter, double Error)>();
@@ -225,9 +231,14 @@ public class StabilizerTuningTests(ITestOutputHelper output)
             output.WriteLine($"{name,-28} still jitter p95 {r.StillJitter:F4}° ({r.StillJitter / 0.0234:F2} px)   tracking error p95 {r.TrackingError:F3}°");
         }
 
+        // Table for tuning sessions (xUnit hides output of passing tests).
+        await File.WriteAllLinesAsync(Path.Combine(AppContext.BaseDirectory, "stabilizer-tuning.txt"),
+            results.Select(r => $"{r.Key,-28} still shake p95 {r.Value.Jitter / 0.0234:F2} px   turn error p95 {r.Value.Error:F3}°"), ct);
         var off = results["off"];
-        var def = results["balanced (default)"];
-        Assert.True(def.Jitter < off.Jitter * 0.8, "balanced must cut still shake by at least 20%");
-        Assert.True(def.Error < 0.5, "balanced must keep world-lock error under 0.5° p95 while turning");
+        var def = results["strong (default)"];
+        var ultra = results["ultra"];
+        Assert.True(def.Jitter < off.Jitter * 0.65, "strong must cut still shake by at least 35%");
+        Assert.True(def.Error < 1.0, "strong must keep world-lock error under 1° p95 while turning");
+        Assert.True(ultra.Jitter < def.Jitter * 0.7, "ultra must be clearly calmer than strong");
     }
 }

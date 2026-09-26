@@ -27,7 +27,7 @@ internal static class RenderCommands
         var hz = new Option<int>("--hz") { Description = "Glasses refresh to request (UltraWide Off offers 60/90/120).", DefaultValueFactory = _ => 120 };
         var predict = new Option<double>("--predict-ms") { Description = "Pose prediction ahead of the late latch.", DefaultValueFactory = _ => 12 };
         var beta = new Option<float>("--beta") { Description = "Madgwick tilt-correction gain.", DefaultValueFactory = _ => 0.02f };
-        var stabilize = new Option<string>("--stabilize") { Description = "Pose stabilizer: off | balanced | strong.", DefaultValueFactory = _ => "balanced" };
+        var stabilize = new Option<string>("--stabilize") { Description = "Pose stabilizer: off | balanced | strong | ultra.", DefaultValueFactory = _ => "strong" };
         var gate = new Option<float>("--accel-gate") { Description = "Skip tilt correction when | |a| - g | exceeds this (m/s²); 0 = off.", DefaultValueFactory = _ => 0.6f };
         var command = new Command("render", "Show virtual monitors fixed in space in the glasses (Ctrl+Alt+R = recenter, Ctrl+Alt+Q = stop).")
         {
