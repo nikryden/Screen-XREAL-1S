@@ -6,6 +6,9 @@ Time: ~20 min. Run commands in PowerShell from the repo root.
 ## Before you start
 - [ ] New PC setup: Windows 11, `git clone git@github.com:nikryden/Screen-XREAL-1S.git`, .NET SDK 10.0.401+ (`winget install Microsoft.DotNet.SDK.10`), Windows SDK 10.0.26100 (comes with VS 2022/2026 "Windows application development" workload; only needed for the WinUI app, not the CLI)
 - [ ] Record the PC's GPU / USB-C port (DP-alt capable?) in the report
+- [ ] Windows Developer Mode on (Settings → System → For developers) — needed to launch the packaged app with `dotnet run`
+
+> Result 2026-09-26 (XREAL 1S, fw 15.01.03.522): all steps passed — see `docs/findings/xreal-one-protocol.md`. For step 9 an agent can play spoken cues (System.Speech) and log cue times next to the capture; this worked far better than asking the wearer to time moves.
 - [ ] Build works: `dotnet build XrealScreen.slnx -c Debug -p:Platform=x64`
 - [ ] Glasses charged/powered; firmware not updated during the test
 

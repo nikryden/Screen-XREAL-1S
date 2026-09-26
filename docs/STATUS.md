@@ -3,36 +3,37 @@
 > Read this first. Update it at the end of every task (see skill `docs-handoff`).
 
 ## Current
-- **Milestone:** M0 Bootstrap — **done**. M1 Protocol spike — **tooling done, waiting for hardware test**.
+- **Milestone:** M1 Protocol spike — **done** (2026-09-26). Next: **M2 Display / VDD spike**.
 - **Last updated:** 2026-09-26
 
 ## Done
-- M0: research (`docs/findings/`), ADR-0001..0007, docs, role subagents, project skills, solution skeleton, CI workflow, WinUI shell.
-- M0: `dotnet build` (Debug + Release, x64) and `dotnet test` green — 26 tests.
-- M0: app launch verified [verified-local]: packaged `dotnet run`, window "XrealScreen", Mica + NavigationView, simulated head tracking at ~1000 samples/s moving the FOV box in the layout preview.
-- M1 tooling: `xrs` CLI (`devices`, `probe`, `imu record/decode/live/replay/synth`), stream framer ported from one-xr (MIT), raw `.xrcap` capture, synthetic fixture `tests/fixtures/synthetic-yawsweep-2s.xrimu`.
-- `xrs probe` without glasses reports "no adapter / ports unreachable" as expected.
+- M0: solution, docs, ADRs, agents, skills, CI, WinUI shell (see ROADMAP).
+- M1 on real XREAL 1S (fw 15.01.03.522):
+  - USB network link, all ports 52996–52999 open, IMU stream decoded at 1000 Hz with 0 errors.
+  - Units (gyro rad/s, accel m/s², timestamps ns) and **sensor frame X right / Y down / Z forward** verified; mapping `+z,-x,-y` now the default.
+  - Pitch sign fixed (look up = +); gyro-bias stillness now on a 100 ms low-pass (bias was never learned before).
+  - Real fixtures + regression tests (`tests/fixtures/*fw15.01.03.522*`); 29/29 tests green.
+  - App tracks the glasses live (Tracking page → source "XREAL One-series glasses", 1000 samples/s).
 
 ## Next 3 steps
-1. **User:** run `docs/testing/hardware-test-M1.md` with the XREAL 1S and report results.
-2. From the recordings: confirm framing/units/axes, fix `XrealOneImuOptions` axis defaults, commit curated fixtures, tag facts `[verified-hw]` in `docs/findings/xreal-one-protocol.md`.
-3. Start M2 (`src/XrealScreen.Display`): CCD enumeration + EDID glasses detection; install VirtualDrivers VDD and verify its pipe commands from source (ADR-0001).
+1. M2: create `src/XrealScreen.Display` — CCD enumeration, find the glasses output by EDID `MRG4102`, read its modes (does the 1S offer 1920×1080@120 / 1920×1200 / ultrawide signals?).
+2. M2: install VirtualDrivers VDD on the glasses PC (not installed; Parsec VDA and virtual-display-rs already are — see `docs/findings/local-environment.md`), read its pipe commands from source, implement `VddPipeProvider`.
+3. M2: borderless WGC capture of one virtual monitor; topology snapshot/restore.
 
 ## Blockers
-- M1 exit needs the XREAL 1S plugged in (user).
+- None. Glasses PC is `C:\GIT\Screen-XREAL-1S` on "Garage_1" (Developer Mode on).
 
 ## Open questions / known gaps
-- Control port 52999 (recenter, brightness, display mode) not implemented; needs a captured request format first. Recenter is host-side today (`HeadTracker.RequestRecenter`).
-- Workspace settings are not persisted yet (M5).
-- App has no tray/startup yet (M6); `PublishTrimmed` removed from the template — decide trimming in M7.
-- Sensor-to-body axis mapping is a hypothesis (`AxisMap` defaults).
+- Control port 52999 not implemented (moved to M4); glasses-side recenter/display mode unknown.
+- Which OSD screen mode = "no anchor" on this firmware — not recorded yet.
+- Yaw drift while worn: bias estimator needs still periods; consider reading the factory gyro bias from the device config (control port) or a start-up "hold still" calibration (M3/M5).
+- Workspace settings not persisted (M5); no tray/startup (M6); trimming decided in M7.
 
 ## Last hardware verification
-- None. (Record: date / device / firmware / what was verified.)
+- **2026-09-26 · XREAL 1S · PID 0x043E · fw 15.01.03.522** — NCM link, ports, IMU framing/units/axes, live tracking in app. Details: `docs/findings/xreal-one-protocol.md`, `docs/findings/xreal-1s-hardware.md`.
 
 ## Session log
 | Date | Agent | Summary |
 |------|-------|---------|
-| 2026-09-26 | Claude | Research (SDK, protocol, VertoXR clean-room, VDD); plan approved; skills imported (winui-app, csharp-async, csharp-developer, csharp-xunit). |
-| 2026-09-26 | Claude (docs subagent) | Docs, ADRs, findings, agents, project skills. |
-| 2026-09-26 | Claude | Solution, Core tracking, One-series transport, xrs CLI, WinUI app, tests, CI; docs reconciled with code (Sniffer merged into `imu record`, control commands deferred). |
+| 2026-09-26 | Claude | M0: research, plan, solution, app, docs, CI. |
+| 2026-09-26 | Claude | M1 hardware test on 1S: protocol verified, axis mapping/pitch/bias fixed, fixtures + tests, docs updated. |
