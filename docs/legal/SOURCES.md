@@ -13,7 +13,7 @@ Every external source consulted. **How used:** `facts` (IDs/constants/behaviour 
 | MSmithDev/AirAPI_Windows | https://github.com/MSmithDev/AirAPI_Windows | GPL-3.0 | facts | 2026-09-26 |
 | VirtualDrivers/Virtual-Display-Driver | https://github.com/VirtualDrivers/Virtual-Display-Driver | MIT | reference; installed by bootstrapper | 2026-09-26 |
 | Microsoft IddSampleDriver | https://github.com/microsoft/Windows-driver-samples/tree/main/video/IndirectDisplay | MIT | reference | 2026-09-26 |
-| MolotovCherry/virtual-display-rs | https://github.com/MolotovCherry/virtual-display-rs | MIT | reference | 2026-09-26 |
+| MolotovCherry/virtual-display-rs (main 22fcd2e) | https://github.com/MolotovCherry/virtual-display-rs | MIT | code-ported (IPC wire format, `VdrsProtocol.cs`); driver used as-is (ADR-0008) | 2026-09-26 |
 | parsec-vdd | https://github.com/nomi-san/parsec-vdd | MIT wrapper; driver Parsec-owned | facts | 2026-09-26 |
 | Amyuni usbmmidd | https://www.amyuni.com | commercial | facts | 2026-09-26 |
 | VertoXR v0.2.10+18 (installed files) | https://vertoxr.com | proprietary | facts (file names/strings only; no decompilation) | 2026-09-26 |

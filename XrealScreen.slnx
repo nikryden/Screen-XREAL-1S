@@ -7,6 +7,7 @@
     <Project Path="src/XrealScreen.Core/XrealScreen.Core.csproj" />
     <Project Path="src/XrealScreen.Device.XrealOne/XrealScreen.Device.XrealOne.csproj" />
     <Project Path="src/XrealScreen.Device.Simulated/XrealScreen.Device.Simulated.csproj" />
+    <Project Path="src/XrealScreen.Display/XrealScreen.Display.csproj" />
     <Project Path="src/XrealScreen.App/XrealScreen.App.csproj" />
   </Folder>
   <Folder Name="/tools/">
@@ -15,5 +16,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/XrealScreen.Core.Tests/XrealScreen.Core.Tests.csproj" />
     <Project Path="tests/XrealScreen.Device.Tests/XrealScreen.Device.Tests.csproj" />
+    <Project Path="tests/XrealScreen.Display.Tests/XrealScreen.Display.Tests.csproj" />
   </Folder>
 </Solution>

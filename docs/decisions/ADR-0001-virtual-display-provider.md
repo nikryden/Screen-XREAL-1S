@@ -1,6 +1,6 @@
 # ADR-0001: Virtual display provider — VirtualDrivers VDD behind `IVirtualDisplayProvider`
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0008 (2026-09-26: VDD has one global monitor count and a crashing reload path)
 - **Date:** 2026-09-26
 
 ## Context

@@ -5,7 +5,8 @@ namespace XrealScreen.Core.Abstractions;
 /// <summary>A virtual monitor created by this app.</summary>
 /// <param name="ProviderId">Provider-specific identifier.</param>
 /// <param name="GdiDeviceName">Windows device name (e.g. \\.\DISPLAY5) once the monitor is attached.</param>
-public sealed record VirtualDisplay(string ProviderId, Resolution Resolution, int RefreshHz, string? GdiDeviceName);
+/// <param name="Name">Provider-side label; used to recognise monitors created by XrealScreen.</param>
+public sealed record VirtualDisplay(string ProviderId, Resolution Resolution, int RefreshHz, string? GdiDeviceName, string? Name = null);
 
 /// <summary>
 /// Creates and removes virtual monitors (Indirect Display Driver). The first implementation

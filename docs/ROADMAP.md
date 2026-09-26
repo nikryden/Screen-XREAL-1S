@@ -14,10 +14,10 @@ Deliverables: `xrs` CLI (`probe`, `imu record/decode/live/replay`) - **done**; s
 - [x] Real fixtures committed (`tests/fixtures/*fw15.01.03.522*`) with regression tests
 
 ## M2 Display / VDD spike
-Deliverables: CCD enumeration, EDID glasses identification, VDD add/remove, topology snapshot/restore, borderless WGC capture.
-- [ ] Virtual monitors at 1920×1080, 2560×1080, 3840×1080, 1920×2160
-- [ ] 3 monitors created, captured and removed cleanly; topology restored
-- [ ] Known whether the VDD pipe needs admin; pipe commands documented from source
+Deliverables: CCD enumeration - **done**; EDID glasses identification - **done**; virtual monitor add/remove via virtual-display-rs (ADR-0008) - **done**; topology snapshot/restore; borderless WGC capture.
+- [x] Virtual monitors at 1920×1080 (60/120 Hz), 2560×1080, 3840×1080, 1920×2160 (2026-09-26)
+- [ ] 3 monitors created, captured and removed cleanly; topology restored (created/removed: done; capture: open)
+- [x] Driver needs no admin at runtime; pipe protocol documented from source and verified
 
 ## M3 Render spike
 Deliverables: fullscreen swapchain on glasses output, captured monitor on pose-driven quad, latency stats.

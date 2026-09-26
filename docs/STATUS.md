@@ -3,29 +3,29 @@
 > Read this first. Update it at the end of every task (see skill `docs-handoff`).
 
 ## Current
-- **Milestone:** M1 Protocol spike — **done** (2026-09-26). Next: **M2 Display / VDD spike**.
+- **Milestone:** M2 Display / virtual monitors — **in progress** (2026-09-26).
 - **Last updated:** 2026-09-26
 
 ## Done
-- M0: solution, docs, ADRs, agents, skills, CI, WinUI shell (see ROADMAP).
-- M1 on real XREAL 1S (fw 15.01.03.522):
-  - USB network link, all ports 52996–52999 open, IMU stream decoded at 1000 Hz with 0 errors.
-  - Units (gyro rad/s, accel m/s², timestamps ns) and **sensor frame X right / Y down / Z forward** verified; mapping `+z,-x,-y` now the default.
-  - Pitch sign fixed (look up = +); gyro-bias stillness now on a 100 ms low-pass (bias was never learned before).
-  - Real fixtures + regression tests (`tests/fixtures/*fw15.01.03.522*`); 29/29 tests green.
-  - App tracks the glasses live (Tracking page → source "XREAL One-series glasses", 1000 samples/s).
+- M0 bootstrap, M1 protocol spike (see ROADMAP; 1S verified on hardware).
+- M2 so far:
+  - `src/XrealScreen.Display`: CCD topology read, EDID glasses detection (1S = `MRG4102`), `xrs display list|modes`.
+  - **ADR-0008: virtual-display-rs replaces VirtualDrivers VDD** (user decision; VDD has a global monitor count and a crashing reload).
+  - `VirtualDisplayRsProvider` + `xrs vdd state|add|clear`: verified on hardware with 3840×1080, 1920×2160, 2560×1080 @ 60 Hz and 1920×1080 @ 120 Hz at once, clean removal.
+  - 44/44 tests green.
 
 ## Next 3 steps
-1. M2: create `src/XrealScreen.Display` — CCD enumeration, find the glasses output by EDID `MRG4102`, read its modes (does the 1S offer 1920×1080@120 / 1920×1200 / ultrawide signals?).
-2. M2: install VirtualDrivers VDD on the glasses PC (not installed; Parsec VDA and virtual-display-rs already are — see `docs/findings/local-environment.md`), read its pipe commands from source, implement `VddPipeProvider`.
-3. M2: borderless WGC capture of one virtual monitor; topology snapshot/restore.
+1. M2: topology snapshot/restore (`IDisplayTopology` write side, `%LOCALAPPDATA%\XrealScreen	opology-snapshot.json`), restore after `vdd clear` and on exit.
+2. M2: borderless Windows.Graphics.Capture of one virtual monitor (`XrealScreen.Render` project start; skill `d3d11-vortice`).
+3. M2/M4: record which modes the glasses offer per OSD UltraWide setting (glasses currently 2560×1080 @ 60, max 90 Hz; see `xreal-1s-hardware.md`).
 
 ## Blockers
-- None. Glasses PC is `C:\GIT\Screen-XREAL-1S` on "Garage_1" (Developer Mode on).
+- None. Glasses PC: `C:\GIT\Screen-XREAL-1S` on "Garage_1".
 
 ## Open questions / known gaps
-- Control port 52999 not implemented (moved to M4); glasses-side recenter/display mode unknown.
-- Yaw drift while worn: bias estimator needs still periods; consider reading the factory gyro bias from the device config (control port) or a start-up "hold still" calibration (M3/M5).
+- Glasses mode list per OSD UltraWide setting not recorded yet (user to switch modes while `xrs display modes` runs).
+- Virtual-display-rs install/signing for end users: decide in M7 (self-signed today; 0.4.0 not in a GitHub release).
+- Control port 52999 not implemented (M4); yaw drift while worn needs better bias (M3/M5).
 - Workspace settings not persisted (M5); no tray/startup (M6); trimming decided in M7.
 
 ## Last hardware verification
@@ -36,3 +36,4 @@
 |------|-------|---------|
 | 2026-09-26 | Claude | M0: research, plan, solution, app, docs, CI. |
 | 2026-09-26 | Claude | M1 hardware test on 1S: protocol verified, axis mapping/pitch/bias fixed, fixtures + tests, docs updated. |
+| 2026-09-26 | Claude | M2: Display project, glasses EDID detection, ADR-0008 virtual-display-rs provider verified on hardware. |

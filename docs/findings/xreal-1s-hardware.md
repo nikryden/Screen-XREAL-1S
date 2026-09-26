@@ -28,7 +28,9 @@ One USB composite device `VID_3318&PID_043E` (friendly name "XREAL 1S"):
 Only PID `0x043E` was seen; `0x043D` (from XRLinuxDriver) remains [from-GPL:facts-only].
 
 ## Display [verified-hw]
-- Windows monitor EDID: manufacturer **`MRG`**, product **`4102`**, name **"XREAL 1S"** (`DISPLAY\MRG4102\...`). Use this to find the glasses output (M2, `windows-display-ccd`).
+- Windows monitor EDID: manufacturer **`MRG`**, product **`4102`**, name **"XREAL 1S"** (`DISPLAY\MRG4102\...`), output technology DisplayPort. Detected by `GlassesDisplayLocator` / `xrs display list`.
+- 2026-09-26, OSD UltraWide presumably 21:9: current mode **2560×1080 @ 60 Hz**; offered modes up to 2560×1080, refresh **60 and 90 Hz only** (no 120 Hz in this mode). Full list: 2560×1080, 2310×990, 2100×990, 1920×1080, 1680×1050, 1920×820, 1280×1024, 1680×720, 1280×720, 1024×768, 800×600, 640×480.
+- Glasses and virtual monitors render on the same AMD adapter (virtual monitors report their own IddCx adapter LUID).
 
 ## OSD (glasses menu) relevant to us
 Source: XREAL One-series user guide and tutorials (apply to "One/1S"); see `docs/legal/SOURCES.md`.
