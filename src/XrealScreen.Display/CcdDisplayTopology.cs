@@ -68,6 +68,26 @@ public sealed class CcdDisplayTopology : IDisplayTopology
             .ToList();
     }
 
+    public DisplayLayout CaptureLayout() => new(
+        DateTimeOffset.Now,
+        GetActiveMonitors()
+            .Select(m => new MonitorPlacement(m.DevicePath, m.EdidId, m.FriendlyName, m.X, m.Y, m.Resolution.Width, m.Resolution.Height, m.RefreshHz, m.IsPrimary))
+            .ToList());
+
+    public LayoutApplyResult ApplyLayout(DisplayLayout layout, bool validateOnly = false)
+    {
+        ArgumentNullException.ThrowIfNull(layout);
+        var (paths, modes) = Query(CcdNative.QDC_ONLY_ACTIVE_PATHS);
+        var devicePaths = paths.Select(p => GetTargetName(p.TargetInfo.AdapterId, p.TargetInfo.Id).DevicePath).ToArray();
+        var result = LayoutPlanner.Plan(paths, modes, i => devicePaths[i], layout);
+
+        uint flags = CcdNative.SDC_USE_SUPPLIED_DISPLAY_CONFIG | CcdNative.SDC_ALLOW_CHANGES |
+                     (validateOnly ? CcdNative.SDC_VALIDATE : CcdNative.SDC_APPLY | CcdNative.SDC_SAVE_TO_DATABASE);
+        int err = CcdNative.SetDisplayConfig((uint)paths.Length, paths, (uint)modes.Length, modes, flags);
+        ThrowIfError(err, nameof(CcdNative.SetDisplayConfig));
+        return result;
+    }
+
     private static (DISPLAYCONFIG_PATH_INFO[] Paths, DISPLAYCONFIG_MODE_INFO[] Modes) Query(uint flags)
     {
         for (int attempt = 0; attempt < 5; attempt++)

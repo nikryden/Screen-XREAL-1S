@@ -12,12 +12,13 @@
   - `src/XrealScreen.Display`: CCD topology read, EDID glasses detection (1S = `MRG4102`), `xrs display list|modes`.
   - **ADR-0008: virtual-display-rs replaces VirtualDrivers VDD** (user decision; VDD has a global monitor count and a crashing reload).
   - `VirtualDisplayRsProvider` + `xrs vdd state|add|clear`: verified on hardware with 3840×1080, 1920×2160, 2560×1080 @ 60 Hz and 1920×1080 @ 120 Hz at once, clean removal.
-  - 44/44 tests green.
+  - Layout snapshot/restore (`IDisplayTopology.CaptureLayout/ApplyLayout`, `LayoutSnapshotStore`, `xrs display save|restore`); `vdd add` saves the layout first, `vdd clear` restores it. Verified on hardware (glasses moved left and back).
+  - 47/47 tests green.
 
 ## Next 3 steps
-1. M2: topology snapshot/restore (`IDisplayTopology` write side, `%LOCALAPPDATA%\XrealScreen	opology-snapshot.json`), restore after `vdd clear` and on exit.
-2. M2: borderless Windows.Graphics.Capture of one virtual monitor (`XrealScreen.Render` project start; skill `d3d11-vortice`).
-3. M3 prep: virtual workspace mode should drive the glasses at UltraWide Off, 1920×1200 @ 120 Hz (set via CCD) — see mode table in `xreal-1s-hardware.md`.
+1. M2: borderless Windows.Graphics.Capture of one virtual monitor (`XrealScreen.Render` project start; skill `d3d11-vortice`).
+2. M3 prep: virtual workspace mode should drive the glasses at UltraWide Off, 1920×1200 @ 120 Hz (set via CCD) — see mode table in `xreal-1s-hardware.md`.
+3. M3: `XrealScreen.Render` fullscreen swapchain on the glasses output; captured monitor on a pose-driven quad.
 
 ## Blockers
 - None. Glasses PC: `C:\GIT\Screen-XREAL-1S` on "Garage_1".
@@ -25,6 +26,7 @@
 ## Open questions / known gaps
 - Virtual-display-rs install/signing for end users: decide in M7 (self-signed today; 0.4.0 not in a GitHub release).
 - Control port 52999 not implemented (M4); yaw drift while worn needs better bias (M3/M5).
+- Layout restore covers position/resolution only; refresh rate and primary selection come with native mode (M4).
 - Workspace settings not persisted (M5); no tray/startup (M6); trimming decided in M7.
 
 ## Last hardware verification

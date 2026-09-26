@@ -57,6 +57,14 @@ internal static class VddCommands
         command.SetAction(async (parse, ct) =>
         {
             var resolution = ParseResolution(parse.GetValue(size)!);
+            var store = new LayoutSnapshotStore();
+            if (!store.Exists)
+            {
+                // First change: remember the user's layout so `vdd clear` can put it back.
+                await store.SaveAsync(new CcdDisplayTopology().CaptureLayout(), ct).ConfigureAwait(false);
+                Console.WriteLine($"saved current layout → {store.Path}");
+            }
+
             var display = await Provider().AddAsync(resolution, parse.GetValue(hz), ct).ConfigureAwait(false);
             Console.WriteLine($"added id={display.ProviderId} {display.Resolution} @ {display.RefreshHz} Hz → {display.GdiDeviceName ?? "(not attached yet)"}");
             return 0;
@@ -71,6 +79,18 @@ internal static class VddCommands
         {
             await Provider().RemoveAllOwnedAsync(ct).ConfigureAwait(false);
             Console.WriteLine("removed all XrealScreen virtual monitors");
+
+            var store = new LayoutSnapshotStore();
+            var layout = await store.LoadAsync(ct).ConfigureAwait(false);
+            if (layout is not null)
+            {
+                // Windows detaches the removed monitors asynchronously.
+                await Task.Delay(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false);
+                var result = new CcdDisplayTopology().ApplyLayout(layout);
+                store.Delete();
+                Console.WriteLine($"restored layout: {string.Join(", ", result.Applied)}");
+            }
+
             return 0;
         });
         return command;

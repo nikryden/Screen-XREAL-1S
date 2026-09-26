@@ -138,6 +138,11 @@ internal static partial class CcdNative
     public const uint DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME = 2;
     public const uint DISPLAYCONFIG_PATH_ACTIVE = 0x1;
     public const int ENUM_CURRENT_SETTINGS = -1;
+    public const uint SDC_USE_SUPPLIED_DISPLAY_CONFIG = 0x20;
+    public const uint SDC_VALIDATE = 0x40;
+    public const uint SDC_APPLY = 0x80;
+    public const uint SDC_SAVE_TO_DATABASE = 0x200;
+    public const uint SDC_ALLOW_CHANGES = 0x400;
 
     [LibraryImport("user32.dll")]
     public static partial int GetDisplayConfigBufferSizes(uint flags, out uint numPathArrayElements, out uint numModeInfoArrayElements);
@@ -150,6 +155,14 @@ internal static partial class CcdNative
         ref uint numModeInfoArrayElements,
         [Out] DISPLAYCONFIG_MODE_INFO[] modeInfoArray,
         IntPtr currentTopologyId);
+
+    [LibraryImport("user32.dll")]
+    public static partial int SetDisplayConfig(
+        uint numPathArrayElements,
+        [In] DISPLAYCONFIG_PATH_INFO[] pathArray,
+        uint numModeInfoArrayElements,
+        [In] DISPLAYCONFIG_MODE_INFO[] modeInfoArray,
+        uint flags);
 
     [LibraryImport("user32.dll")]
     public static partial int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_SOURCE_DEVICE_NAME requestPacket);

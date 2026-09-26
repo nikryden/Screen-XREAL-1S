@@ -33,9 +33,29 @@ public readonly record struct DisplayMode(Resolution Resolution, int RefreshHz, 
 }
 
 /// <summary>Reads (and in later M2 steps changes) the Windows display topology.</summary>
+/// <summary>Where one monitor sits in the Windows desktop. Identity = <see cref="DevicePath"/>.</summary>
+public sealed record MonitorPlacement(string DevicePath, string EdidId, string FriendlyName, int X, int Y, int Width, int Height, double RefreshHz, bool IsPrimary);
+
+/// <summary>A saved desktop layout (active monitors only).</summary>
+public sealed record DisplayLayout(DateTimeOffset CapturedAt, IReadOnlyList<MonitorPlacement> Monitors);
+
+/// <summary>Result of applying a layout.</summary>
+/// <param name="Applied">Monitors whose position/resolution were set.</param>
+/// <param name="Missing">Saved monitors that are not active now (unplugged or disabled).</param>
+public sealed record LayoutApplyResult(IReadOnlyList<string> Applied, IReadOnlyList<string> Missing);
+
+/// <summary>Reads and changes the Windows display topology (user session only, ADR-0004).</summary>
 public interface IDisplayTopology
 {
     IReadOnlyList<DisplayMonitor> GetActiveMonitors();
 
     IReadOnlyList<DisplayMode> GetSupportedModes(string gdiDeviceName);
+
+    DisplayLayout CaptureLayout();
+
+    /// <summary>
+    /// Restores positions and resolutions of the saved monitors that are still active.
+    /// Monitors not in the layout (e.g. our virtual monitors) are left as they are.
+    /// </summary>
+    LayoutApplyResult ApplyLayout(DisplayLayout layout, bool validateOnly = false);
 }

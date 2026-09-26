@@ -33,7 +33,7 @@ do {
 - `edidManufactureId` (big-endian PNP ID packed in 3×5 bits: decode `((v>>10)&31)+'@'`, `((v>>5)&31)+'@'`, `(v&31)+'@'` after byte-swap)
 - `edidProductCodeId`, `monitorFriendlyDeviceName`, `monitorDevicePath`, `outputTechnology` (DisplayPort external / USB-C alt).
 - Validate flag `friendlyNameFromEdid` / `edidIdsValid` before trusting IDs.
-- XREAL EDID manufacturer/product for 1S: **unknown** → record in `docs/findings/xreal-1s-hardware.md` after `xrs display list` [hypothesis until verified-hw]. Match by EDID IDs, fall back to friendly name; never by `\\.\DISPLAYn` (unstable).
+- XREAL 1S = EDID `MRG` / `0x4102` [verified-hw] (`GlassesCatalog.Displays`, `GlassesDisplayLocator`). The glasses re-enumerate with a different mode list per OSD UltraWide setting (table in `docs/findings/xreal-1s-hardware.md`). Match by EDID IDs, fall back to friendly name; never by `\\.\DISPLAYn` (unstable).
 - Source name: type 1 `GET_SOURCE_NAME` → `viewGdiDeviceName`; use to correlate with `HMONITOR` (`EnumDisplayMonitors` + `GetMonitorInfo`) for WGC.
 
 ## Change modes / topology

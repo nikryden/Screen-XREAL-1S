@@ -14,9 +14,9 @@ Deliverables: `xrs` CLI (`probe`, `imu record/decode/live/replay`) - **done**; s
 - [x] Real fixtures committed (`tests/fixtures/*fw15.01.03.522*`) with regression tests
 
 ## M2 Display / VDD spike
-Deliverables: CCD enumeration - **done**; EDID glasses identification - **done**; virtual monitor add/remove via virtual-display-rs (ADR-0008) - **done**; topology snapshot/restore; borderless WGC capture.
+Deliverables: CCD enumeration - **done**; EDID glasses identification - **done**; virtual monitor add/remove via virtual-display-rs (ADR-0008) - **done**; layout snapshot/restore (positions + resolutions, `%LOCALAPPDATA%\XrealScreen\topology-snapshot.json`) - **done**; borderless WGC capture.
 - [x] Virtual monitors at 1920×1080 (60/120 Hz), 2560×1080, 3840×1080, 1920×2160 (2026-09-26)
-- [ ] 3 monitors created, captured and removed cleanly; topology restored (created/removed: done; capture: open)
+- [ ] 3 monitors created, captured and removed cleanly; topology restored (create/remove/restore: done 2026-09-26; capture: open)
 - [x] Driver needs no admin at runtime; pipe protocol documented from source and verified
 
 ## M3 Render spike
