@@ -1,5 +1,10 @@
+using System.Globalization;
 using System.CommandLine;
 using XrealScreen.Cli;
+
+// Numbers on the command line use "." regardless of the Windows locale (e.g. --latch-lead-ms 1.5).
+CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
 
 var root = new RootCommand("xrs — XrealScreen developer/hardware tool (see docs/testing/hardware-test-M1.md)");
 root.Subcommands.Add(DeviceCommands.CreateDevices());

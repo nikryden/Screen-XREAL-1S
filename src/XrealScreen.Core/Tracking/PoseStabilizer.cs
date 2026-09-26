@@ -7,21 +7,22 @@ namespace XrealScreen.Core.Tracking;
 /// <param name="SpeedCoefficient">Extra cutoff (Hz) per degree/second of head speed, so turns are followed without lag.</param>
 /// <param name="SpeedCutoffHz">Low-pass for the speed estimate itself.</param>
 /// <remarks>
-/// Presets measured on the 1S rotation fixture (p95 still shake / p95 world-lock error while turning):
-/// Off 1.31 px / 0.06°, Balanced 0.96 px / 0.40°, Strong 0.75 px / 0.77°, Ultra 0.43 px / 1.55°
-/// (StabilizerTuningTests). In the glasses the user rated Strong best of off/balanced/strong
-/// (2026-09-26) and asked for an extra "ultra steady" option.
+/// Presets are tuned for the speed measured by the gyro (pass |ω| to <see cref="PoseStabilizer.Filter(Quaternion, float, float?)"/>).
+/// On the 1S rotation fixture (p95 still shake / p95 world-lock error while turning, 12 ms prediction):
+/// Off 1.31 px / 0.06°, Balanced 0.68 px / 0.23°, Strong 0.50 px / 0.34°, Ultra 0.44 px / 0.40°.
+/// The earlier pose-speed presets were Strong 0.75 px / 0.77° (user: "too much lag") — the gyro
+/// releases the smoothing as soon as a turn starts (StabilizerOrderTests, 2026-09-27).
 /// </remarks>
-public sealed record StabilizerSettings(float MinCutoffHz = 0.5f, float SpeedCoefficient = 0.1f, float SpeedCutoffHz = 2f)
+public sealed record StabilizerSettings(float MinCutoffHz = 0.3f, float SpeedCoefficient = 0.6f, float SpeedCutoffHz = 2f)
 {
     public static StabilizerSettings Off { get; } = new(0f);
 
-    public static StabilizerSettings Balanced { get; } = new(1.0f, 0.3f);
+    public static StabilizerSettings Balanced { get; } = new(0.5f, 1.0f);
 
-    public static StabilizerSettings Strong { get; } = new(0.5f, 0.1f);
+    public static StabilizerSettings Strong { get; } = new(0.3f, 0.6f);
 
-    /// <summary>Calmest; screens trail noticeably behind fast head turns.</summary>
-    public static StabilizerSettings Ultra { get; } = new(0.2f, 0.03f);
+    /// <summary>Calmest; screens trail slightly behind fast head turns.</summary>
+    public static StabilizerSettings Ultra { get; } = new(0.2f, 0.5f);
 
     public static StabilizerSettings FromName(string name) => name.ToLowerInvariant() switch
     {
@@ -54,7 +55,13 @@ public sealed class PoseStabilizer
 
     public void Reset() => _initialized = false;
 
-    public Quaternion Filter(Quaternion input, float dt)
+    public Quaternion Filter(Quaternion input, float dt) => Filter(input, dt, measuredSpeedDegPerSec: null);
+
+    /// <summary>
+    /// Filters with an externally measured head speed (e.g. |gyro| in °/s). The gyro knows instantly when
+    /// a turn starts, so smoothing releases without the lag of estimating speed from the filtered pose.
+    /// </summary>
+    public Quaternion Filter(Quaternion input, float dt, float? measuredSpeedDegPerSec)
     {
         // Never let an invalid sample poison the filter state (it would stay NaN forever).
         if (!QuaternionMath.IsValidRotation(input))
@@ -87,9 +94,16 @@ public sealed class PoseStabilizer
             input = Quaternion.Negate(input);
         }
 
-        float angle = QuaternionMath.AngleBetween(_filtered, input);
-        float rawSpeed = angle * 180f / MathF.PI / dt;
-        _speed += Alpha(Settings.SpeedCutoffHz, dt) * (rawSpeed - _speed);
+        if (measuredSpeedDegPerSec is { } measured && float.IsFinite(measured))
+        {
+            _speed = measured;
+        }
+        else
+        {
+            float angle = QuaternionMath.AngleBetween(_filtered, input);
+            float rawSpeed = angle * 180f / MathF.PI / dt;
+            _speed += Alpha(Settings.SpeedCutoffHz, dt) * (rawSpeed - _speed);
+        }
 
         float cutoff = Settings.MinCutoffHz + Settings.SpeedCoefficient * _speed;
         _filtered = Quaternion.Normalize(Quaternion.Slerp(_filtered, input, Alpha(cutoff, dt)));

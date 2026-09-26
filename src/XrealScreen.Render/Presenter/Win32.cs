@@ -109,6 +109,33 @@ internal static unsafe partial class Win32
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool SetProcessDpiAwarenessContext(IntPtr value);
 
+    [LibraryImport("kernel32.dll", EntryPoint = "CreateWaitableTimerExW")]
+    public static partial IntPtr CreateWaitableTimerEx(IntPtr attributes, IntPtr name, uint flags, uint access);
+
+    [LibraryImport("kernel32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool SetWaitableTimer(IntPtr timer, long* dueTime, int period, IntPtr completion, IntPtr arg, [MarshalAs(UnmanagedType.Bool)] bool resume);
+
+    [LibraryImport("kernel32.dll")]
+    public static partial uint WaitForSingleObject(IntPtr handle, uint milliseconds);
+
+    [LibraryImport("kernel32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool CloseHandle(IntPtr handle);
+
+    /// <summary>High-resolution timer (~0.5 ms); Thread.Sleep can be 15.6 ms coarse and missed vblanks ([verified-local]).</summary>
+    public static IntPtr CreateHighResolutionTimer() =>
+        CreateWaitableTimerEx(IntPtr.Zero, IntPtr.Zero, 0x2 /* CREATE_WAITABLE_TIMER_HIGH_RESOLUTION */, 0x1F0003 /* TIMER_ALL_ACCESS */);
+
+    public static void SleepPrecise(IntPtr timer, double milliseconds)
+    {
+        long due = -(long)(milliseconds * 10_000); // relative, 100 ns units
+        if (timer != IntPtr.Zero && SetWaitableTimer(timer, &due, 0, IntPtr.Zero, IntPtr.Zero, false))
+        {
+            _ = WaitForSingleObject(timer, 0xFFFFFFFF);
+        }
+    }
+
     [LibraryImport("kernel32.dll", EntryPoint = "GetModuleHandleW")]
     public static partial IntPtr GetModuleHandle(IntPtr name);
 

@@ -420,22 +420,24 @@ public sealed class WorkspaceEngine : IAsyncDisposable
                 }
 
                 Quaternion predicted;
+                float speed;
                 lock (_poseLock)
                 {
                     predicted = _latest.PredictRelative(predictSeconds);
+                    speed = _latest.AngularVelocity.Length() * 180f / MathF.PI;
                 }
 
                 long now = Stopwatch.GetTimestamp();
                 float dt = lastLatch == 0 ? 0f : (float)Stopwatch.GetElapsedTime(lastLatch, now).TotalSeconds;
                 lastLatch = now;
-                var full = stabilizer.Filter(predicted, dt);
+                var full = stabilizer.Filter(predicted, dt, speed);
                 // Eye position from the full head rotation (lean-in still brings screens closer),
                 // view orientation limited to the axes the user wants the screens to follow.
                 return new HeadView(o.Axes.Constrain(full), ViewMath.EyeOffset(full, neckToEye));
             }
 
             // Present until stopped.
-            using var presenter = new GlassesPresenter(gd, scene, GlassesOptics.Xreal1S, Latch, glasses.X, glasses.Y, glasses.Resolution.Width, glasses.Resolution.Height);
+            using var presenter = new GlassesPresenter(gd, scene, GlassesOptics.Xreal1S, Latch, glasses.X, glasses.Y, glasses.Resolution.Width, glasses.Resolution.Height) { LatchLeadMs = o.LatchLeadMs };
             presenter.RecenterRequested += Recenter;
             DistanceMeters = o.DistanceMeters;
             var layoutSpecs = specs.Take(captures.Count).ToList();

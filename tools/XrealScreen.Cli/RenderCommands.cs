@@ -20,6 +20,7 @@ internal static class RenderCommands
         var follow = new Option<bool>("--follow") { Description = "Auto center: follow the head beyond a 20° dead-zone." };
         var hz = new Option<int>("--hz") { Description = "Glasses refresh to request (UltraWide Off offers 60/90/120).", DefaultValueFactory = _ => 120 };
         var predict = new Option<double>("--predict-ms") { Description = "Pose prediction ahead of the late latch.", DefaultValueFactory = _ => 12 };
+        var lead = new Option<double>("--latch-lead-ms") { Description = "Late latch: read the pose this many ms before the next glasses vblank (0 = right after vblank).", DefaultValueFactory = _ => 0 };
         var beta = new Option<float>("--beta") { Description = "Madgwick tilt-correction gain.", DefaultValueFactory = _ => 0.02f };
         var gate = new Option<float>("--accel-gate") { Description = "Skip tilt correction when | |a| - g | exceeds this (m/s²); 0 = off.", DefaultValueFactory = _ => 0.6f };
         var stabilize = new Option<string>("--stabilize") { Description = "Pose stabilizer: off | balanced | strong | ultra.", DefaultValueFactory = _ => "strong" };
@@ -28,7 +29,7 @@ internal static class RenderCommands
         var syncDesktop = new Option<bool>("--sync-desktop") { Description = "Set other monitors to the glasses refresh for the session (avoids judder; restored on exit).", DefaultValueFactory = _ => true };
         var command = new Command("render", "Show virtual monitors fixed in space in the glasses (Ctrl+Alt+R recenter, Ctrl+Alt+Plus/Minus closer/farther, Ctrl+Alt+Q stop).")
         {
-            screens, mode, source, seconds, follow, hz, predict, beta, gate, stabilize, syncDesktop, neck, axes, kind, gap, aspect,
+            screens, mode, source, seconds, follow, hz, predict, beta, gate, stabilize, syncDesktop, neck, axes, kind, gap, aspect, lead,
         };
         command.SetAction(async (parse, ct) =>
         {
@@ -40,6 +41,7 @@ internal static class RenderCommands
                 AutoCenter = new AutoCenterSettings { Policy = parse.GetValue(follow) ? RecenterPolicy.Follow : RecenterPolicy.Manual },
                 GlassesRefreshHz = parse.GetValue(hz),
                 PredictMs = parse.GetValue(predict),
+                LatchLeadMs = parse.GetValue(lead),
                 FilterBeta = parse.GetValue(beta),
                 AccelGate = parse.GetValue(gate),
                 Stabilizer = parse.GetValue(stabilize)!,

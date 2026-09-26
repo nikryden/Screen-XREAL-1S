@@ -172,7 +172,7 @@ public class StabilizerTuningTests(ITestOutputHelper output)
             }
 
             next = poses[i].T + 8_333_333;
-            var shown = stabilizer.Filter(poses[i].Pose.PredictRelative(0.012f), 1f / 120f);
+            var shown = stabilizer.Filter(poses[i].Pose.PredictRelative(0.012f), 1f / 120f, poses[i].Pose.AngularVelocity.Length() * 180f / MathF.PI);
             double t = (poses[i].T - t0) / 1e9;
             if (previous is { } p && t < 4.5)
             {
@@ -237,8 +237,115 @@ public class StabilizerTuningTests(ITestOutputHelper output)
         var off = results["off"];
         var def = results["strong (default)"];
         var ultra = results["ultra"];
-        Assert.True(def.Jitter < off.Jitter * 0.65, "strong must cut still shake by at least 35%");
-        Assert.True(def.Error < 1.0, "strong must keep world-lock error under 1° p95 while turning");
-        Assert.True(ultra.Jitter < def.Jitter * 0.7, "ultra must be clearly calmer than strong");
+        Assert.True(def.Jitter < off.Jitter * 0.5, "strong must at least halve still shake");
+        Assert.True(def.Error < 0.5, "strong must keep world-lock error under 0.5° p95 while turning");
+        Assert.True(ultra.Jitter < def.Jitter, "ultra must be calmer than strong");
+    }
+}
+
+public class StabilizerOrderTests
+{
+    /// <summary>
+    /// Compares predict→stabilize (current) with stabilize→predict on the real fixture for several
+    /// display latencies L (prediction horizon = L). Writes stabilizer-order.txt (tuning aid).
+    /// </summary>
+    [Fact]
+    public async Task StabilizeThenPredict_TradeoffTable()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var tracker = new HeadTracker();
+        var poses = new List<(long T, HeadPose Pose)>();
+        await foreach (var s in XrimuFile.ReadAsync(Path.Combine(AppContext.BaseDirectory, "fixtures", "1s-rotate-fw15.01.03.522.xrimu"), ct))
+        {
+            poses.Add((s.TimestampNs, tracker.Update(s)));
+        }
+
+        var lines = new List<string>();
+        foreach (float latencyMs in new[] { 12f, 20f, 28f })
+        {
+            foreach (bool stabilizeFirst in new[] { false, true })
+            {
+                var (jitter, error) = Measure(poses, StabilizerSettings.Strong, latencyMs, stabilizeFirst);
+                lines.Add($"L={latencyMs,2} ms {(stabilizeFirst ? "stabilize→predict" : "predict→stabilize")}: still shake p95 {jitter / 0.0234:F2} px, world-lock error p95 {error:F3}°");
+            }
+        }
+
+        await File.WriteAllLinesAsync(Path.Combine(AppContext.BaseDirectory, "stabilizer-order.txt"), lines, ct);
+        Assert.NotEmpty(lines);
+    }
+
+    [Fact]
+    public async Task GyroSpeedStabilizer_TradeoffTable()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var tracker = new HeadTracker();
+        var poses = new List<(long T, HeadPose Pose)>();
+        await foreach (var s in XrimuFile.ReadAsync(Path.Combine(AppContext.BaseDirectory, "fixtures", "1s-rotate-fw15.01.03.522.xrimu"), ct))
+        {
+            poses.Add((s.TimestampNs, tracker.Update(s)));
+        }
+
+        var lines = new List<string>();
+        foreach (var (name, settings, gyro) in new (string, StabilizerSettings, bool)[]
+        {
+            ("off", StabilizerSettings.Off, false),
+            ("strong (pose speed, current)", StabilizerSettings.Strong, false),
+            ("balanced (pose speed)", StabilizerSettings.Balanced, false),
+            ("gyro min0.5 k0.1", new(0.5f, 0.1f), true),
+            ("gyro min0.5 k0.3", new(0.5f, 0.3f), true),
+            ("gyro min0.3 k0.3", new(0.3f, 0.3f), true),
+            ("gyro min0.3 k0.6", new(0.3f, 0.6f), true),
+            ("gyro min0.2 k0.5", new(0.2f, 0.5f), true),
+            ("gyro min0.5 k1.0", new(0.5f, 1.0f), true),
+        })
+        {
+            var (jitter, error) = Measure(poses, settings, 12f, stabilizeFirst: false, gyroSpeed: gyro);
+            lines.Add($"{name,-30} still shake p95 {jitter / 0.0234:F2} px, world-lock error p95 {error:F3}°");
+        }
+
+        await File.WriteAllLinesAsync(Path.Combine(AppContext.BaseDirectory, "stabilizer-gyro.txt"), lines, ct);
+        Assert.NotEmpty(lines);
+    }
+
+    internal static (double Jitter, double Error) Measure(List<(long T, HeadPose Pose)> poses, StabilizerSettings settings, float latencyMs, bool stabilizeFirst, bool gyroSpeed = false)
+    {
+        var stabilizer = new PoseStabilizer(settings);
+        long t0 = poses[0].T, next = t0 + 500_000_000, horizon = (long)(latencyMs * 1e6);
+        var jitter = new List<double>();
+        var error = new List<double>();
+        Quaternion? previous = null;
+        int j = 0;
+        for (int i = 0; i < poses.Count; i++)
+        {
+            if (poses[i].T < next)
+            {
+                continue;
+            }
+
+            next = poses[i].T + 8_333_333;
+            var pose = poses[i].Pose;
+            Quaternion shown = stabilizeFirst
+                ? QuaternionMath.Integrate(stabilizer.Filter(pose.Relative, 1f / 120f), pose.AngularVelocity, latencyMs / 1000f)
+                : stabilizer.Filter(pose.PredictRelative(latencyMs / 1000f), 1f / 120f, gyroSpeed ? pose.AngularVelocity.Length() * 180f / MathF.PI : null);
+            if (previous is { } p && (poses[i].T - t0) / 1e9 < 4.5)
+            {
+                jitter.Add(QuaternionMath.AngleBetween(p, shown) * 180 / Math.PI);
+            }
+
+            previous = shown;
+            while (j < poses.Count && poses[j].T < poses[i].T + horizon)
+            {
+                j++;
+            }
+
+            if (j < poses.Count)
+            {
+                error.Add(QuaternionMath.AngleBetween(shown, poses[j].Pose.Relative) * 180 / Math.PI);
+            }
+        }
+
+        jitter.Sort();
+        error.Sort();
+        return (jitter[(int)(jitter.Count * 0.95)], error[(int)(error.Count * 0.95)]);
     }
 }

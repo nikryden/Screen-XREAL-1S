@@ -58,6 +58,13 @@ public sealed unsafe class GlassesPresenter : IDisposable
     /// <summary>Flat mode: screens are drawn pixel-exact without head tracking (glasses-anchor workspace).</summary>
     public bool Flat { get; init; }
 
+    /// <summary>
+    /// Late latch: read the pose and render this many ms BEFORE the next glasses vblank instead of right
+    /// after the previous one (0 = right after vblank). DWM composes at vblank; a frame presented just
+    /// after it waits a whole refresh. Rendering takes ~0.2 ms here, so 2–3 ms leaves ample margin.
+    /// </summary>
+    public double LatchLeadMs { get; init; }
+
     /// <summary>Raised on the window thread when the user presses R.</summary>
     public event Action? RecenterRequested;
 
@@ -266,9 +273,27 @@ public sealed unsafe class GlassesPresenter : IDisposable
             var total = Stopwatch.StartNew();
             long last = Stopwatch.GetTimestamp();
             double expectedMs = 0;
+            IntPtr timer = LatchLeadMs > 0 ? Win32.CreateHighResolutionTimer() : IntPtr.Zero;
             while (!_stop)
             {
                 glassesOutput.WaitForVBlank();
+                long vblank = Stopwatch.GetTimestamp();
+                if (LatchLeadMs > 0 && expectedMs > 0)
+                {
+                    // High-resolution timer to ~0.7 ms before the latch point, then spin the rest.
+                    double targetMs = expectedMs - LatchLeadMs;
+                    double sleepMs = targetMs - 0.7;
+                    if (sleepMs > 0)
+                    {
+                        Win32.SleepPrecise(timer, sleepMs);
+                    }
+
+                    while (Stopwatch.GetElapsedTime(vblank).TotalMilliseconds < targetMs)
+                    {
+                        Thread.SpinWait(50);
+                    }
+                }
+
                 long latch = Stopwatch.GetTimestamp();
                 var viewProjection = Flat ? Matrix4x4.Identity : ViewMath.ViewProjection(_latchPose(), _optics); // late latch
                 _scene.Render(rtv, _width, _height, viewProjection);
@@ -295,6 +320,10 @@ public sealed unsafe class GlassesPresenter : IDisposable
             }
 
             _seconds = total.Elapsed.TotalSeconds;
+            if (timer != IntPtr.Zero)
+            {
+                Win32.CloseHandle(timer);
+            }
             // Frame statistics are only available when DWM is bypassed (independent flip / fullscreen).
             _presentPath = swapChain.GetFrameStatistics(out _).Success ? "independent flip" : "composed by DWM, vblank-paced";
             _gd.Context.ClearState();
