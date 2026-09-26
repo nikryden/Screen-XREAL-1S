@@ -3,22 +3,20 @@
 > Read this first. Update it at the end of every task (see skill `docs-handoff`).
 
 ## Current
-- **Milestone:** M2 Display / virtual monitors — **in progress** (2026-09-26).
+- **Milestone:** M2 Display / virtual monitors — **done** (2026-09-26). Next: **M3 Render spike**.
 - **Last updated:** 2026-09-26
 
 ## Done
-- M0 bootstrap, M1 protocol spike (see ROADMAP; 1S verified on hardware).
-- M2 so far:
-  - `src/XrealScreen.Display`: CCD topology read, EDID glasses detection (1S = `MRG4102`), `xrs display list|modes`.
-  - **ADR-0008: virtual-display-rs replaces VirtualDrivers VDD** (user decision; VDD has a global monitor count and a crashing reload).
-  - `VirtualDisplayRsProvider` + `xrs vdd state|add|clear`: verified on hardware with 3840×1080, 1920×2160, 2560×1080 @ 60 Hz and 1920×1080 @ 120 Hz at once, clean removal.
-  - Layout snapshot/restore (`IDisplayTopology.CaptureLayout/ApplyLayout`, `LayoutSnapshotStore`, `xrs display save|restore`); `vdd add` saves the layout first, `vdd clear` restores it. Verified on hardware (glasses moved left and back).
-  - 47/47 tests green.
+- M0 bootstrap, M1 protocol spike (1S verified on hardware), M2 display/virtual monitors:
+  - `XrealScreen.Display`: CCD read, glasses EDID detection (`MRG4102`), layout snapshot/restore, `VirtualDisplayRsProvider` (ADR-0008).
+  - 1S display modes per OSD UltraWide setting recorded (120 Hz only with UltraWide Off).
+  - `XrealScreen.Render`: `GraphicsDevice` (Vortice D3D11), `MonitorCapture` (borderless WGC) — captures virtual monitors on hardware.
+  - CLI: `xrs display list|modes|save|restore`, `xrs vdd state|add|clear`, `xrs capture test`. 47/47 tests green.
 
 ## Next 3 steps
-1. M2: borderless Windows.Graphics.Capture of one virtual monitor (`XrealScreen.Render` project start; skill `d3d11-vortice`).
-2. M3 prep: virtual workspace mode should drive the glasses at UltraWide Off, 1920×1200 @ 120 Hz (set via CCD) — see mode table in `xreal-1s-hardware.md`.
-3. M3: `XrealScreen.Render` fullscreen swapchain on the glasses output; captured monitor on a pose-driven quad.
+1. M3: pick the D3D11 adapter that owns the glasses output; set the glasses to 1920×1200 @ 120 Hz (UltraWide Off) via CCD.
+2. M3: borderless fullscreen flip-model swapchain on the glasses monitor (dedicated render thread, waitable object, 120 Hz).
+3. M3: draw one captured virtual monitor as a quad driven by `HeadTracker` (late-latched, predicted pose); frame/latency stats; drift check over 5 min.
 
 ## Blockers
 - None. Glasses PC: `C:\GIT\Screen-XREAL-1S` on "Garage_1".
@@ -38,3 +36,4 @@
 | 2026-09-26 | Claude | M0: research, plan, solution, app, docs, CI. |
 | 2026-09-26 | Claude | M1 hardware test on 1S: protocol verified, axis mapping/pitch/bias fixed, fixtures + tests, docs updated. |
 | 2026-09-26 | Claude | M2: Display project, glasses EDID detection, ADR-0008 virtual-display-rs provider verified on hardware. |
+| 2026-09-26 | Claude | M2 done: layout snapshot/restore, 1S mode table, WGC capture of virtual monitors. |

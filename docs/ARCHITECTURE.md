@@ -22,8 +22,8 @@ Projects are created when their milestone starts (no empty shells).
 | `src/XrealScreen.Device.Simulated` | **exists** | Synthetic motion, `.xrimu` replay |
 | `src/XrealScreen.App` | **exists** | WinUI 3 (packaged, Mica, NavigationView): Home, Screens, Tracking, Device, Settings, About |
 | `tools/XrealScreen.Cli` (`xrs`) | **exists** | `devices`, `probe`, `imu record/decode/live/replay/synth`. `imu record` is also the raw-traffic sniffer (`.xrcap`). |
-| `src/XrealScreen.Display` | **exists** (M2 in progress) | CCD topology read (`CcdDisplayTopology`), EDID glasses detection (`GlassesDisplayLocator`), `VirtualDisplayRsProvider` (ADR-0008); topology snapshot/restore next |
-| `src/XrealScreen.Render` | M3 | WGC capture, D3D11 flip-model swapchain, compositor, late pose latch, stats |
+| `src/XrealScreen.Display` | **exists** | CCD topology read (`CcdDisplayTopology`), EDID glasses detection (`GlassesDisplayLocator`), `VirtualDisplayRsProvider` (ADR-0008); topology snapshot/restore next |
+| `src/XrealScreen.Render` | **exists** (capture done; render M3) | `GraphicsDevice`, `MonitorCapture` (WGC); next: D3D11 flip-model swapchain, compositor, late pose latch, stats |
 | `src/XrealScreen.Host` | M5 | In-process engine wiring + DI (Microsoft.Extensions.Hosting); today the App holds view models directly |
 | `src/XrealScreen.Contracts` | M6 | IPC DTOs, named-pipe framing, System.Text.Json source-gen |
 | `src/XrealScreen.Service` | M6 | Elevated helper Windows service (ADR-0004) |
