@@ -52,5 +52,8 @@
 
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
+    <!-- Windows.Graphics.Capture of our virtual monitors without picker and without the yellow border -->
+    <rescap:Capability Name="graphicsCaptureProgrammatic" />
+    <rescap:Capability Name="graphicsCaptureWithoutBorder" />
   </Capabilities>
 </Package>

@@ -3,19 +3,21 @@
 > Read this first. Update it at the end of every task (see skill `docs-handoff`).
 
 ## Current
-- **Milestone:** M3 Render spike — **done** (2026-09-26). Next: bring the workspace into the WinUI app (M4/M5).
+- **Milestone:** M4/M5 — workspace in the WinUI app — **in progress** (2026-09-26).
 - **Last updated:** 2026-09-26
 
 ## Done
-- M0, M1 (1S protocol verified), M2 (display, virtual monitors, capture), **M3 (render in the glasses)** — see ROADMAP.
-- Usable today from the CLI: `xrs render --screens 3` (defaults: stabilizer strong, desktop refresh sync on, Manual recenter via Ctrl+Alt+R, stop Ctrl+Alt+Q). Glasses OSD: UltraWide Off, Follow, Stabilizer off.
-- Verified with the user in the glasses: 120 fps, calm image (after tracker tuning, One Euro stabilizer, desk 120 Hz sync), no drift over 5 min, mouse and window dragging work on the virtual monitors.
+- M0–M3 (see ROADMAP): 1S protocol, virtual monitors, capture, head-tracked rendering verified in the glasses.
+- `XrealScreen.Host.WorkspaceEngine`: the whole session in one class; `xrs render` and the app both use it.
+- App: Home → **Start workspace / Stop / Recenter**, status + log; Tracking → stabilizer choice (default Strong); settings persisted to `%LOCALAPPDATA%\XrealScreen\settings.json`; closing the app stops the session and restores the desktop.
+- Manifest: `graphicsCaptureProgrammatic`, `graphicsCaptureWithoutBorder`.
+- Verified via UI automation: start → 3 virtual monitors + desk 120 Hz + glasses 120 Hz; stop → desktop restored.
 - 57/57 tests.
 
 ## Next 3 steps
-1. M4/M5: `XrealScreen.Host` engine (wraps what `RenderCommands` does) and drive it from the WinUI app: Screens page (count, ultrawide mode, layout), Tracking page (stabilizer preset, recenter, follow), Start/Stop workspace.
-2. Persist settings; tray + global hotkeys owned by the app (M6).
-3. Latency/DWM follow-up (ADR-0009): independent flip or DirectComposition so the desk can keep 144 Hz; measure motion-to-photon; pose trace logging for drift analysis.
+1. User test: start/stop the workspace from the app in the glasses.
+2. M6: tray icon + start with Windows; app-level hotkeys; crash-safe restore on next start (snapshot file present → offer restore).
+3. ADR-0009 follow-up: independent flip / DirectComposition (desk keeps 144 Hz); pose trace logging.
 
 ## Blockers
 - None. Glasses PC: `C:\GIT\Screen-XREAL-1S` on "Garage_1".
@@ -39,3 +41,4 @@
 | 2026-09-26 | Claude | M2 done: layout snapshot/restore, 1S mode table, WGC capture of virtual monitors. |
 | 2026-09-26 | Claude | M3: renderer in the glasses; user A/B tests → tracker tuning, stabilizer presets, desktop refresh sync (ADR-0009 update). |
 | 2026-09-26 | Claude | M3 done: drift test 5 min OK, mouse fixed (desktop order), all verified with the user in the glasses. |
+| 2026-09-26 | Claude | M4/M5 start: WorkspaceEngine (Host), app Start/Stop workspace, stabilizer UI, settings persistence. |

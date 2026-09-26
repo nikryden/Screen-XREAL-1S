@@ -53,7 +53,10 @@
 
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel Spacing="12">
-                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Auto center" />
+                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Stabilizer" />
+                    <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Smooths tiny head movements so the screens look calm when you hold still. Stronger settings trail a little behind fast turns. Used when the workspace starts." />
+                    <RadioButtons ItemsSource="{x:Bind Tracking.StabilizerNames}" SelectedIndex="{x:Bind Tracking.StabilizerIndex, Mode=TwoWay}" />
+                    <TextBlock Margin="0,12,0,0" Style="{StaticResource SubtitleTextBlockStyle}" Text="Auto center" />
                     <RadioButtons ItemsSource="{x:Bind Tracking.PolicyNames}" SelectedIndex="{x:Bind Tracking.PolicyIndex, Mode=TwoWay}" />
                     <Slider
                         Header="Dead-zone (degrees)"

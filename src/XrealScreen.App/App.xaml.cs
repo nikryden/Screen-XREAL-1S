@@ -20,6 +20,8 @@ public partial class App : Application
 
     public static DeviceViewModel Device { get; private set; } = null!;
 
+    public static SessionViewModel Session { get; private set; } = null!;
+
     public static MainWindow MainWindow { get; private set; } = null!;
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
@@ -28,9 +30,15 @@ public partial class App : Application
         Workspace = new WorkspaceViewModel();
         Tracking = new TrackingViewModel(dispatcher);
         Device = new DeviceViewModel();
+        Session = new SessionViewModel(dispatcher, Workspace, Tracking);
 
         MainWindow = new MainWindow();
-        MainWindow.Closed += (_, _) => Tracking.Dispose();
+        MainWindow.Closed += (_, _) =>
+        {
+            // Always hand the desktop back (virtual monitors, layout, refresh rates).
+            Session.Dispose();
+            Tracking.Dispose();
+        };
         _window = MainWindow;
         _window.Activate();
     }

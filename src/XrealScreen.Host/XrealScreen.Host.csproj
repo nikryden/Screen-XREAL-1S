@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- User-session engine: wires device, display, capture and rendering into one workspace session (ADR-0004). -->
+  <ItemGroup>
+    <ProjectReference Include="..\XrealScreen.Core\XrealScreen.Core.csproj" />
+    <ProjectReference Include="..\XrealScreen.Device.XrealOne\XrealScreen.Device.XrealOne.csproj" />
+    <ProjectReference Include="..\XrealScreen.Device.Simulated\XrealScreen.Device.Simulated.csproj" />
+    <ProjectReference Include="..\XrealScreen.Display\XrealScreen.Display.csproj" />
+    <ProjectReference Include="..\XrealScreen.Render\XrealScreen.Render.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="XrealScreen.Host.Tests" />
+  </ItemGroup>
+</Project>

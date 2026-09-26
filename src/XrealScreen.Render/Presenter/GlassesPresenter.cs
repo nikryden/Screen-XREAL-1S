@@ -120,7 +120,7 @@ public sealed unsafe class GlassesPresenter : IDisposable
             Win32.RegisterClassEx(&wc); // returns 0 if already registered — fine
         }
 
-        _hwnd = Win32.CreateWindowEx(Win32.WS_EX_TOOLWINDOW | Win32.WS_EX_TOPMOST, "XrealScreenPresenter", "XrealScreen", Win32.WS_POPUP | Win32.WS_VISIBLE,
+        _hwnd = Win32.CreateWindowEx(Win32.WS_EX_TOOLWINDOW | Win32.WS_EX_TOPMOST, "XrealScreenPresenter", "XrealScreen glasses output", Win32.WS_POPUP | Win32.WS_VISIBLE,
             _x, _y, _width, _height, IntPtr.Zero, IntPtr.Zero, Win32.GetModuleHandle(IntPtr.Zero), IntPtr.Zero);
         ready.Set();
         if (_hwnd == IntPtr.Zero)

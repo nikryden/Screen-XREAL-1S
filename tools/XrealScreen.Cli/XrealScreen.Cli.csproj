@@ -14,5 +14,6 @@
     <ProjectReference Include="..\..\src\XrealScreen.Device.Simulated\XrealScreen.Device.Simulated.csproj" />
     <ProjectReference Include="..\..\src\XrealScreen.Display\XrealScreen.Display.csproj" />
     <ProjectReference Include="..\..\src\XrealScreen.Render\XrealScreen.Render.csproj" />
+    <ProjectReference Include="..\..\src\XrealScreen.Host\XrealScreen.Host.csproj" />
   </ItemGroup>
 </Project>

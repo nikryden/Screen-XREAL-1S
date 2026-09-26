@@ -9,6 +9,7 @@
     <Project Path="src/XrealScreen.Device.Simulated/XrealScreen.Device.Simulated.csproj" />
     <Project Path="src/XrealScreen.Display/XrealScreen.Display.csproj" />
     <Project Path="src/XrealScreen.Render/XrealScreen.Render.csproj" />
+    <Project Path="src/XrealScreen.Host/XrealScreen.Host.csproj" />
     <Project Path="src/XrealScreen.App/XrealScreen.App.csproj" />
   </Folder>
   <Folder Name="/tools/">

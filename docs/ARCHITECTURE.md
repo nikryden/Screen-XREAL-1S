@@ -20,11 +20,11 @@ Projects are created when their milestone starts (no empty shells).
 | `src/XrealScreen.Core` | **exists** | Madgwick fusion (ADR-0007), gyro bias, `HeadTracker` + prediction, `AutoCenter` (`RecenterPolicy`), `UltrawideMode`, `WorkspaceLayout`, `GlassesCatalog`, `.xrimu` format, interfaces `IImuSource`, `IVirtualDisplayProvider` |
 | `src/XrealScreen.Device.XrealOne` | **exists** | NCM adapter discovery, TCP IMU client, stream framer, axis mapping, raw `.xrcap` capture |
 | `src/XrealScreen.Device.Simulated` | **exists** | Synthetic motion, `.xrimu` replay |
-| `src/XrealScreen.App` | **exists** | WinUI 3 (packaged, Mica, NavigationView): Home, Screens, Tracking, Device, Settings, About |
+| `src/XrealScreen.App` | **exists** | WinUI 3 (packaged, Mica, NavigationView). Home: Start/Stop/Recenter workspace + log (`SessionViewModel` → `WorkspaceEngine`); Screens: count/ultrawide/layout; Tracking: stabilizer, auto center, preview; Device; Settings |
 | `tools/XrealScreen.Cli` (`xrs`) | **exists** | `devices`, `probe`, `imu record/decode/live/replay/synth`. `imu record` is also the raw-traffic sniffer (`.xrcap`). |
 | `src/XrealScreen.Display` | **exists** | CCD topology read (`CcdDisplayTopology`), EDID glasses detection (`GlassesDisplayLocator`), `VirtualDisplayRsProvider` (ADR-0008); topology snapshot/restore next |
 | `src/XrealScreen.Render` | **exists** (capture done; render M3) | `GraphicsDevice`, `MonitorCapture` (WGC); next: D3D11 flip-model swapchain, compositor, late pose latch, stats |
-| `src/XrealScreen.Host` | M5 | In-process engine wiring + DI (Microsoft.Extensions.Hosting); today the App holds view models directly |
+| `src/XrealScreen.Host` | **exists** | `WorkspaceEngine` (one session: virtual monitors → desktop order → refresh sync → capture → tracking → presenter; always restores the desktop), `WorkspaceOptions`, `WorkspaceSettingsStore` (%LOCALAPPDATA%\XrealScreen\settings.json). Used by the app and `xrs render`. |
 | `src/XrealScreen.Contracts` | M6 | IPC DTOs, named-pipe framing, System.Text.Json source-gen |
 | `src/XrealScreen.Service` | M6 | Elevated helper Windows service (ADR-0004) |
 | Packaging / bootstrapper | M7 | Single-project MSIX lives in the App today; bootstrapper installs VDD (ADR-0005) |

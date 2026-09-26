@@ -15,4 +15,6 @@ public sealed partial class HomePage : Page
     public TrackingViewModel Tracking => App.Tracking;
 
     public DeviceViewModel Device => App.Device;
+
+    public SessionViewModel Session => App.Session;
 }

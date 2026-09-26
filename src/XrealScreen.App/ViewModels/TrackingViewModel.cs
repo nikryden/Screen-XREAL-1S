@@ -37,7 +37,49 @@ public sealed partial class TrackingViewModel : ObservableObject, IDisposable
 
     public event EventHandler? PoseUpdated;
 
-    public IReadOnlyList<string> SourceNames { get; } = ["Simulated head (no glasses)", "XREAL One-series glasses (USB network)"];
+    public IReadOnlyList<string> SourceNames { get; } = ["Simulated head (no glasses)", "XREAL One-series glasses (USB network)", "No tracking — screens follow the head (diagnostic)"];
+
+    public IReadOnlyList<string> StabilizerNames { get; } = ["Off", "Balanced", "Strong (recommended)", "Ultra steady"];
+
+    /// <summary>0 off, 1 balanced, 2 strong, 3 ultra (see StabilizerSettings).</summary>
+    [ObservableProperty]
+    public partial int StabilizerIndex { get; set; } = 2;
+
+    public string StabilizerPreset => StabilizerIndex switch { 0 => "off", 1 => "balanced", 3 => "ultra", _ => "strong" };
+
+    /// <summary>True while a pose is shown: the preview runs, or a workspace session feeds poses.</summary>
+    public bool HasPose => IsRunning || _externalPose;
+
+    private bool _externalPose;
+
+    /// <summary>Shows a pose coming from the running workspace session (UI thread).</summary>
+    public void ApplyExternalPose(XrealScreen.Core.Tracking.HeadPose pose)
+    {
+        _externalPose = true;
+        Yaw = pose.YawDegrees;
+        Pitch = pose.PitchDegrees;
+        Roll = pose.RollDegrees;
+        PoseUpdated?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void ClearExternalPose()
+    {
+        _externalPose = false;
+        PoseUpdated?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Set by the app while a workspace session runs; blocks the standalone preview.</summary>
+    public bool SessionActive
+    {
+        get => _sessionActive;
+        set
+        {
+            _sessionActive = value;
+            StartCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    private bool _sessionActive;
 
     public IReadOnlyList<string> PolicyNames { get; } = ["Manual — stays until you recenter", "Follow — moves when you turn beyond the dead-zone"];
 
@@ -106,7 +148,7 @@ public sealed partial class TrackingViewModel : ObservableObject, IDisposable
         _uiTimer.Start();
     }
 
-    private bool CanStart() => !IsRunning;
+    private bool CanStart() => !IsRunning && !SessionActive;
 
     [RelayCommand(CanExecute = nameof(IsRunning))]
     private async Task StopAsync()

@@ -102,7 +102,7 @@ public sealed partial class WorkspacePreview : UserControl
             _canvas.Children.Add(label);
         }
 
-        if (_tracking is { IsRunning: true })
+        if (_tracking is { HasPose: true })
         {
             var fov = new Rectangle
             {
