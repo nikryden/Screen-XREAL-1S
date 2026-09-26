@@ -41,4 +41,19 @@ Keep a DWM-composed borderless window and pace the render thread on the **glasse
   Strong 0.50 px still shake / 0.34° turn error (was 0.75 px / 0.77°).
 - Glasses A/B ([verified-hw] 2026-09-27, 1S fw 15.01.03.522, 1920×1200 @ 120 Hz, axes Full): latch 0 / predict 12 vs
   latch 1.5 / predict 12 vs latch 1.5 / predict 20 → the last lagged least ("a little" lag left).
-- **Defaults now: `LatchLeadMs` 1.5, `PredictMs` 20.** Remaining lag: the DWM frame (follow-up above).
+- Defaults: `PredictMs` 20 (see the measurement update below for `LatchLeadMs`).
+
+## Update 2026-09-27 — measured latency; the DWM path is not avoidable here
+- The presenter now reports **latch→scan-out** (DXGI `GetFrameStatistics`: `SyncQPCTime` of the vblank at which each
+  present count reached the screen) and the **composition mode** (`IDXGISwapChainMedia` `CompositionMode`) in its stats.
+- [verified-hw] 1S on AMD Radeon iGPU, 1920×1200 @ 120 Hz: every frame is **Composed** by DWM. Changing the window
+  (no tool-window style, foreground), 3 buffers, allow-tearing, or stopping all captures never gave independent flip
+  or overlay. Nothing overlaps the presenter window on the glasses monitor.
+- Latch→scan-out is **~22 ms p50** (18–29 ms per session). DWM composes on its own clock (the primary monitor's), whose
+  phase to the glasses vblank changes every session (0.2–6 ms seen). Late latch on the glasses vblank (0–7 ms lead) and
+  latching against DWM's clock (`DwmGetCompositionTimingInfo`, 2.5–4.5 ms before DWM vblank) did **not** lower the
+  average (5 sessions: 22.7 vs 22.5 ms) and cost extra missed frames.
+- Decision: **`LatchLeadMs` default 0** (option kept for a direct-flip path). Lag is compensated by prediction
+  (default 20 ms; photon time ≈ 22 ms + half a scan-out ≈ 26 ms, so a longer horizon is a candidate for a glasses A/B).
+- Follow-ups that could remove DWM: exclusive fullscreen on the glasses output (rejected earlier: focus-bound), or a
+  DirectComposition/composition-swapchain path; re-check on other GPUs (the iGPU driver may not offer iflip for this output).

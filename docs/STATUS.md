@@ -14,14 +14,14 @@
 - Engine hardening: no NaN before the first IMU sample, watchdog for glasses re-enumeration, catch-all session errors, forced virtual-monitor resolutions (fixes SetDisplayConfig 87), crash log `%LOCALAPPDATA%\XrealScreen\crash.log`.
 - **Tray + background (M6)**: tray icon (Open / Start / Stop / Recenter / Exit), close-to-tray, Ctrl+Alt+W toggles the workspace, Start with Windows (MSIX StartupTask, starts hidden in tray); app preferences in `%LOCALAPPDATA%\XrealScreen\app.json`.
 - **Installer phase 1 (M7)**: `installer\\Build-Package.ps1` → `artifacts\\installer\\` (signed self-contained MSIX 105 MB, `Install-XrealScreen.ps1` checks the driver). New app icon.
-- **Less lag + no nod bobbing (App head tracking)**: gyro-speed stabilizer, late latch 1.5 ms, 20 ms prediction (ADR-0009), tilt correction only when the head is nearly still (ADR-0007 `RateGate`) — verified with the user in the glasses.
+- **Less lag + no nod bobbing (App head tracking)**: gyro-speed stabilizer, 20 ms prediction (ADR-0009), tilt correction only when the head is nearly still (ADR-0007 `RateGate`) — verified with the user in the glasses.
 - **Crash-safe restore**: at app start (and `xrs recover`) leftover virtual monitors are removed and layout + refresh rates restored ([verified-local] hard-kill test).
 - 85/85 tests.
 
 ## Next 3 steps
 1. M6: user test of tray icon / start with Windows / Ctrl+Alt+W (implemented 2026-09-27); then optional "start workspace when glasses connect".
 2. M7 phase 2: build/sign virtual-display-rs ourselves and bundle it; clean-VM install test. (Phase 1 done: signed self-contained MSIX + scripts in `installer/`, new app icon.)
-3. App head tracking: remaining small lag = DWM frame (ADR-0009 follow-up: independent flip / DirectComposition); optional A/B Strong vs Balanced for the last nod bob.
+3. App head tracking: glasses A/B of prediction 20 vs 26 ms (measured latch→scan-out ≈ 22 ms, ADR-0009); optional Strong vs Balanced for the last nod bob. Removing DWM (always composed here) needs exclusive fullscreen or DirectComposition — deferred.
 
 ## Blockers
 - None.
@@ -51,3 +51,4 @@
 | 2026-09-26/27 | Claude | M4/M5: engine + app Start/Stop; user feedback → axes modes, neck model, stabilizer, NaN fix, glasses-anchor workspace (ADR-0010) with gap/aspect/preview/apply, crash-safe restore. |
 | 2026-09-27 | Claude | M6 tray/autostart/hotkey; M7 phase 1: icon, signed self-contained MSIX, install scripts. |
 | 2026-09-27 | Claude | Lag work: gyro-speed stabilizer, late latch, 20 ms prediction; nod bobbing fixed with Madgwick rate gate (glasses A/B). |
+| 2026-09-27 | Claude | Latency measurement in presenter stats (latch→scan-out ≈ 22 ms, always DWM-composed); late latch default back to 0 (no gain while composed). |

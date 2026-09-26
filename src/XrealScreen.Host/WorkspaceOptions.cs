@@ -59,7 +59,7 @@ public sealed record WorkspaceOptions
     public double PredictMs { get; init; } = 20;
 
     /// <summary>Late latch lead before the next glasses vblank (ms); 0 = latch right after vblank (ADR-0009).</summary>
-    public double LatchLeadMs { get; init; } = 1.5;
+    public double LatchLeadMs { get; init; }
 
     public float FilterBeta { get; init; } = 0.02f;
 
