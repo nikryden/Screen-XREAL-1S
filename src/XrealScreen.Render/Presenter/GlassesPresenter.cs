@@ -115,7 +115,6 @@ public sealed unsafe class GlassesPresenter : IDisposable
                 cbSize = (uint)sizeof(Win32.WNDCLASSEXW),
                 lpfnWndProc = &WndProc,
                 hInstance = Win32.GetModuleHandle(IntPtr.Zero),
-                hCursor = Win32.LoadCursor(IntPtr.Zero, Win32.IDC_ARROW),
                 lpszClassName = className,
             };
             Win32.RegisterClassEx(&wc); // returns 0 if already registered — fine
@@ -169,6 +168,11 @@ public sealed unsafe class GlassesPresenter : IDisposable
             case Win32.WM_HOTKEY when wParam == Win32.HotkeyStop:
                 Win32.PostMessage(hwnd, Win32.WM_CLOSE, 0, 0);
                 return 0;
+            case Win32.WM_SETCURSOR when (lParam & 0xFFFF) == Win32.HTCLIENT:
+                // A pointer over the glasses output would be head-locked; hide it (the pointer is shown,
+                // world-locked, inside the captured virtual monitors instead).
+                Win32.SetCursor(IntPtr.Zero);
+                return 1;
             case Win32.WM_CLOSE:
                 if (self is not null)
                 {

@@ -86,6 +86,16 @@ internal static class RenderCommands
 
             await Task.Delay(1000, ct).ConfigureAwait(false);
 
+            // Desktop order [desk][virtual 1..n][glasses]: the pointer reaches the virtual monitors
+            // without crossing the glasses area (where it would be head-locked and clicks do nothing).
+            var arrangement = WorkspaceArrangement.Arrange(
+                topology.GetActiveMonitors(),
+                virtuals.Where(v => v.GdiDeviceName is not null).Select(v => v.GdiDeviceName!).ToList(),
+                glasses.GdiDeviceName);
+            topology.ApplyLayout(arrangement);
+            await Task.Delay(1000, ct).ConfigureAwait(false);
+            Console.WriteLine("desktop order: desk → virtual monitors → glasses (move the mouse right from your desk monitor)");
+
             // 3. Desktop monitors to the glasses refresh rate. DWM composes on the primary monitor clock;
             // 144 Hz desk vs 120 Hz glasses made the image judder ([verified-hw] 2026-09-26, ADR-0009).
             if (syncDesktop)

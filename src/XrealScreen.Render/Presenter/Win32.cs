@@ -21,6 +21,8 @@ internal static unsafe partial class Win32
     public const int HotkeyRecenter = 1;
     public const int HotkeyStop = 2;
     public const int IDC_ARROW = 32512;
+    public const uint WM_SETCURSOR = 0x0020;
+    public const int HTCLIENT = 1;
 
     [StructLayout(LayoutKind.Sequential)]
     public struct WNDCLASSEXW
@@ -88,6 +90,9 @@ internal static unsafe partial class Win32
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool UnregisterHotKey(IntPtr hwnd, int id);
+
+    [LibraryImport("user32.dll")]
+    public static partial IntPtr SetCursor(IntPtr cursor);
 
     [LibraryImport("user32.dll", EntryPoint = "LoadCursorW")]
     public static partial IntPtr LoadCursor(IntPtr instance, IntPtr cursorName);
