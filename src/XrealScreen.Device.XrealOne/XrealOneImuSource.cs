@@ -13,14 +13,17 @@ public sealed record XrealOneImuOptions
 
     public TimeSpan ConnectTimeout { get; init; } = TimeSpan.FromSeconds(3);
 
-    /// <summary>Sensor → body mapping for the gyro. [hypothesis] identity, verify in M1.</summary>
-    public AxisMap GyroAxes { get; init; } = AxisMap.Identity;
-
     /// <summary>
-    /// Sensor → body mapping for the accelerometer. [from-source:MIT] one-xr remaps accel
-    /// as (z, y, x) into its gyro frame; verify in M1.
+    /// Sensor frame is X right, Y down, Z forward for both gyro and accel; the tracker body
+    /// frame is X forward, Y left, Z up. [verified-hw] XREAL 1S fw 15.01.03.522, 2026-09-26.
     /// </summary>
-    public AxisMap AccelAxes { get; init; } = AxisMap.Parse("+z,+y,+x");
+    public static AxisMap SensorToBody { get; } = AxisMap.Parse("+z,-x,-y");
+
+    /// <summary>Sensor → body mapping for the gyro.</summary>
+    public AxisMap GyroAxes { get; init; } = SensorToBody;
+
+    /// <summary>Sensor → body mapping for the accelerometer (same frame as the gyro).</summary>
+    public AxisMap AccelAxes { get; init; } = SensorToBody;
 
     /// <summary>Optional tap for raw bytes (e.g. an <see cref="XrcapWriter"/>).</summary>
     public Func<DateTime, ReadOnlyMemory<byte>, CancellationToken, ValueTask>? RawTap { get; init; }

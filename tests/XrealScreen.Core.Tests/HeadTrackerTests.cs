@@ -46,12 +46,13 @@ public class HeadTrackerTests
     public void TiltedStart_AlignsToGravityImmediately()
     {
         var tracker = new HeadTracker();
-        // Head pitched: gravity partly along body X.
+        // Head pitched 30° nose-up: gravity reaction partly along body X (forward).
         var accel = Vector3.Normalize(new Vector3(0.5f, 0, 0.866f)) * 9.81f;
         var pose = tracker.Update(new ImuSample(0, Vector3.Zero, accel));
 
         var up = Vector3.Transform(Vector3.Normalize(accel), pose.World);
         Assert.True(Vector3.Distance(up, Vector3.UnitZ) < 1e-4f, $"measured up maps to {up}");
+        Assert.InRange(pose.PitchDegrees, 29.9f, 30.1f);
     }
 
     [Fact]

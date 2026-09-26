@@ -66,8 +66,8 @@ internal static class ImuCommands
     {
         var input = new Argument<string>("xrcap") { Description = "Raw capture to decode." };
         var output = new Option<string?>("--out") { Description = "Output .xrimu (default: next to input)." };
-        var gyroAxes = new Option<string>("--gyro-axes") { DefaultValueFactory = _ => AxisMap.Identity.ToString() };
-        var accelAxes = new Option<string>("--accel-axes") { DefaultValueFactory = _ => new XrealOneImuOptions().AccelAxes.ToString() };
+        var gyroAxes = new Option<string>("--gyro-axes") { DefaultValueFactory = _ => XrealOneImuOptions.SensorToBody.ToString() };
+        var accelAxes = new Option<string>("--accel-axes") { DefaultValueFactory = _ => XrealOneImuOptions.SensorToBody.ToString() };
         var command = new Command("decode", "Re-decode a raw .xrcap with the current parser (use after protocol changes).") { input, output, gyroAxes, accelAxes };
         command.SetAction(async (parse, ct) =>
         {

@@ -7,10 +7,17 @@ namespace XrealScreen.Core.Tracking;
 /// <param name="World">Absolute orientation (Z-up world, arbitrary initial yaw).</param>
 /// <param name="Relative">Orientation relative to the workspace center (yaw re-referenced).</param>
 /// <param name="AngularVelocity">Bias-corrected body rate, rad/s (used for prediction).</param>
+/// <remarks>
+/// Body frame X forward, Y left, Z up. Angle conventions: yaw + = turn left,
+/// pitch + = look up, roll + = tilt toward the right shoulder.
+/// </remarks>
 public readonly record struct HeadPose(long TimestampNs, Quaternion World, Quaternion Relative, Vector3 AngularVelocity)
 {
     public float YawDegrees => QuaternionMath.Yaw(Relative) * 180f / MathF.PI;
-    public float PitchDegrees => QuaternionMath.Pitch(Relative) * 180f / MathF.PI;
+
+    // Rotation about +Y (left) is nose-down; flip so looking up is positive.
+    public float PitchDegrees => -QuaternionMath.Pitch(Relative) * 180f / MathF.PI;
+
     public float RollDegrees => QuaternionMath.Roll(Relative) * 180f / MathF.PI;
 
     /// <summary>Extrapolates the relative pose <paramref name="seconds"/> ahead (render latency compensation).</summary>
