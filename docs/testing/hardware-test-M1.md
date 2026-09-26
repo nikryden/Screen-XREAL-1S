@@ -15,7 +15,7 @@ Time: ~20 min. Run commands in PowerShell from the repo root.
 ## Steps
 1. **Plug in** the glasses via USB-C directly to a DP-alt capable port (no hub). Put them on; confirm a picture appears.
 2. **Firmware:** open the OSD menu on the glasses and note the firmware version.
-3. **Disable anchor/stabilizer** in the OSD (screen mode: off / 0DoF). Note which option you chose.
+3. **Follow mode, Stabilizer off:** single-click the X button until the glasses are in **Follow** (not Anchor); then double-click X → **Spatial Screen → Stabilizer** → Off (+/− navigate, X toggles).
 4. **Network adapter:**
    ```powershell
    Get-NetAdapter | Format-Table Name, InterfaceDescription, Status, MacAddress

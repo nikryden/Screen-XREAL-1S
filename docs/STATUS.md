@@ -25,7 +25,6 @@
 
 ## Open questions / known gaps
 - Control port 52999 not implemented (moved to M4); glasses-side recenter/display mode unknown.
-- Which OSD screen mode = "no anchor" on this firmware — not recorded yet.
 - Yaw drift while worn: bias estimator needs still periods; consider reading the factory gyro bias from the device config (control port) or a start-up "hold still" calibration (M3/M5).
 - Workspace settings not persisted (M5); no tray/startup (M6); trimming decided in M7.
 

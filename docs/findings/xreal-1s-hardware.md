@@ -30,13 +30,14 @@ Only PID `0x043E` was seen; `0x043D` (from XRLinuxDriver) remains [from-GPL:fact
 ## Display [verified-hw]
 - Windows monitor EDID: manufacturer **`MRG`**, product **`4102`**, name **"XREAL 1S"** (`DISPLAY\MRG4102\...`). Use this to find the glasses output (M2, `windows-display-ccd`).
 
-## OSD features relevant to us
-- Screen modes: **anchor**, **follow**, **smooth follow** (onboard 3DoF).
-- **Ultrawide** in OSD "Laboratory": 21:9, 32:9, 16:18. Requires Windows extended display mode.
+## OSD (glasses menu) relevant to us
+Source: XREAL One-series user guide and tutorials (apply to "One/1S"); see `docs/legal/SOURCES.md`.
+- **Two screen modes:** **Anchor** (screen fixed in mid-air, glasses' own 3DoF) and **Follow** (screen fixed in front of the eyes). **Single-click X** toggles; saved until next use. Long-press X recenters in Anchor.
+- **Stabilizer** ("smooth follow"): only in Follow, **on by default**; the glasses compensate small head movements. Double-click X → **Spatial Screen → Stabilizer**; +/− navigate, X toggles.
+- **"No anchor" for our virtual workspace mode = Follow + Stabilizer off** (ADR-0003). There is no separate "off / 0DoF" menu item.
+- **UltraWide:** Spatial Screen → UltraWide Mode: 16:18, 21:9, 32:9; **Laboratory** sets the default. Requires Windows extended display mode.
 - Exact ultrawide signal resolution on 1S: unknown. One Pro reportedly 3840×1080 for 32:9. [hypothesis]
-- Community advice: disable glasses anchor/stabilizer when the host does head tracking (avoids double correction). → ADR-0003.
 
 ## Open questions (M2)
 - [ ] Which display modes does the 1S EDID expose (1920×1080@120? 1920×1200? ultrawide signals)?
 - [ ] What each OSD ultrawide mode changes on the Windows side (resolution reported to Windows).
-- [ ] Which OSD screen mode name corresponds to "no anchor" on fw 15.01.03.522.

@@ -25,3 +25,4 @@ Every external source consulted. **How used:** `facts` (IDs/constants/behaviour 
 | `csharp-async` skill | likely github/awesome-copilot `skills/csharp-async` (same name/format) | MIT (verify origin) | imported | 2026-09-26 |
 | `csharp-developer` skill | https://github.com/Jeffallan (per SKILL.md metadata) | MIT (per frontmatter) | imported | 2026-09-26 |
 | `winui-app` skill | see `.claude/skills/winui-app/` | Apache-2.0 (`LICENSE.txt`) | imported | 2026-09-26 |
+| XREAL tutorials: One-series OSD (UltraWide, Stabilizer) + One-series user guide | https://tutorials.xreal.com/docs/glasses/one-series/osd/stabilizer/ , https://us.shop.xreal.com/blogs/buying-guide/user-guide_xreal-one-series | vendor docs | facts (OSD usage) | 2026-09-26 |

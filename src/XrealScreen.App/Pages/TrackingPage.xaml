@@ -12,8 +12,8 @@
                 IsClosable="True"
                 IsOpen="True"
                 Severity="Warning"
-                Title="Turn off the glasses' own anchor"
-                Message="When this app tracks your head, set the glasses' display mode to plain (no Anchor / Follow / Stabilizer) in the glasses menu, otherwise movement is corrected twice." />
+                Title="Set the glasses to Follow with Stabilizer off"
+                Message="Click the X button until the glasses are in Follow mode, then double-click X and turn off Spatial Screen &gt; Stabilizer. Otherwise the glasses and this app both correct head movement." />
 
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel Spacing="12">
