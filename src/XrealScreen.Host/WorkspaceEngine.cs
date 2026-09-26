@@ -385,7 +385,7 @@ public sealed class WorkspaceEngine : IAsyncDisposable
                 _latest = new HeadPose(0, Quaternion.Identity, Quaternion.Identity, Vector3.Zero);
             }
 
-            _tracker = new HeadTracker(new MadgwickFilter(o.FilterBeta) { AccelGate = o.AccelGate });
+            _tracker = new HeadTracker(new MadgwickFilter(o.FilterBeta) { AccelGate = o.AccelGate, RateGate = o.RateGate });
             _tracker.AutoCenter.Settings = o.AutoCenter;
             _stabilizer = new PoseStabilizer(StabilizerSettings.FromName(o.Stabilizer));
             if (o.Source != TrackingSource.Fixed)

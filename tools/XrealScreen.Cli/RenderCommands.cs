@@ -19,17 +19,18 @@ internal static class RenderCommands
         var seconds = new Option<double>("--seconds") { Description = "Stop after this long (Ctrl+Alt+Q stops earlier).", DefaultValueFactory = _ => 120 };
         var follow = new Option<bool>("--follow") { Description = "Auto center: follow the head beyond a 20° dead-zone." };
         var hz = new Option<int>("--hz") { Description = "Glasses refresh to request (UltraWide Off offers 60/90/120).", DefaultValueFactory = _ => 120 };
-        var predict = new Option<double>("--predict-ms") { Description = "Pose prediction ahead of the late latch.", DefaultValueFactory = _ => 12 };
-        var lead = new Option<double>("--latch-lead-ms") { Description = "Late latch: read the pose this many ms before the next glasses vblank (0 = right after vblank).", DefaultValueFactory = _ => 0 };
+        var predict = new Option<double>("--predict-ms") { Description = "Pose prediction ahead of the late latch.", DefaultValueFactory = _ => 20 };
+        var lead = new Option<double>("--latch-lead-ms") { Description = "Late latch: read the pose this many ms before the next glasses vblank (0 = right after vblank).", DefaultValueFactory = _ => 1.5 };
         var beta = new Option<float>("--beta") { Description = "Madgwick tilt-correction gain.", DefaultValueFactory = _ => 0.02f };
         var gate = new Option<float>("--accel-gate") { Description = "Skip tilt correction when | |a| - g | exceeds this (m/s²); 0 = off.", DefaultValueFactory = _ => 0.6f };
+        var rateGate = new Option<float>("--rate-gate") { Description = "Skip tilt correction while the head turns faster than this (rad/s; stops up/down bobbing when nodding); 0 = off.", DefaultValueFactory = _ => 0.09f };
         var stabilize = new Option<string>("--stabilize") { Description = "Pose stabilizer: off | balanced | strong | ultra.", DefaultValueFactory = _ => "strong" };
         var axes = new Option<TrackingAxes>("--axes") { Description = "Head rotations that move the screens: YawRoll (level, no up/down) | YawOnly | YawPitch | Full.", DefaultValueFactory = _ => TrackingAxes.YawRoll };
         var neck = new Option<bool>("--neck-model") { Description = "Neck model: screens come closer when you lean/nod in.", DefaultValueFactory = _ => true };
         var syncDesktop = new Option<bool>("--sync-desktop") { Description = "Set other monitors to the glasses refresh for the session (avoids judder; restored on exit).", DefaultValueFactory = _ => true };
         var command = new Command("render", "Show virtual monitors fixed in space in the glasses (Ctrl+Alt+R recenter, Ctrl+Alt+Plus/Minus closer/farther, Ctrl+Alt+Q stop).")
         {
-            screens, mode, source, seconds, follow, hz, predict, beta, gate, stabilize, syncDesktop, neck, axes, kind, gap, aspect, lead,
+            screens, mode, source, seconds, follow, hz, predict, beta, gate, stabilize, syncDesktop, neck, axes, kind, gap, aspect, lead, rateGate,
         };
         command.SetAction(async (parse, ct) =>
         {
@@ -44,6 +45,7 @@ internal static class RenderCommands
                 LatchLeadMs = parse.GetValue(lead),
                 FilterBeta = parse.GetValue(beta),
                 AccelGate = parse.GetValue(gate),
+                RateGate = parse.GetValue(rateGate),
                 Stabilizer = parse.GetValue(stabilize)!,
                 SyncDesktopRefresh = parse.GetValue(syncDesktop),
                 NeckModel = parse.GetValue(neck),

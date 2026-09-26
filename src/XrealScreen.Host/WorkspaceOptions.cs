@@ -55,14 +55,18 @@ public sealed record WorkspaceOptions
 
     public int GlassesRefreshHz { get; init; } = 120;
 
-    public double PredictMs { get; init; } = 12;
+    /// <summary>Pose prediction (ms). 20 ms lagged least in the glasses A/B test (12 / 20 ms, [verified-hw] 2026-09-27).</summary>
+    public double PredictMs { get; init; } = 20;
 
     /// <summary>Late latch lead before the next glasses vblank (ms); 0 = latch right after vblank (ADR-0009).</summary>
-    public double LatchLeadMs { get; init; }
+    public double LatchLeadMs { get; init; } = 1.5;
 
     public float FilterBeta { get; init; } = 0.02f;
 
     public float AccelGate { get; init; } = 0.6f;
+
+    /// <summary>Skip tilt correction while the head turns faster than this (rad/s); see <see cref="MadgwickFilter.RateGate"/>.</summary>
+    public float RateGate { get; init; } = 0.09f;
 
     /// <summary>Which head rotations move the screens (default: turning, level with the horizon, no up/down).</summary>
     public TrackingAxes Axes { get; init; } = TrackingAxes.YawRoll;

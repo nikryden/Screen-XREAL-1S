@@ -20,6 +20,15 @@ public sealed class MadgwickFilter
     /// </summary>
     public float AccelGate { get; set; } = 0.6f;
 
+    /// <summary>
+    /// Accelerometer correction is also skipped while the head rotates faster than this (rad/s): nodding
+    /// swings the acceleration's direction but barely its size, so <see cref="AccelGate"/> lets it through and
+    /// the fixed-rate correction bobs the screens up and down ([verified-hw] 2026-09-27: "shaky when tilting up and
+    /// down"). On the nod fixture 0.09 rad/s (5°/s) cuts the bob from 35 to 14 px (slow nods) and 34 to 22 px (fast
+    /// nods) (NodShakeTests). 0 disables.
+    /// </summary>
+    public float RateGate { get; set; } = 0.09f;
+
     /// <summary>Expected |accel| at rest (m/s² for XREAL One-series glasses).</summary>
     public float GravityMagnitude { get; set; } = 9.81f;
 
@@ -50,7 +59,8 @@ public sealed class MadgwickFilter
         float qDot3 = 0.5f * (q0 * gz + q1 * gy - q2 * gx);
 
         float aNorm = accel.Length();
-        bool trustAccel = AccelGate <= 0f || MathF.Abs(aNorm - GravityMagnitude) <= AccelGate;
+        bool trustAccel = (AccelGate <= 0f || MathF.Abs(aNorm - GravityMagnitude) <= AccelGate)
+            && (RateGate <= 0f || gyro.LengthSquared() <= RateGate * RateGate);
         if (trustAccel && aNorm > 1e-6f && float.IsFinite(aNorm))
         {
             float ax = accel.X / aNorm, ay = accel.Y / aNorm, az = accel.Z / aNorm;
