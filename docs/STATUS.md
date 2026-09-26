@@ -17,13 +17,12 @@
 ## Next 3 steps
 1. M2: topology snapshot/restore (`IDisplayTopology` write side, `%LOCALAPPDATA%\XrealScreen	opology-snapshot.json`), restore after `vdd clear` and on exit.
 2. M2: borderless Windows.Graphics.Capture of one virtual monitor (`XrealScreen.Render` project start; skill `d3d11-vortice`).
-3. M2/M4: record which modes the glasses offer per OSD UltraWide setting (glasses currently 2560×1080 @ 60, max 90 Hz; see `xreal-1s-hardware.md`).
+3. M3 prep: virtual workspace mode should drive the glasses at UltraWide Off, 1920×1200 @ 120 Hz (set via CCD) — see mode table in `xreal-1s-hardware.md`.
 
 ## Blockers
 - None. Glasses PC: `C:\GIT\Screen-XREAL-1S` on "Garage_1".
 
 ## Open questions / known gaps
-- Glasses mode list per OSD UltraWide setting not recorded yet (user to switch modes while `xrs display modes` runs).
 - Virtual-display-rs install/signing for end users: decide in M7 (self-signed today; 0.4.0 not in a GitHub release).
 - Control port 52999 not implemented (M4); yaw drift while worn needs better bias (M3/M5).
 - Workspace settings not persisted (M5); no tray/startup (M6); trimming decided in M7.

@@ -29,7 +29,17 @@ Only PID `0x043E` was seen; `0x043D` (from XRLinuxDriver) remains [from-GPL:fact
 
 ## Display [verified-hw]
 - Windows monitor EDID: manufacturer **`MRG`**, product **`4102`**, name **"XREAL 1S"** (`DISPLAY\MRG4102\...`), output technology DisplayPort. Detected by `GlassesDisplayLocator` / `xrs display list`.
-- 2026-09-26, OSD UltraWide presumably 21:9: current mode **2560×1080 @ 60 Hz**; offered modes up to 2560×1080, refresh **60 and 90 Hz only** (no 120 Hz in this mode). Full list: 2560×1080, 2310×990, 2100×990, 1920×1080, 1680×1050, 1920×820, 1280×1024, 1680×720, 1280×720, 1024×768, 800×600, 640×480.
+- **The glasses change their EDID with the OSD UltraWide setting** (Windows re-enumerates the monitor; same `MRG4102` identity). Measured 2026-09-26, fw 15.01.03.522, via `xrs display modes`:
+
+  | OSD UltraWide | Max signal (Windows mode) | Refresh offered | Other top modes |
+  |---|---|---|---|
+  | Off | **1920×1200** (native 16:10) | 60 / 90 / **120** Hz | 1920×1080, 1600×1200, 1680×1050 … all at 60/90/120 |
+  | 21:9 | **2560×1080** | 60 / 90 Hz | 2310×990, 2100×990, 1920×1080 |
+  | 32:9 | **3840×1080** | 60 Hz only | 3520×990, 3200×900, 1920×1080, 2560×720 |
+  | 16:18 | **1920×2160** (two 16:9 stacked) | 60 Hz only | 1920×1200, 1920×1080, 1600×1200 |
+
+- Windows remembers a separate layout per EDID variant: e.g. the glasses were primary at (0,0) in 21:9 but secondary to the right of the desk monitor in Off / 16:18 / 32:9. Native mode (M4) must set the layout it wants after each OSD switch.
+- Consequences: **120 Hz is only available with UltraWide Off**, so the virtual workspace mode (our own rendering) should run the glasses in Off @ 1920×1200 / 120 Hz. Native ultrawide modes are 60 Hz (32:9, 16:18) or up to 90 Hz (21:9). Our virtual 16:9 base stays 1920×1080; the glasses' own "Off" signal is 1920×1200.
 - Glasses and virtual monitors render on the same AMD adapter (virtual monitors report their own IddCx adapter LUID).
 
 ## OSD (glasses menu) relevant to us
@@ -41,5 +51,3 @@ Source: XREAL One-series user guide and tutorials (apply to "One/1S"); see `docs
 - Exact ultrawide signal resolution on 1S: unknown. One Pro reportedly 3840×1080 for 32:9. [hypothesis]
 
 ## Open questions (M2)
-- [ ] Which display modes does the 1S EDID expose (1920×1080@120? 1920×1200? ultrawide signals)?
-- [ ] What each OSD ultrawide mode changes on the Windows side (resolution reported to Windows).
