@@ -32,5 +32,14 @@ public class TrackingAxesTests
     }
 
     [Fact]
+    public void YawRoll_KeepsYawAndRoll_DropsPitch()
+    {
+        var q = TrackingAxes.YawRoll.Constrain(Head);
+        Assert.Equal(30f, Deg(QuaternionMath.Yaw(q)), 2);
+        Assert.Equal(0f, Deg(QuaternionMath.Pitch(q)), 2);
+        Assert.Equal(15f, Deg(QuaternionMath.Roll(q)), 1);
+    }
+
+    [Fact]
     public void Full_IsUnchanged() => Assert.Equal(Head, TrackingAxes.Full.Constrain(Head));
 }

@@ -41,8 +41,8 @@ public sealed record WorkspaceOptions
 
     public float AccelGate { get; init; } = 0.6f;
 
-    /// <summary>Which head rotations move the screens (default: turning left/right only).</summary>
-    public TrackingAxes Axes { get; init; } = TrackingAxes.YawOnly;
+    /// <summary>Which head rotations move the screens (default: turning, level with the horizon, no up/down).</summary>
+    public TrackingAxes Axes { get; init; } = TrackingAxes.YawRoll;
 
     /// <summary>Neck model: leaning/nodding moves the eyes, so screens come closer when you lean in.</summary>
     public bool NeckModel { get; init; } = true;

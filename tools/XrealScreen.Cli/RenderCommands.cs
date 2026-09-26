@@ -20,7 +20,7 @@ internal static class RenderCommands
         var beta = new Option<float>("--beta") { Description = "Madgwick tilt-correction gain.", DefaultValueFactory = _ => 0.02f };
         var gate = new Option<float>("--accel-gate") { Description = "Skip tilt correction when | |a| - g | exceeds this (m/s²); 0 = off.", DefaultValueFactory = _ => 0.6f };
         var stabilize = new Option<string>("--stabilize") { Description = "Pose stabilizer: off | balanced | strong | ultra.", DefaultValueFactory = _ => "strong" };
-        var axes = new Option<TrackingAxes>("--axes") { Description = "Head rotations that move the screens: YawOnly | YawPitch | Full.", DefaultValueFactory = _ => TrackingAxes.YawOnly };
+        var axes = new Option<TrackingAxes>("--axes") { Description = "Head rotations that move the screens: YawRoll (level, no up/down) | YawOnly | YawPitch | Full.", DefaultValueFactory = _ => TrackingAxes.YawRoll };
         var neck = new Option<bool>("--neck-model") { Description = "Neck model: screens come closer when you lean/nod in.", DefaultValueFactory = _ => true };
         var syncDesktop = new Option<bool>("--sync-desktop") { Description = "Set other monitors to the glasses refresh for the session (avoids judder; restored on exit).", DefaultValueFactory = _ => true };
         var command = new Command("render", "Show virtual monitors fixed in space in the glasses (Ctrl+Alt+R recenter, Ctrl+Alt+Plus/Minus closer/farther, Ctrl+Alt+Q stop).")

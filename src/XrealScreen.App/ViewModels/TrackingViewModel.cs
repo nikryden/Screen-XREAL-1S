@@ -47,9 +47,16 @@ public sealed partial class TrackingViewModel : ObservableObject, IDisposable
 
     public string StabilizerPreset => StabilizerIndex switch { 0 => "off", 1 => "balanced", 3 => "ultra", _ => "strong" };
 
-    public IReadOnlyList<string> AxesNames { get; } = ["Turning left/right only (recommended)", "Turning and nodding (no tilt)", "Full: turning, nodding and tilting"];
+    /// <summary>Same order as <see cref="XrealScreen.Core.Tracking.TrackingAxes"/>.</summary>
+    public IReadOnlyList<string> AxesNames { get; } =
+    [
+        "Turning + level: screens stay level when you tilt your head, no up/down (recommended)",
+        "Turning only: screens tilt with your head",
+        "Turning and nodding: screens tilt with your head",
+        "Full: turning, nodding and tilting — like monitors fixed in the room",
+    ];
 
-    /// <summary>0 YawOnly, 1 YawPitch, 2 Full.</summary>
+    /// <summary>Index into <see cref="AxesNames"/> = (int)TrackingAxes.</summary>
     [ObservableProperty]
     public partial int AxesIndex { get; set; }
 

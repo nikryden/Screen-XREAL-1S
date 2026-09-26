@@ -159,7 +159,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         Source = _tracking.SourceIndex switch { 0 => TrackingSource.Simulated, 2 => TrackingSource.Fixed, _ => TrackingSource.Glasses },
         Stabilizer = _tracking.StabilizerPreset,
         NeckModel = _tracking.NeckModel,
-        Axes = (TrackingAxes)Math.Clamp(_tracking.AxesIndex, 0, 2),
+        Axes = (TrackingAxes)Math.Clamp(_tracking.AxesIndex, 0, Enum.GetValues<TrackingAxes>().Length - 1),
         AutoCenter = new AutoCenterSettings
         {
             Policy = _tracking.PolicyIndex == 1 ? RecenterPolicy.Follow : RecenterPolicy.Manual,
