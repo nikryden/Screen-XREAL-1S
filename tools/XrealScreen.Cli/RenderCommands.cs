@@ -11,7 +11,7 @@ internal static class RenderCommands
     public static Command Create()
     {
         var kind = new Option<WorkspaceKind>("--workspace") { Description = "AppTracking (curved, head-tracked by the app) | GlassesAnchor (glasses hold the image; set OSD Anchor + UltraWide).", DefaultValueFactory = _ => WorkspaceKind.AppTracking };
-        var gap = new Option<int>("--gap") { Description = "Glasses anchor: pixels between the screens.", DefaultValueFactory = _ => 32 };
+        var gap = new Option<int>("--gap") { Description = "Glasses anchor: pixels between the screens.", DefaultValueFactory = _ => 10 };
         var aspect = new Option<AnchorAspect>("--aspect") { Description = "Glasses anchor: Ratio16x9 | Ratio16x10 | Fill.", DefaultValueFactory = _ => AnchorAspect.Ratio16x9 };
         var screens = new Option<int>("--screens") { Description = "Number of virtual monitors (1-6).", DefaultValueFactory = _ => 3 };
         var mode = new Option<UltrawideMode>("--mode") { Description = "Virtual monitor size: Off (16:9), Wide21x9, Wide32x9, Tall16x18.", DefaultValueFactory = _ => UltrawideMode.Off };

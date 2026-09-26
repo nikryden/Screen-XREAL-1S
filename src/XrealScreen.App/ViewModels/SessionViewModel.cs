@@ -22,7 +22,6 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
     private readonly TrackingViewModel _tracking;
     private readonly DispatcherQueueTimer _poseTimer;
     private bool _applyingEngineDistance;
-    private readonly DispatcherQueueTimer _restartTimer;
 
     public SessionViewModel(DispatcherQueue dispatcher, WorkspaceViewModel workspace, TrackingViewModel tracking)
     {
@@ -42,20 +41,6 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
             _workspace.DistanceMeters = Math.Round(meters, 2);
             _applyingEngineDistance = false;
         });
-        // Glasses anchor: changing count/gap/shape needs new virtual monitors → restart (debounced).
-        _restartTimer = dispatcher.CreateTimer();
-        _restartTimer.Interval = TimeSpan.FromMilliseconds(900);
-        _restartTimer.IsRepeating = false;
-        _restartTimer.Tick += async (_, _) => await RestartForNewSplitAsync().ConfigureAwait(true);
-        _workspace.AnchorSplitChanged += (_, _) =>
-        {
-            if (IsRunning && _workspace.IsGlassesAnchor)
-            {
-                _restartTimer.Stop();
-                _restartTimer.Start();
-            }
-        };
-
         _workspace.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(WorkspaceViewModel.DistanceMeters) && IsRunning && !_applyingEngineDistance)
@@ -96,6 +81,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
 
         var options = BuildOptions();
         _store.Save(options);
+        _workspace.MarkScreenSettingsApplied();
         StatusTitle = "Starting…";
         StatusMessage = "Creating virtual monitors and preparing the glasses.";
         Severity = InfoBarSeverity.Informational;
@@ -197,10 +183,20 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         }
     }
 
-    private async Task RestartForNewSplitAsync()
+    /// <summary>
+    /// Applies the screen settings (count, gap, shape): saves them and, when a workspace runs,
+    /// restarts it so the new virtual monitors are created. Nothing changes until this is pressed.
+    /// </summary>
+    [RelayCommand]
+    private async Task ApplyScreenSettingsAsync()
     {
+        _store.Save(BuildOptions());
+        _workspace.MarkScreenSettingsApplied();
         if (!IsRunning)
         {
+            StatusTitle = "Screen settings saved";
+            StatusMessage = "They are used when you start the workspace.";
+            Severity = InfoBarSeverity.Informational;
             return;
         }
 
@@ -250,6 +246,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         _workspace.KindIndex = o.Kind == WorkspaceKind.GlassesAnchor ? 0 : 1;
         _workspace.AnchorGapPixels = o.AnchorGapPixels;
         _workspace.AnchorAspectIndex = (int)o.AnchorAspect;
+        _workspace.MarkScreenSettingsApplied();
         _workspace.ScreenCount = o.ScreenCount;
         _workspace.UltrawideModeIndex = Math.Max(0, UltrawideModes.All.ToList().IndexOf(o.Mode));
         _workspace.PresetIndex = o.Preset == LayoutPreset.Grid ? 1 : 0;

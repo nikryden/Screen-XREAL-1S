@@ -6,6 +6,19 @@ namespace XrealScreen.Host;
 /// <summary>What the glasses currently send to Windows, described for the UI.</summary>
 public static class GlassesSignal
 {
+    /// <summary>Current glasses resolution, or null when the glasses are not an active monitor.</summary>
+    public static Resolution? CurrentResolution()
+    {
+        try
+        {
+            return GlassesDisplayLocator.FindGlasses(new CcdDisplayTopology().GetActiveMonitors())?.Resolution;
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            return null;
+        }
+    }
+
     public static string Describe(int screenCount, int gapPixels = 0, AnchorAspect aspect = AnchorAspect.Fill)
     {
         try

@@ -42,22 +42,38 @@ public sealed partial class WorkspaceViewModel : ObservableObject
     public partial int AnchorAspectIndex { get; set; }
 
     [ObservableProperty]
-    public partial double AnchorGapPixels { get; set; } = 32;
+    [NotifyPropertyChangedFor(nameof(AnchorGapText))]
+    public partial double AnchorGapPixels { get; set; } = 10;
+
+    public string AnchorGapText => $"{Math.Round(AnchorGapPixels):F0} px";
 
     public XrealScreen.Core.Workspace.AnchorAspect AnchorAspect => (XrealScreen.Core.Workspace.AnchorAspect)Math.Clamp(AnchorAspectIndex, 0, 2);
 
-    /// <summary>Raised when a glasses-anchor split setting changes (count, gap, shape).</summary>
-    public event EventHandler? AnchorSplitChanged;
+    /// <summary>True when count/gap/shape changed since the last Apply or Start.</summary>
+    [ObservableProperty]
+    public partial bool HasPendingScreenChanges { get; set; }
 
-    partial void OnAnchorAspectIndexChanged(int value) => OnAnchorSplitChanged();
+    /// <summary>Glasses image size used for the preview (the real signal, or a 32:9 example).</summary>
+    public XrealScreen.Core.Workspace.Resolution AnchorCanvas { get; private set; } = new(3840, 1080);
 
-    partial void OnAnchorGapPixelsChanged(double value) => OnAnchorSplitChanged();
+    public bool AnchorCanvasIsExample { get; private set; } = true;
 
-    private void OnAnchorSplitChanged()
+    public IReadOnlyList<XrealScreen.Core.Workspace.PixelRect> AnchorRects { get; private set; } = [];
+
+    /// <summary>Raised when the glasses-anchor preview must be redrawn.</summary>
+    public event EventHandler? AnchorPreviewChanged;
+
+    partial void OnAnchorAspectIndexChanged(int value) => OnAnchorSettingChanged();
+
+    partial void OnAnchorGapPixelsChanged(double value) => OnAnchorSettingChanged();
+
+    private void OnAnchorSettingChanged()
     {
+        HasPendingScreenChanges = true;
         RefreshGlassesSignal();
-        AnchorSplitChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    public void MarkScreenSettingsApplied() => HasPendingScreenChanges = false;
 
     /// <summary>What the glasses send right now (glasses-anchor mode), e.g. "32:9 (3840×1080) → 2 screens".</summary>
     [ObservableProperty]
@@ -66,7 +82,14 @@ public sealed partial class WorkspaceViewModel : ObservableObject
     public void RefreshGlassesSignal()
     {
         int count = double.IsNaN(ScreenCount) ? 1 : (int)Math.Clamp(Math.Round(ScreenCount), 1, XrealScreen.Core.Workspace.AnchorSplit.MaxScreens);
-        GlassesSignal = XrealScreen.Host.GlassesSignal.Describe(count, (int)AnchorGapPixels, AnchorAspect);
+        int gap = (int)Math.Round(AnchorGapPixels);
+        GlassesSignal = XrealScreen.Host.GlassesSignal.Describe(count, gap, AnchorAspect);
+
+        var current = XrealScreen.Host.GlassesSignal.CurrentResolution();
+        AnchorCanvasIsExample = current is not { } r || !XrealScreen.Core.Workspace.AnchorSplit.IsUltrawideSignal(r);
+        AnchorCanvas = AnchorCanvasIsExample ? new XrealScreen.Core.Workspace.Resolution(3840, 1080) : current!.Value;
+        AnchorRects = XrealScreen.Core.Workspace.AnchorSplit.Split(AnchorCanvas, count, gap, AnchorAspect);
+        AnchorPreviewChanged?.Invoke(this, EventArgs.Empty);
     }
 
     [ObservableProperty]
@@ -94,7 +117,7 @@ public sealed partial class WorkspaceViewModel : ObservableObject
         Recompute();
         if (IsGlassesAnchor)
         {
-            OnAnchorSplitChanged();
+            OnAnchorSettingChanged();
         }
     }
 
