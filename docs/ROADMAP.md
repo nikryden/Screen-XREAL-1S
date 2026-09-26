@@ -37,7 +37,7 @@ Deliverables: fullscreen swapchain on glasses output, captured monitor on pose-d
 - [x] Mouse usable (desktop order desk → virtual → glasses)
 - [ ] Comfort: Full mode with less lag (see ADR-0009 follow-up)
 
-## M6 (in progress: crash-safe restore done) Background & service
+## M6 Background & service (in progress: crash-safe restore done)
 Deliverables: tray, StartupTask, helper service + ACL'd pipe, crash-safe topology restore, sleep/resume + hot-plug state machines.
 - [ ] Kill app mid-session → topology restored
 - [ ] Sleep/resume and unplug/replug recover without restart
