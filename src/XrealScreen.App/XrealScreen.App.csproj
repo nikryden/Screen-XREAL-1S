@@ -13,6 +13,7 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <!-- x:Bind needs instance members on pages even when they only forward to App.* -->
     <NoWarn>$(NoWarn);CA1822</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,12 +1,21 @@
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.Windows.AppLifecycle;
+using XrealScreen.App.Tray;
 using XrealScreen.App.ViewModels;
+using XrealScreen.Host;
 
 namespace XrealScreen.App;
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1001", Justification = "App lives for the whole process; the tray icon is disposed in ExitApp / window closing.")]
 public partial class App : Application
 {
-    private Window? _window;
+    /// <summary>StartupTask id declared in Package.appxmanifest.</summary>
+    public const string StartupTaskId = "XrealScreenStartup";
+
+    private TrayIcon? _tray;
+    private bool _exiting;
 
     public App()
     {
@@ -24,7 +33,7 @@ public partial class App : Application
         };
     }
 
-    /// <summary>App-wide view models (single window app; a DI container arrives with XrealScreen.Host in M5).</summary>
+    /// <summary>App-wide view models (single window app).</summary>
     public static WorkspaceViewModel Workspace { get; private set; } = null!;
 
     public static TrackingViewModel Tracking { get; private set; } = null!;
@@ -35,22 +44,129 @@ public partial class App : Application
 
     public static MainWindow MainWindow { get; private set; } = null!;
 
+    public static AppPreferences Preferences { get; private set; } = null!;
+
+    public static new App Current => (App)Application.Current;
+
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         var dispatcher = DispatcherQueue.GetForCurrentThread();
+        Preferences = AppPreferences.Load();
         Workspace = new WorkspaceViewModel();
         Tracking = new TrackingViewModel(dispatcher);
         Device = new DeviceViewModel();
         Session = new SessionViewModel(dispatcher, Workspace, Tracking);
 
         MainWindow = new MainWindow();
-        MainWindow.Closed += (_, _) =>
+        MainWindow.AppWindow.Closing += OnWindowClosing;
+        MainWindow.Closed += (_, _) => ShutDownSession();
+
+        _tray = new TrayIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.ico"), "XrealScreen — workspace stopped");
+        _tray.CommandInvoked += OnTrayCommand;
+        Session.PropertyChanged += (_, e) =>
         {
-            // Always hand the desktop back (virtual monitors, layout, refresh rates).
-            Session.Dispose();
-            Tracking.Dispose();
+            if (e.PropertyName == nameof(SessionViewModel.State))
+            {
+                _tray.WorkspaceRunning = Session.IsRunning;
+                _tray.SetTooltip(Session.IsRunning ? "XrealScreen — workspace running" : "XrealScreen — workspace stopped");
+            }
         };
-        _window = MainWindow;
-        _window.Activate();
+
+        // Started by Windows at sign-in: stay in the tray.
+        bool startedByWindows = AppInstance.GetCurrent().GetActivatedEventArgs().Kind == ExtendedActivationKind.StartupTask;
+        if (!startedByWindows)
+        {
+            MainWindow.Activate();
+        }
+    }
+
+    public void ShowMainWindow()
+    {
+        MainWindow.AppWindow.Show();
+        if (MainWindow.AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized } presenter)
+        {
+            presenter.Restore();
+        }
+
+        MainWindow.Activate();
+    }
+
+    /// <summary>Quits for real: stops the workspace (restoring the desktop) and removes the tray icon.</summary>
+    public void ExitApp()
+    {
+        _exiting = true;
+        ShutDownSession();
+        _tray?.Dispose();
+        _tray = null;
+        Exit();
+    }
+
+    private void OnWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
+    {
+        if (_exiting || !Preferences.KeepRunningInTray)
+        {
+            _exiting = true;
+            _tray?.Dispose();
+            _tray = null;
+            return;
+        }
+
+        // Keep running in the tray (the workspace keeps running too).
+        args.Cancel = true;
+        sender.Hide();
+        if (!Preferences.TrayHintShown)
+        {
+            _tray?.ShowNotification("XrealScreen is still running", "Open it or start/stop the workspace from the tray icon, or press Ctrl+Alt+W.");
+            Preferences.TrayHintShown = true;
+            Preferences.Save();
+        }
+    }
+
+    private void OnTrayCommand(TrayCommand command)
+    {
+        switch (command)
+        {
+            case TrayCommand.Open:
+                ShowMainWindow();
+                break;
+            case TrayCommand.StartWorkspace:
+                Session.StartCommand.Execute(null);
+                break;
+            case TrayCommand.StopWorkspace:
+                Session.StopCommand.Execute(null);
+                break;
+            case TrayCommand.Recenter:
+                Session.RecenterCommand.Execute(null);
+                break;
+            case TrayCommand.ToggleWorkspace:
+                if (Session.IsRunning)
+                {
+                    Session.StopCommand.Execute(null);
+                }
+                else if (Session.IsIdle)
+                {
+                    Session.StartCommand.Execute(null);
+                }
+
+                break;
+            case TrayCommand.Exit:
+                ExitApp();
+                break;
+        }
+    }
+
+    private bool _shutDown;
+
+    private void ShutDownSession()
+    {
+        if (_shutDown)
+        {
+            return;
+        }
+
+        _shutDown = true;
+        // Always hand the desktop back (virtual monitors, layout, refresh rates).
+        Session.Dispose();
+        Tracking.Dispose();
     }
 }

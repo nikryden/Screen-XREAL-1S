@@ -12,11 +12,12 @@
   - **Glasses anchor** (user's preferred): glasses OSD Anchor + UltraWide; app splits the glasses image into 1–3 pixel-exact virtual screens with a gap (default 10 px) and aspect (16:9 default); preview picture + **Apply screen settings** button; auto-restart when the glasses UltraWide changes.
   - **App head tracking**: curved screens, stabilizer presets (default Strong), tracking axes (default Turning + level; Full is most comfortable per user), neck model, Ctrl+Alt+Plus/Minus distance, desk refresh sync.
 - Engine hardening: no NaN before the first IMU sample, watchdog for glasses re-enumeration, catch-all session errors, forced virtual-monitor resolutions (fixes SetDisplayConfig 87), crash log `%LOCALAPPDATA%\XrealScreen\crash.log`.
+- **Tray + background (M6)**: tray icon (Open / Start / Stop / Recenter / Exit), close-to-tray, Ctrl+Alt+W toggles the workspace, Start with Windows (MSIX StartupTask, starts hidden in tray); app preferences in `%LOCALAPPDATA%\XrealScreen\app.json`.
 - **Crash-safe restore**: at app start (and `xrs recover`) leftover virtual monitors are removed and layout + refresh rates restored ([verified-local] hard-kill test).
 - 81/81 tests.
 
 ## Next 3 steps
-1. M6: tray icon + start with Windows + global hotkey to start/stop the workspace without opening the app.
+1. M6: user test of tray icon / start with Windows / Ctrl+Alt+W (implemented 2026-09-27); then optional "start workspace when glasses connect".
 2. M7: installer (bootstrapper installs/checks virtual-display-rs, then the MSIX); signed test package so the app runs outside `dotnet run`.
 3. App head tracking latency (ADR-0009 follow-up: independent flip / DirectComposition) and a comfort re-test of Full vs Turning+level.
 
