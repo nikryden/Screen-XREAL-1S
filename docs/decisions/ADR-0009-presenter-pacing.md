@@ -14,6 +14,15 @@ The workspace is drawn in a borderless popup window covering the glasses monitor
 ## Decision
 Keep a DWM-composed borderless window and pace the render thread on the **glasses output's vblank** (`WaitForVBlank`), late-latch the pose right after it, render, `Present(0)`; device max frame latency 1. Set the glasses refresh after all topology changes and verify with `OutputTiming.MeasureVblankHz`.
 
+## Update 2026-09-26 (glasses A/B tests, user feedback)
+- Frozen pose (`--source fixed`, no tracking): **no shake** → glasses, link and our rendering are clean.
+- Stabilizer strong vs ultra with the desk at 144 Hz: **no noticeable difference** → remaining shake was not tracking noise.
+- Desk monitor at **120 Hz** (same as the glasses): **calmer**. The DWM clock mismatch (144 vs 120) varies the
+  frame-to-photon delay frame by frame, which reads as shake during head motion.
+- Decision addition: `xrs render` sets the other physical monitors to the glasses refresh for the session
+  (`--sync-desktop`, default on) and restores them on exit. Follow-up: remove DWM from the glasses path
+  (independent flip / DirectComposition) so the desk can keep its own rate.
+
 ## Consequences
 - + Exactly one frame per glasses refresh; independent of the primary monitor's rate; focus-independent.
 - − DWM composition adds up to one compositor frame of latency on top of scan-out (not measured yet; M3 latency work). Prediction (`--predict-ms`, default 12 ms) compensates.

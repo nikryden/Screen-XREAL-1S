@@ -15,7 +15,17 @@
 
 Frames are never written to disk (privacy).
 
-## Render
+## Render — verified on the 1S (2026-09-26)
+| Fact | Tag |
+|------|-----|
+| Borderless popup + flip-model swapchain on the glasses is **composed by DWM** (no independent flip), pacing follows the primary monitor clock | [verified-hw] |
+| Pacing on the glasses output vblank (`WaitForVBlank`) gives 119.9 fps at 120 Hz, p99 8.6 ms, pose latch→present ~0.2 ms | [verified-hw] |
+| Adding/removing virtual monitors or changing another monitor's mode makes Windows re-apply the glasses saved mode (120 → 90 Hz); set the glasses mode last and verify by vblank | [verified-hw] |
+| Visible shake while holding still came mainly from the 144 Hz (desk) vs 120 Hz (glasses) DWM mismatch; fixed pose showed no shake; desk at 120 Hz was calmer | [verified-hw] user A/B |
+| Head micro-motion while "still" ≈ 3–4 °/s → ~1.3 px/frame; One Euro stabilizer presets reduce it (strong 0.75 px, ultra 0.43 px); user preferred strong | [verified-hw] fixture + user A/B |
+| XREAL OSD must be **Follow + Stabilizer off**; Anchor during a test made the image wobble (double correction) | [verified-hw] |
+
+## Render (design)
 - Fullscreen D3D11 **flip-model** swapchain (`FLIP_DISCARD`, waitable object) on the glasses output, in a borderless window positioned on that monitor.
 - Device created on the **same adapter** as the glasses output and the VDD monitors (no cross-adapter copies).
 - Each virtual monitor = textured quad (or curved mesh) rotated by the inverse head pose.

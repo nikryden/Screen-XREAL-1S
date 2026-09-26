@@ -19,7 +19,7 @@ Deliverables: CCD enumeration - **done**; EDID glasses identification - **done**
 - [x] Monitors created, captured and removed cleanly; topology restored (2026-09-26)
 - [x] Driver needs no admin at runtime; pipe protocol documented from source and verified
 
-## M3 Render spike
+## M3 Render spike (in progress)
 Deliverables: fullscreen swapchain on glasses output, captured monitor on pose-driven quad, latency stats.
 - [ ] 120 fps sustained
 - [ ] < 20 ms pose→present
