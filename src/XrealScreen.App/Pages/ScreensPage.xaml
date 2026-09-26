@@ -40,6 +40,22 @@
                         MaxColumns="4"
                         SelectedIndex="{x:Bind Workspace.UltrawideModeIndex, Mode=TwoWay}" />
 
+                    <StackPanel Spacing="12" Visibility="{x:Bind Workspace.IsGlassesAnchor, Mode=OneWay}">
+                        <Slider
+                            Header="Space between screens (pixels)"
+                            MaxWidth="480"
+                            HorizontalAlignment="Left"
+                            MinWidth="320"
+                            Maximum="200"
+                            Minimum="0"
+                            StepFrequency="4"
+                            Value="{x:Bind Workspace.AnchorGapPixels, Mode=TwoWay}" />
+                        <RadioButtons
+                            Header="Screen shape (screens fill the space and keep this aspect ratio)"
+                            ItemsSource="{x:Bind Workspace.AnchorAspectNames}"
+                            MaxColumns="3"
+                            SelectedIndex="{x:Bind Workspace.AnchorAspectIndex, Mode=TwoWay}" />
+                    </StackPanel>
                     <NumberBox
                         Header="Number of screens"
                         Maximum="6"

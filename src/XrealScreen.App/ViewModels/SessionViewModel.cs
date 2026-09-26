@@ -22,6 +22,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
     private readonly TrackingViewModel _tracking;
     private readonly DispatcherQueueTimer _poseTimer;
     private bool _applyingEngineDistance;
+    private readonly DispatcherQueueTimer _restartTimer;
 
     public SessionViewModel(DispatcherQueue dispatcher, WorkspaceViewModel workspace, TrackingViewModel tracking)
     {
@@ -41,6 +42,20 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
             _workspace.DistanceMeters = Math.Round(meters, 2);
             _applyingEngineDistance = false;
         });
+        // Glasses anchor: changing count/gap/shape needs new virtual monitors → restart (debounced).
+        _restartTimer = dispatcher.CreateTimer();
+        _restartTimer.Interval = TimeSpan.FromMilliseconds(900);
+        _restartTimer.IsRepeating = false;
+        _restartTimer.Tick += async (_, _) => await RestartForNewSplitAsync().ConfigureAwait(true);
+        _workspace.AnchorSplitChanged += (_, _) =>
+        {
+            if (IsRunning && _workspace.IsGlassesAnchor)
+            {
+                _restartTimer.Stop();
+                _restartTimer.Start();
+            }
+        };
+
         _workspace.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(WorkspaceViewModel.DistanceMeters) && IsRunning && !_applyingEngineDistance)
@@ -182,6 +197,23 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         }
     }
 
+    private async Task RestartForNewSplitAsync()
+    {
+        if (!IsRunning)
+        {
+            return;
+        }
+
+        StatusTitle = "Applying new screen layout";
+        StatusMessage = "Restarting the workspace…";
+        await StopAsync().ConfigureAwait(true);
+        await Task.Delay(1000).ConfigureAwait(true);
+        if (IsIdle)
+        {
+            await StartAsync().ConfigureAwait(true);
+        }
+    }
+
     private void AddLog(string message)
     {
         Log.Insert(0, $"{DateTime.Now:HH:mm:ss}  {message}");
@@ -194,6 +226,8 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
     private WorkspaceOptions BuildOptions() => new()
     {
         Kind = _workspace.KindIndex == 0 ? WorkspaceKind.GlassesAnchor : WorkspaceKind.AppTracking,
+        AnchorGapPixels = (int)Math.Round(_workspace.AnchorGapPixels),
+        AnchorAspect = _workspace.AnchorAspect,
         ScreenCount = (int)Math.Clamp(Math.Round(double.IsNaN(_workspace.ScreenCount) ? 1 : _workspace.ScreenCount), 1, WorkspaceLayout.MaxScreens),
         Mode = _workspace.UltrawideMode,
         Preset = _workspace.PresetIndex == 1 ? LayoutPreset.Grid : LayoutPreset.Arc,
@@ -214,6 +248,8 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
     private void ApplySettings(WorkspaceOptions o)
     {
         _workspace.KindIndex = o.Kind == WorkspaceKind.GlassesAnchor ? 0 : 1;
+        _workspace.AnchorGapPixels = o.AnchorGapPixels;
+        _workspace.AnchorAspectIndex = (int)o.AnchorAspect;
         _workspace.ScreenCount = o.ScreenCount;
         _workspace.UltrawideModeIndex = Math.Max(0, UltrawideModes.All.ToList().IndexOf(o.Mode));
         _workspace.PresetIndex = o.Preset == LayoutPreset.Grid ? 1 : 0;

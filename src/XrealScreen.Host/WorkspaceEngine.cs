@@ -184,7 +184,7 @@ public sealed class WorkspaceEngine : IAsyncDisposable
             }
 
             changedDesktop = true;
-            var rects = AnchorSplit.Split(glasses.Resolution, o.ScreenCount);
+            var rects = AnchorSplit.Split(glasses.Resolution, o.ScreenCount, o.AnchorGapPixels, o.AnchorAspect);
             var virtuals = new List<VirtualDisplay>();
             foreach (var rect in rects)
             {

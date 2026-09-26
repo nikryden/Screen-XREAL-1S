@@ -11,6 +11,8 @@ internal static class RenderCommands
     public static Command Create()
     {
         var kind = new Option<WorkspaceKind>("--workspace") { Description = "AppTracking (curved, head-tracked by the app) | GlassesAnchor (glasses hold the image; set OSD Anchor + UltraWide).", DefaultValueFactory = _ => WorkspaceKind.AppTracking };
+        var gap = new Option<int>("--gap") { Description = "Glasses anchor: pixels between the screens.", DefaultValueFactory = _ => 32 };
+        var aspect = new Option<AnchorAspect>("--aspect") { Description = "Glasses anchor: Ratio16x9 | Ratio16x10 | Fill.", DefaultValueFactory = _ => AnchorAspect.Ratio16x9 };
         var screens = new Option<int>("--screens") { Description = "Number of virtual monitors (1-6).", DefaultValueFactory = _ => 3 };
         var mode = new Option<UltrawideMode>("--mode") { Description = "Virtual monitor size: Off (16:9), Wide21x9, Wide32x9, Tall16x18.", DefaultValueFactory = _ => UltrawideMode.Off };
         var source = new Option<TrackingSource>("--source") { Description = "Head tracking: Glasses | Simulated | Fixed (no tracking, diagnostic).", DefaultValueFactory = _ => TrackingSource.Glasses };
@@ -26,7 +28,7 @@ internal static class RenderCommands
         var syncDesktop = new Option<bool>("--sync-desktop") { Description = "Set other monitors to the glasses refresh for the session (avoids judder; restored on exit).", DefaultValueFactory = _ => true };
         var command = new Command("render", "Show virtual monitors fixed in space in the glasses (Ctrl+Alt+R recenter, Ctrl+Alt+Plus/Minus closer/farther, Ctrl+Alt+Q stop).")
         {
-            screens, mode, source, seconds, follow, hz, predict, beta, gate, stabilize, syncDesktop, neck, axes, kind,
+            screens, mode, source, seconds, follow, hz, predict, beta, gate, stabilize, syncDesktop, neck, axes, kind, gap, aspect,
         };
         command.SetAction(async (parse, ct) =>
         {
@@ -45,6 +47,8 @@ internal static class RenderCommands
                 NeckModel = parse.GetValue(neck),
                 Axes = parse.GetValue(axes),
                 Kind = parse.GetValue(kind),
+                AnchorGapPixels = parse.GetValue(gap),
+                AnchorAspect = parse.GetValue(aspect),
             };
             return await RunAsync(options, parse.GetValue(seconds), ct).ConfigureAwait(false);
         });

@@ -34,6 +34,12 @@ public sealed record WorkspaceOptions
 
     public int ScreenCount { get; init; } = 3;
 
+    /// <summary>Glasses anchor: pixels between the screens.</summary>
+    public int AnchorGapPixels { get; init; } = 32;
+
+    /// <summary>Glasses anchor: screen shape (screens are as large as possible with this aspect).</summary>
+    public AnchorAspect AnchorAspect { get; init; } = AnchorAspect.Ratio16x9;
+
     public UltrawideMode Mode { get; init; } = UltrawideMode.Off;
 
     public LayoutPreset Preset { get; init; } = LayoutPreset.Arc;

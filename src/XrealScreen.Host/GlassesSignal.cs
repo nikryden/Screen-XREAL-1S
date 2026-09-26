@@ -6,7 +6,7 @@ namespace XrealScreen.Host;
 /// <summary>What the glasses currently send to Windows, described for the UI.</summary>
 public static class GlassesSignal
 {
-    public static string Describe(int screenCount)
+    public static string Describe(int screenCount, int gapPixels = 0, AnchorAspect aspect = AnchorAspect.Fill)
     {
         try
         {
@@ -23,7 +23,7 @@ public static class GlassesSignal
             }
 
             string name = r.Height > r.Width ? "16:18" : (double)r.Width / r.Height > 3 ? "32:9" : "21:9";
-            var split = AnchorSplit.Split(r, screenCount);
+            var split = AnchorSplit.Split(r, screenCount, gapPixels, aspect);
             return $"The glasses send {name} ({r}) → {split.Count} screen(s) of {split[0].Width}×{split[0].Height}. Change UltraWide in the glasses menu; a running workspace adapts automatically.";
         }
         catch (System.ComponentModel.Win32Exception ex)

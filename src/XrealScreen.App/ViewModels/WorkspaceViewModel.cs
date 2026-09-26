@@ -35,6 +35,30 @@ public sealed partial class WorkspaceViewModel : ObservableObject
 
     public bool IsGlassesAnchor => KindIndex == 0;
 
+    public IReadOnlyList<string> AnchorAspectNames { get; } = ["16:9 (recommended)", "16:10", "Fill the height"];
+
+    /// <summary>Index = (int)AnchorAspect.</summary>
+    [ObservableProperty]
+    public partial int AnchorAspectIndex { get; set; }
+
+    [ObservableProperty]
+    public partial double AnchorGapPixels { get; set; } = 32;
+
+    public XrealScreen.Core.Workspace.AnchorAspect AnchorAspect => (XrealScreen.Core.Workspace.AnchorAspect)Math.Clamp(AnchorAspectIndex, 0, 2);
+
+    /// <summary>Raised when a glasses-anchor split setting changes (count, gap, shape).</summary>
+    public event EventHandler? AnchorSplitChanged;
+
+    partial void OnAnchorAspectIndexChanged(int value) => OnAnchorSplitChanged();
+
+    partial void OnAnchorGapPixelsChanged(double value) => OnAnchorSplitChanged();
+
+    private void OnAnchorSplitChanged()
+    {
+        RefreshGlassesSignal();
+        AnchorSplitChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     /// <summary>What the glasses send right now (glasses-anchor mode), e.g. "32:9 (3840×1080) → 2 screens".</summary>
     [ObservableProperty]
     public partial string GlassesSignal { get; set; } = string.Empty;
@@ -42,7 +66,7 @@ public sealed partial class WorkspaceViewModel : ObservableObject
     public void RefreshGlassesSignal()
     {
         int count = double.IsNaN(ScreenCount) ? 1 : (int)Math.Clamp(Math.Round(ScreenCount), 1, XrealScreen.Core.Workspace.AnchorSplit.MaxScreens);
-        GlassesSignal = XrealScreen.Host.GlassesSignal.Describe(count);
+        GlassesSignal = XrealScreen.Host.GlassesSignal.Describe(count, (int)AnchorGapPixels, AnchorAspect);
     }
 
     [ObservableProperty]
@@ -70,7 +94,7 @@ public sealed partial class WorkspaceViewModel : ObservableObject
         Recompute();
         if (IsGlassesAnchor)
         {
-            RefreshGlassesSignal();
+            OnAnchorSplitChanged();
         }
     }
 
