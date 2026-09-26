@@ -11,7 +11,8 @@ Windows 11 app (.NET 10, WinUI 3) that turns XREAL 1S / One / One Pro glasses in
 ```powershell
 dotnet build XrealScreen.slnx -p:Platform=x64      # everything incl. WinUI app
 dotnet test --solution XrealScreen.slnx            # xUnit v3 on Microsoft.Testing.Platform (global.json)
-dotnet run --project src/XrealScreen.App -p:Platform=x64   # packaged launch via WinApp debug identity
+dotnet build src/XrealScreen.App -p:Platform=x64         # build the APP PROJECT before running it: the solution build writes bin\Debug\…, but
+dotnet run --project src/XrealScreen.App -p:Platform=x64   # `dotnet run -p:Platform=x64` launches bind\Debug\… (stale app otherwise!)
 dotnet run --project tools/XrealScreen.Cli -- --help       # xrs: devices | probe | imu … | display … | vdd … | capture test | render
 ```
 WinUI templates: `dotnet new install Microsoft.WindowsAppSDK.WinUI.CSharp.Templates`.
