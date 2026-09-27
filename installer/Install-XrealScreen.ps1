@@ -4,8 +4,10 @@
   (needed to trust the test certificates and install the virtual display driver).
 .PARAMETER UpdateDriver
   Replace an already installed virtual-display-rs driver with the bundled build.
+.PARAMETER Yes
+  Unattended: trust the driver test certificate without asking (test machines only).
 #>
-param([switch]$UpdateDriver)
+param([switch]$UpdateDriver, [switch]$Yes)
 $ErrorActionPreference = 'Stop'
 $here = $PSScriptRoot
 
@@ -26,7 +28,7 @@ Write-Host 'OK certificate trusted'
 
 # 2. Virtual display driver (virtual-display-rs 0.4, ADR-0008): bundled; an existing one is kept
 if (Test-Path (Join-Path $here 'driver\VirtualDisplayDriver.inf')) {
-    & (Join-Path $here 'Install-Driver.ps1') -Update:$UpdateDriver
+    & (Join-Path $here 'Install-Driver.ps1') -Update:$UpdateDriver -Yes:$Yes
 } elseif (Test-Path '\\.\pipe\virtualdisplaydriver') {
     Write-Host 'OK virtual display driver found'
 } else {
