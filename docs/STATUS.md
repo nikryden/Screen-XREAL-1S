@@ -20,7 +20,9 @@
 
 ## Next 3 steps
 1. M6: user test of tray icon / start with Windows / Ctrl+Alt+W (implemented 2026-09-27); then optional "start workspace when glasses connect".
-2. M7: clean-PC install test — Windows Sandbox enabled 2026-09-27 (restart pending); run `installer	est\Start-SandboxTest.ps1`, read `artifacts\sandboxesultseport.txt`. Then trusted signing for a public release.
+2. M7: clean-PC install test in Windows Sandbox (`installer\test\Start-SandboxTest.ps1` -> `artifacts\sandbox\results\report.txt`). **First run 2026-09-27 stalled** right after "PASS no driver before install", inside `Install-XrealScreen.ps1 -Yes` (no output for 9 min) - probably a dialog in the Sandbox (driver install prompt or Add-AppxPackage). Next: look at the Sandbox window, log each install step separately with timeouts in `Run-InSandbox.ps1`, rerun. Then trusted signing for a public release.
+esults
+eport.txt`. Then trusted signing for a public release.
 3. App head tracking: glasses A/B of prediction 20 vs 26 ms (measured latch→scan-out ≈ 22 ms, ADR-0009); optional Strong vs Balanced for the last nod bob. Removing DWM (always composed here) needs exclusive fullscreen or DirectComposition — deferred.
 
 ## Blockers
