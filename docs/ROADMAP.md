@@ -43,11 +43,11 @@ Deliverables: tray, StartupTask, helper service + ACL'd pipe, crash-safe topolog
 - [ ] Kill app mid-session → topology restored
 - [ ] Sleep/resume and unplug/replug recover without restart
 
-## M7 Packaging (phase 1 done 2026-09-27)
+## M7 Packaging (phases 1 + 2 done 2026-09-27)
 - [x] App icon + MSIX logos (`tools/branding/Make-Icons.ps1`)
 - [x] Signed self-contained MSIX + install/uninstall scripts (`installer/`, ADR-0005 update)
-- [ ] Phase 2: build + sign virtual-display-rs 0.4 ourselves; bootstrapper installs it (needs Rust + WDK)
-- [ ] Trusted signing certificate (or Store) for a public release
+- [x] Phase 2: build + sign virtual-display-rs 0.4 ourselves; installer installs it (`installer/driver/Build-Driver.ps1`, `Install-Driver.ps1`, ADR-0005)
+- [ ] Trusted signing certificate (or Store) for a public release; driver via EV + attestation signing; license list of the driver's Rust crates
 - [ ] Clean-VM install test
 
 ## M8 Hardening

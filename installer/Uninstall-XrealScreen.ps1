@@ -12,4 +12,6 @@ if ($pkg) {
 } else {
     Write-Host 'XrealScreen is not installed.'
 }
+# Removes the virtual display driver only if this installer installed it.
+& (Join-Path $PSScriptRoot 'Install-Driver.ps1') -Uninstall
 Write-Host 'Settings remain in %LOCALAPPDATA%\XrealScreen (delete the folder to remove them).'

@@ -8,7 +8,8 @@
     installer\.signing (git-ignored). For a public release replace it with a trusted certificate (ADR-0005).
   - Publishes the app self-contained (.NET + Windows App SDK inside the package): the target PC needs
     no runtimes or developer tools.
-  - Driver: NOT included (ADR-0008/0005 phase 1). Install-XrealScreen.ps1 checks for it.
+  - Driver: bundles artifacts\driver (build it first with installer\driver\Build-Driver.ps1, ADR-0005 phase 2);
+    without it the package has no driver and Install-XrealScreen.ps1 only checks for one.
 #>
 param(
     [string]$Configuration = 'Release',
@@ -63,7 +64,15 @@ finally {
 $msix = Get-ChildItem $pkgDir -Recurse -Filter *.msix | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if (-not $msix) { throw 'no .msix produced' }
 Copy-Item $msix.FullName (Join-Path $out 'XrealScreen.msix') -Force
-Copy-Item (Join-Path $PSScriptRoot 'Install-XrealScreen.ps1'), (Join-Path $PSScriptRoot 'Uninstall-XrealScreen.ps1'), (Join-Path $PSScriptRoot 'README.md') $out -Force
+Copy-Item (Join-Path $PSScriptRoot 'Install-XrealScreen.ps1'), (Join-Path $PSScriptRoot 'Uninstall-XrealScreen.ps1'), (Join-Path $PSScriptRoot 'Install-Driver.ps1'), (Join-Path $PSScriptRoot 'README.md') $out -Force
+$driver = Join-Path $repo 'artifacts\driver'
+Remove-Item (Join-Path $out 'driver') -Recurse -Force -ErrorAction SilentlyContinue
+if (Test-Path (Join-Path $driver 'VirtualDisplayDriver.cat')) {
+    Copy-Item $driver (Join-Path $out 'driver') -Recurse
+    Write-Host 'driver: bundled from artifacts\driver'
+} else {
+    Write-Warning 'driver: artifacts\driver not built (installer\driver\Build-Driver.ps1) - package has no driver'
+}
 
 $sig = Get-AuthenticodeSignature (Join-Path $out 'XrealScreen.msix')
 Write-Host "package: $out\XrealScreen.msix  ($([math]::Round($msix.Length / 1MB, 1)) MB)  signer: $($sig.SignerCertificate.Subject)"

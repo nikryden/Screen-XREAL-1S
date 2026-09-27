@@ -27,3 +27,18 @@ We want clean install/update/uninstall (MSIX), but MSIX cannot install kernel or
 - The driver is **not bundled yet** (ADR-0008: 0.4.0 has no official release; building it needs Rust + WDK). Phase 2: build and sign virtual-display-rs ourselves and let the bootstrapper install it.
 - Trimming stays off (WinUI + reflection risk); ReadyToRun on in Release.
 
+## Update 2026-09-27 — phase 2: bundled virtual display driver (user decision: separate driver certificate)
+- `installer/driver/Build-Driver.ps1` builds virtual-display-rs **unmodified** at commit `22fcd2e0` (crate 0.4.0, the
+  protocol `VirtualDisplayRsProvider` speaks), stamps the INF as **0.4.0.1**, and signs the DLL and catalog with a
+  **separate** self-signed certificate `CN=XrealScreen Driver (test)` (key in git-ignored `installer/.signing/driver/`).
+  Toolchain [verified-local]: rustup (pinned nightly-2024-07-26 from the upstream `rust-toolchain.toml`), WDK 10.0.26100,
+  VS 2026 C++ tools, **LLVM 18.1.8** as libclang — LLVM 23 made bindgen 0.70 emit empty structs, and newer bindgen emits
+  syntax the pinned nightly cannot parse.
+- `installer/Install-Driver.ps1` (called by `Install-XrealScreen.ps1`): keeps an existing virtual-display-rs driver
+  (e.g. VertoXR's 0.4.0.0) unless `-UpdateDriver`; otherwise **asks** before adding the driver certificate to
+  LocalMachine Root + TrustedPublisher, creates the root device `Root\VirtualDisplayDriver` (SetupAPI, what
+  `devcon install` does) and installs the driver. It records what it did in `%ProgramData%\XrealScreen\driver-install.json`;
+  uninstall removes only that (device, driver package, certificate).
+- Security: trusting a self-signed root lets whoever holds its key sign code this PC trusts. Hence a dedicated driver
+  certificate, an explicit prompt, and removal on uninstall. For a public release: EV certificate + Microsoft
+  attestation signing (no root install), and a full license list of the Rust crates statically linked into the DLL.

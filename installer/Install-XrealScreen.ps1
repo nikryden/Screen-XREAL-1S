@@ -1,8 +1,11 @@
 <#
 .SYNOPSIS
   Installs XrealScreen from this folder. Run in PowerShell "as administrator"
-  (needed once to trust the test certificate).
+  (needed to trust the test certificates and install the virtual display driver).
+.PARAMETER UpdateDriver
+  Replace an already installed virtual-display-rs driver with the bundled build.
 #>
+param([switch]$UpdateDriver)
 $ErrorActionPreference = 'Stop'
 $here = $PSScriptRoot
 
@@ -21,15 +24,13 @@ $cer = Join-Path $here 'XrealScreen.cer'
 Import-Certificate -FilePath $cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
 Write-Host 'OK certificate trusted'
 
-# 2. Virtual display driver (virtual-display-rs, ADR-0008) - not bundled yet
-$pipe = Test-Path '\\.\pipe\virtualdisplaydriver'
-$device = Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue | Where-Object { $_.HardwareID -contains 'Root\VirtualDisplayDriver' }
-if ($pipe -or $device) {
+# 2. Virtual display driver (virtual-display-rs 0.4, ADR-0008): bundled; an existing one is kept
+if (Test-Path (Join-Path $here 'driver\VirtualDisplayDriver.inf')) {
+    & (Join-Path $here 'Install-Driver.ps1') -Update:$UpdateDriver
+} elseif (Test-Path '\\.\pipe\virtualdisplaydriver') {
     Write-Host 'OK virtual display driver found'
 } else {
-    Write-Host '! virtual display driver (virtual-display-rs 0.4) NOT found.' -ForegroundColor Yellow
-    Write-Host '  XrealScreen installs, but the workspace cannot create screens until the driver is installed.' -ForegroundColor Yellow
-    Write-Host '  A bundled driver is planned (see docs/ROADMAP.md, M7).' -ForegroundColor Yellow
+    Write-Host '! virtual display driver NOT found and not bundled in this package.' -ForegroundColor Yellow
 }
 
 # 3. Install (or update) the app
