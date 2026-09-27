@@ -65,10 +65,11 @@ public partial class App : Application
         _tray.CommandInvoked += OnTrayCommand;
         Session.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(SessionViewModel.State))
+            // The tray is gone once the app is exiting, but stopping the session still raises State changes.
+            if (e.PropertyName == nameof(SessionViewModel.State) && _tray is { } tray)
             {
-                _tray.WorkspaceRunning = Session.IsRunning;
-                _tray.SetTooltip(Session.IsRunning ? "XrealScreen — workspace running" : "XrealScreen — workspace stopped");
+                tray.WorkspaceRunning = Session.IsRunning;
+                tray.SetTooltip(Session.IsRunning ? "XrealScreen — workspace running" : "XrealScreen — workspace stopped");
             }
         };
 
