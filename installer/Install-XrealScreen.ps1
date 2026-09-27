@@ -41,5 +41,5 @@ if ($existing -and $existing.IsDevelopmentMode) {
     Write-Host "Removing developer registration ($($existing.PackageFullName))"
     Remove-AppxPackage -Package $existing.PackageFullName
 }
-Add-AppxPackage -Path (Join-Path $here 'XrealScreen.msix') -ForceUpdateFromAnyVersion
+Add-AppxPackage -Path (Join-Path $here 'XrealScreen.msix') -ForceUpdateFromAnyVersion -ForceApplicationShutdown
 Write-Host 'OK XrealScreen installed - find it in the Start menu.' -ForegroundColor Green
