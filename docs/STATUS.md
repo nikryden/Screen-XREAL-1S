@@ -20,7 +20,7 @@
 
 ## Next 3 steps
 1. M6: user test of tray icon / start with Windows / Ctrl+Alt+W (implemented 2026-09-27); then optional "start workspace when glasses connect".
-2. M7: clean-PC install test (Windows Sandbox or a VM) of `artifacts\installer` including the bundled driver; then trusted signing for a public release.
+2. M7: clean-PC install test — Windows Sandbox enabled 2026-09-27 (restart pending); run `installer	est\Start-SandboxTest.ps1`, read `artifacts\sandboxesultseport.txt`. Then trusted signing for a public release.
 3. App head tracking: glasses A/B of prediction 20 vs 26 ms (measured latch→scan-out ≈ 22 ms, ADR-0009); optional Strong vs Balanced for the last nod bob. Removing DWM (always composed here) needs exclusive fullscreen or DirectComposition — deferred.
 
 ## Blockers
