@@ -18,6 +18,15 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
     private readonly DispatcherQueue _dispatcher;
     private readonly WorkspaceEngine _engine = new();
     private readonly WorkspaceSettingsStore _store = new();
+    private readonly WorkspaceLibrary _library = new();
+    private readonly DispatcherQueueTimer _autoSaveTimer;
+    private readonly Task _recovery;
+
+    /// <summary>Last loaded options; keeps the fields the UI does not edit (prediction, filter tuning).</summary>
+    private WorkspaceOptions _base = new();
+
+    /// <summary>What settings.json holds (null = unknown: save on the next check).</summary>
+    private WorkspaceOptions? _lastSaved;
     private readonly WorkspaceViewModel _workspace;
     private readonly TrackingViewModel _tracking;
     private readonly DispatcherQueueTimer _poseTimer;
@@ -48,8 +57,29 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
                 _engine.SetDistance((float)_workspace.DistanceMeters);
             }
         };
-        ApplySettings(_store.Load());
-        _ = RecoverAsync();
+
+        // Every setting is saved automatically shortly after it changes.
+        _autoSaveTimer = dispatcher.CreateTimer();
+        _autoSaveTimer.Interval = TimeSpan.FromMilliseconds(500);
+        _autoSaveTimer.IsRepeating = false;
+        _autoSaveTimer.Tick += (_, _) => SaveIfChanged();
+        _workspace.PropertyChanged += (_, _) => ScheduleAutoSave();
+        _tracking.PropertyChanged += (_, _) => ScheduleAutoSave();
+
+        _lastSaved = _store.Load();
+        ApplySettings(_lastSaved);
+        RefreshSavedWorkspaces(App.Preferences.LastWorkspaceName);
+        _recovery = RecoverAsync();
+    }
+
+    /// <summary>"Start the latest workspace when XrealScreen starts": waits for the crash-safe restore first.</summary>
+    public async Task StartOnLaunchAsync()
+    {
+        await _recovery.ConfigureAwait(true);
+        if (IsIdle)
+        {
+            await StartAsync().ConfigureAwait(true);
+        }
     }
 
     /// <summary>Crash-safe restore: clean up a session that did not end normally (app crash, power loss).</summary>
@@ -101,8 +131,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
             await _tracking.StopCommand.ExecuteAsync(null).ConfigureAwait(true);
         }
 
-        var options = BuildOptions();
-        _store.Save(options);
+        var options = SaveIfChanged();
         _workspace.MarkScreenSettingsApplied();
         StatusTitle = "Starting…";
         StatusMessage = "Creating virtual monitors and preparing the glasses.";
@@ -148,6 +177,8 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
+        _autoSaveTimer.Stop();
+        SaveIfChanged();
         StopBlocking();
         _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
     }
@@ -212,7 +243,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task ApplyScreenSettingsAsync()
     {
-        _store.Save(BuildOptions());
+        SaveIfChanged();
         _workspace.MarkScreenSettingsApplied();
         if (!IsRunning)
         {
@@ -223,6 +254,11 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         }
 
         StatusTitle = "Applying new screen layout";
+        await RestartAsync().ConfigureAwait(true);
+    }
+
+    private async Task RestartAsync()
+    {
         StatusMessage = "Restarting the workspace…";
         await StopAsync().ConfigureAwait(true);
         await Task.Delay(1000).ConfigureAwait(true);
@@ -241,7 +277,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         }
     }
 
-    private WorkspaceOptions BuildOptions() => new()
+    private WorkspaceOptions BuildOptions() => _base with
     {
         Kind = _workspace.KindIndex == 0 ? WorkspaceKind.GlassesAnchor : WorkspaceKind.AppTracking,
         AnchorGapPixels = (int)Math.Round(_workspace.AnchorGapPixels),
@@ -265,6 +301,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
 
     private void ApplySettings(WorkspaceOptions o)
     {
+        _base = o;
         _workspace.KindIndex = o.Kind == WorkspaceKind.GlassesAnchor ? 0 : 1;
         _workspace.AnchorGapPixels = o.AnchorGapPixels;
         _workspace.AnchorAspectIndex = (int)o.AnchorAspect;
@@ -281,5 +318,189 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         _tracking.DeadZoneDegrees = o.AutoCenter.DeadZoneDegrees;
         _tracking.SmoothingSeconds = o.AutoCenter.SmoothingSeconds;
         _tracking.MaxFollowSpeed = o.AutoCenter.MaxFollowSpeedDegrees;
+    }
+
+    private void ScheduleAutoSave()
+    {
+        if (!_autoSaveTimer.IsRunning)
+        {
+            _autoSaveTimer.Start();
+        }
+    }
+
+    /// <summary>Saves the current settings when they differ from the last saved ones; returns them.</summary>
+    private WorkspaceOptions SaveIfChanged()
+    {
+        var options = BuildOptions();
+        if (options == _lastSaved)
+        {
+            return options;
+        }
+
+        try
+        {
+            _store.Save(options);
+            _lastSaved = options;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            CrashLog.Write("Settings", ex);
+        }
+
+        return options;
+    }
+
+    // ---- Saved workspaces ----
+
+    public ObservableCollection<string> SavedWorkspaces { get; } = [];
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(LoadWorkspaceCommand), nameof(DeleteWorkspaceCommand))]
+    public partial string? SelectedWorkspace { get; set; }
+
+    /// <summary>Name for "Save"; follows the selected workspace, so Save overwrites it unless a new name is typed.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SaveWorkspaceCommand))]
+    public partial string WorkspaceName { get; set; } = string.Empty;
+
+    partial void OnSelectedWorkspaceChanged(string? value)
+    {
+        if (value is not null)
+        {
+            WorkspaceName = value;
+        }
+    }
+
+    private bool HasSelectedWorkspace => SelectedWorkspace is not null;
+
+    private bool HasValidWorkspaceName => WorkspaceLibrary.NormalizeName(WorkspaceName) is not null;
+
+    [RelayCommand(CanExecute = nameof(HasValidWorkspaceName))]
+    private void SaveWorkspace()
+    {
+        string name = WorkspaceLibrary.NormalizeName(WorkspaceName)!;
+        try
+        {
+            _library.Save(name, SaveIfChanged());
+            RememberWorkspace(name);
+            ShowInfo("Workspace saved", $"Saved as \"{name}\".");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ShowError("Could not save the workspace", ex.Message);
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(HasSelectedWorkspace))]
+    private async Task LoadWorkspaceAsync()
+    {
+        string name = SelectedWorkspace!;
+        if (_library.Load(name) is not { } options)
+        {
+            ShowError("Could not load the workspace", $"\"{name}\" is missing or damaged.");
+            RefreshSavedWorkspaces(null);
+            return;
+        }
+
+        RememberWorkspace(name);
+        await UseSettingsAsync(options, $"Loaded \"{name}\".").ConfigureAwait(true);
+    }
+
+    [RelayCommand(CanExecute = nameof(HasSelectedWorkspace))]
+    private void DeleteWorkspace()
+    {
+        string name = SelectedWorkspace!;
+        try
+        {
+            _library.Delete(name);
+            RefreshSavedWorkspaces(null);
+            WorkspaceName = string.Empty;
+            ShowInfo("Workspace deleted", $"\"{name}\" was deleted.");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ShowError("Could not delete the workspace", ex.Message);
+        }
+    }
+
+    /// <summary>Writes the current settings and all saved workspaces to <paramref name="path"/>.</summary>
+    public void ExportSettings(string path)
+    {
+        try
+        {
+            _library.Export(path, SaveIfChanged());
+            ShowInfo("Settings exported", path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ShowError("Could not export the settings", ex.Message);
+        }
+    }
+
+    /// <summary>Adds the saved workspaces from <paramref name="path"/> and uses its current settings.</summary>
+    public async Task ImportSettingsAsync(string path)
+    {
+        WorkspaceOptions options;
+        try
+        {
+            options = _library.Import(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            ShowError("Could not import the settings", ex.Message);
+            return;
+        }
+
+        RefreshSavedWorkspaces(SelectedWorkspace);
+        await UseSettingsAsync(options, $"Imported from {Path.GetFileName(path)}.").ConfigureAwait(true);
+    }
+
+    /// <summary>Shows <paramref name="options"/> in the UI, saves them, and restarts a running workspace with them.</summary>
+    private async Task UseSettingsAsync(WorkspaceOptions options, string message)
+    {
+        ApplySettings(options);
+        SaveIfChanged();
+        _workspace.RefreshGlassesSignal();
+        if (IsRunning)
+        {
+            StatusTitle = message;
+            await RestartAsync().ConfigureAwait(true);
+        }
+        else
+        {
+            ShowInfo("Settings loaded", message + " They are used when you start the workspace.");
+        }
+    }
+
+    private void RememberWorkspace(string name)
+    {
+        RefreshSavedWorkspaces(name);
+        App.Preferences.LastWorkspaceName = name;
+        App.Preferences.Save();
+    }
+
+    private void RefreshSavedWorkspaces(string? select)
+    {
+        SavedWorkspaces.Clear();
+        foreach (string name in _library.List())
+        {
+            SavedWorkspaces.Add(name);
+        }
+
+        SelectedWorkspace = select is not null && SavedWorkspaces.Contains(select) ? select : null;
+    }
+
+    private void ShowInfo(string title, string message)
+    {
+        StatusTitle = title;
+        StatusMessage = message;
+        Severity = InfoBarSeverity.Informational;
+    }
+
+    private void ShowError(string title, string message)
+    {
+        StatusTitle = title;
+        StatusMessage = message;
+        Severity = InfoBarSeverity.Error;
     }
 }

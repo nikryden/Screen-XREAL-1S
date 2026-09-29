@@ -21,13 +21,21 @@
                         TextWrapping="Wrap"
                         Visibility="Collapsed" />
                     <ToggleSwitch
+                        x:Name="StartWorkspaceToggle"
+                        Header="Start the latest workspace when XrealScreen starts"
+                        Toggled="StartWorkspace_Toggled" />
+                    <ToggleSwitch
                         x:Name="TrayToggle"
                         Header="Keep running in the tray when the window is closed"
                         Toggled="Tray_Toggled" />
                     <TextBlock
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         TextWrapping="Wrap"
-                        Text="Tray icon: left-click opens XrealScreen, right-click for Start / Stop / Recenter / Exit. Ctrl+Alt+W starts or stops the workspace from anywhere." />
+                        Text="Tray icon: left-click opens XrealScreen, right-click for Start / Stop / Recenter / Exit. Ctrl+Alt+W starts or stops the workspace from anywhere. Exit (bottom of the menu) quits for real." />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap"
+                        Text="All settings are saved automatically and loaded when XrealScreen starts. Save, load, export and import workspaces on the Home page." />
                 </StackPanel>
             </Border>
 

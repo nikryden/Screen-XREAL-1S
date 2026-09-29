@@ -58,6 +58,7 @@ public partial class App : Application
         Session = new SessionViewModel(dispatcher, Workspace, Tracking);
 
         MainWindow = new MainWindow();
+        MainWindow.SetTheme(ThemeFromIndex(Preferences.Theme));
         MainWindow.AppWindow.Closing += OnWindowClosing;
         MainWindow.Closed += (_, _) => ShutDownSession();
 
@@ -79,7 +80,19 @@ public partial class App : Application
         {
             MainWindow.Activate();
         }
+
+        if (Preferences.StartWorkspaceOnLaunch)
+        {
+            _ = Session.StartOnLaunchAsync();
+        }
     }
+
+    public static ElementTheme ThemeFromIndex(int index) => index switch
+    {
+        1 => ElementTheme.Light,
+        2 => ElementTheme.Dark,
+        _ => ElementTheme.Default,
+    };
 
     public void ShowMainWindow()
     {

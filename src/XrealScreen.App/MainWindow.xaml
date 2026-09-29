@@ -32,6 +32,7 @@
             Grid.Row="1"
             IsBackButtonVisible="Collapsed"
             IsPaneToggleButtonVisible="False"
+            ItemInvoked="NavView_ItemInvoked"
             SelectionChanged="NavView_SelectionChanged">
             <NavigationView.MenuItems>
                 <NavigationViewItem Content="Home" IsSelected="True" Tag="home">
@@ -59,6 +60,16 @@
                 <NavigationViewItem Content="About" Tag="about">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE946;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem
+                    AutomationProperties.Name="Exit XrealScreen"
+                    Content="Exit"
+                    SelectsOnInvoked="False"
+                    Tag="exit"
+                    ToolTipService.ToolTip="Stop the workspace, restore your monitors and quit XrealScreen">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE7E8;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.FooterMenuItems>

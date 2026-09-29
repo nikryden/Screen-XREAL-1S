@@ -1,11 +1,29 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace XrealScreen.Host;
 
 [JsonSerializable(typeof(WorkspaceOptions))]
+[JsonSerializable(typeof(WorkspaceBundle))]
 [JsonSourceGenerationOptions(WriteIndented = true, UseStringEnumConverter = true)]
 internal sealed partial class SettingsJsonContext : JsonSerializerContext;
+
+internal static class SettingsFile
+{
+    /// <summary>Writes via a temp file so a crash never leaves a half-written settings file.</summary>
+    public static void WriteAtomic<T>(string path, T value, JsonTypeInfo<T> typeInfo)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        string tmp = path + ".tmp";
+        using (var stream = File.Create(tmp))
+        {
+            JsonSerializer.Serialize(stream, value, typeInfo);
+        }
+
+        File.Move(tmp, path, overwrite: true);
+    }
+}
 
 /// <summary>Persists the user's workspace options (%LOCALAPPDATA%\XrealScreen\settings.json).</summary>
 public sealed class WorkspaceSettingsStore(string? path = null)
@@ -31,15 +49,5 @@ public sealed class WorkspaceSettingsStore(string? path = null)
         return new WorkspaceOptions();
     }
 
-    public void Save(WorkspaceOptions options)
-    {
-        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-        string tmp = Path + ".tmp";
-        using (var stream = File.Create(tmp))
-        {
-            JsonSerializer.Serialize(stream, options, SettingsJsonContext.Default.WorkspaceOptions);
-        }
-
-        File.Move(tmp, Path, overwrite: true);
-    }
+    public void Save(WorkspaceOptions options) => SettingsFile.WriteAtomic(Path, options, SettingsJsonContext.Default.WorkspaceOptions);
 }

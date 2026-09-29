@@ -12,6 +12,15 @@ public sealed class AppPreferences
     /// <summary>The "still running in the tray" notification was shown once.</summary>
     public bool TrayHintShown { get; set; }
 
+    /// <summary>Start the latest workspace (the last used settings) when XrealScreen starts.</summary>
+    public bool StartWorkspaceOnLaunch { get; set; }
+
+    /// <summary>Saved workspace last saved or loaded (preselected on the Home page).</summary>
+    public string? LastWorkspaceName { get; set; }
+
+    /// <summary>0 = system, 1 = light, 2 = dark.</summary>
+    public int Theme { get; set; }
+
     private static string FilePath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "XrealScreen", "app.json");
 

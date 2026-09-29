@@ -18,6 +18,7 @@ public sealed partial class SettingsPage : Page
             _ => 0,
         };
         TrayToggle.IsOn = App.Preferences.KeepRunningInTray;
+        StartWorkspaceToggle.IsOn = App.Preferences.StartWorkspaceOnLaunch;
         Loaded += async (_, _) =>
         {
             await LoadStartupStateAsync().ConfigureAwait(true);
@@ -80,11 +81,20 @@ public sealed partial class SettingsPage : Page
         App.Preferences.Save();
     }
 
-    private void ThemeRadio_SelectionChanged(object sender, SelectionChangedEventArgs e) =>
-        App.MainWindow.SetTheme(ThemeRadio.SelectedIndex switch
+    private void StartWorkspace_Toggled(object sender, RoutedEventArgs e)
+    {
+        App.Preferences.StartWorkspaceOnLaunch = StartWorkspaceToggle.IsOn;
+        App.Preferences.Save();
+    }
+
+    private void ThemeRadio_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        int index = Math.Max(0, ThemeRadio.SelectedIndex);
+        App.MainWindow.SetTheme(App.ThemeFromIndex(index));
+        if (App.Preferences.Theme != index)
         {
-            1 => ElementTheme.Light,
-            2 => ElementTheme.Dark,
-            _ => ElementTheme.Default,
-        });
+            App.Preferences.Theme = index;
+            App.Preferences.Save();
+        }
+    }
 }

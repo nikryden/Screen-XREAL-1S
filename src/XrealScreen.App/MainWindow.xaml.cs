@@ -27,6 +27,14 @@ public sealed partial class MainWindow : Window
 
     private void TitleBar_BackRequested(TitleBar sender, object args) => NavFrame.GoBack();
 
+    private void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+    {
+        if (args.InvokedItemContainer?.Tag is "exit")
+        {
+            App.Current.ExitApp();
+        }
+    }
+
     private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
         if (args.IsSettingsSelected)

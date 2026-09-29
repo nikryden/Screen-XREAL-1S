@@ -47,6 +47,56 @@
             </Border>
 
             <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="12">
+                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Saved workspaces" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap"
+                        Text="Your settings are saved automatically. Save them under a name to switch between setups; loading one restarts a running workspace." />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ComboBox
+                            MinWidth="240"
+                            AutomationProperties.Name="Saved workspace"
+                            ItemsSource="{x:Bind Session.SavedWorkspaces}"
+                            PlaceholderText="No workspace selected"
+                            SelectedItem="{x:Bind Session.SelectedWorkspace, Mode=TwoWay}" />
+                        <Button Command="{x:Bind Session.LoadWorkspaceCommand}" Content="Load" Style="{StaticResource AccentButtonStyle}" />
+                        <Button AutomationProperties.Name="Delete saved workspace" Command="{x:Bind Session.DeleteWorkspaceCommand}">
+                            <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBox
+                            MinWidth="240"
+                            AutomationProperties.Name="Workspace name"
+                            MaxLength="60"
+                            PlaceholderText="Name, e.g. Desk"
+                            Text="{x:Bind Session.WorkspaceName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Command="{x:Bind Session.SaveWorkspaceCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="14" Glyph="&#xE74E;" />
+                                <TextBlock Text="Save current settings" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Click="Import_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="14" Glyph="&#xE8B5;" />
+                                <TextBlock Text="Import…" />
+                            </StackPanel>
+                        </Button>
+                        <Button Click="Export_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="14" Glyph="&#xEDE1;" />
+                                <TextBlock Text="Export…" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CardStyle}">
                 <Grid RowSpacing="12">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
