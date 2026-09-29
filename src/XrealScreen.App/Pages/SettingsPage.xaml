@@ -25,6 +25,15 @@
                         Header="Start the latest workspace when XrealScreen starts"
                         Toggled="StartWorkspace_Toggled" />
                     <ToggleSwitch
+                        x:Name="GlassesConnectToggle"
+                        Header="Start the selected workspace when the glasses are connected"
+                        Toggled="GlassesConnect_Toggled" />
+                    <TextBlock
+                        Margin="0,-8,0,0"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap"
+                        Text="Uses the workspace selected under Saved workspaces on the Home page, or your latest settings when none is selected. XrealScreen must be running (for example in the tray)." />
+                    <ToggleSwitch
                         x:Name="TrayToggle"
                         Header="Keep running in the tray when the window is closed"
                         Toggled="Tray_Toggled" />

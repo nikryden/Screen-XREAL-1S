@@ -14,7 +14,32 @@ public static class WorkspaceArrangement
     /// <param name="monitors">Active monitors.</param>
     /// <param name="virtualGdiNames">Our virtual monitors, in left-to-right workspace order.</param>
     /// <param name="glassesGdiName">The glasses output.</param>
-    public static DisplayLayout Arrange(IReadOnlyList<DisplayMonitor> monitors, IReadOnlyList<string> virtualGdiNames, string glassesGdiName)
+    /// <param name="primaryIndex">
+    /// Virtual monitor (index into <paramref name="virtualGdiNames"/>) to make the Windows primary monitor;
+    /// -1 keeps the current primary. Windows' primary is the monitor at (0,0), so the whole layout shifts.
+    /// </param>
+    public static DisplayLayout Arrange(IReadOnlyList<DisplayMonitor> monitors, IReadOnlyList<string> virtualGdiNames, string glassesGdiName, int primaryIndex = -1)
+    {
+        var layout = ArrangeKeepingPrimary(monitors, virtualGdiNames, glassesGdiName);
+        if (primaryIndex < 0 || primaryIndex >= virtualGdiNames.Count
+            || monitors.FirstOrDefault(m => m.GdiDeviceName == virtualGdiNames[primaryIndex]) is not { } primary
+            || layout.Monitors.FirstOrDefault(p => p.DevicePath == primary.DevicePath) is not { } origin)
+        {
+            return layout;
+        }
+
+        return layout with
+        {
+            Monitors = [.. layout.Monitors.Select(p => p with
+            {
+                X = p.X - origin.X,
+                Y = p.Y - origin.Y,
+                IsPrimary = p.X == origin.X && p.Y == origin.Y,
+            })],
+        };
+    }
+
+    private static DisplayLayout ArrangeKeepingPrimary(IReadOnlyList<DisplayMonitor> monitors, IReadOnlyList<string> virtualGdiNames, string glassesGdiName)
     {
         ArgumentNullException.ThrowIfNull(monitors);
         ArgumentNullException.ThrowIfNull(virtualGdiNames);

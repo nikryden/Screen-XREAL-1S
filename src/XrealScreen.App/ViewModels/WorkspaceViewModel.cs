@@ -95,6 +95,17 @@ public sealed partial class WorkspaceViewModel : ObservableObject
     [ObservableProperty]
     public partial double ScreenCount { get; set; } = 3;
 
+    /// <summary>Index = WorkspaceOptions.PrimaryScreen (0 = keep the current primary monitor).</summary>
+    public IReadOnlyList<string> PrimaryScreenNames { get; } =
+        ["Keep my current primary monitor", .. Enumerable.Range(1, WorkspaceLayout.MaxScreens).Select(i => $"Screen {i}")];
+
+    [ObservableProperty]
+    public partial int PrimaryScreenIndex { get; set; }
+
+    /// <summary>Move app windows from the glasses display onto the workspace when it starts.</summary>
+    [ObservableProperty]
+    public partial bool MoveWindowsFromGlasses { get; set; } = true;
+
     /// <summary>Index into <see cref="UltrawideModes.All"/> (same order as the enum).</summary>
     [ObservableProperty]
     public partial int UltrawideModeIndex { get; set; }

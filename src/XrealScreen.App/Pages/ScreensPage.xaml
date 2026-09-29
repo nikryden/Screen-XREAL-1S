@@ -86,6 +86,21 @@
                     </StackPanel>
 
                     <ComboBox
+                        Header="Primary monitor while the workspace runs (taskbar, new windows)"
+                        MinWidth="280"
+                        ItemsSource="{x:Bind Workspace.PrimaryScreenNames}"
+                        SelectedIndex="{x:Bind Workspace.PrimaryScreenIndex, Mode=TwoWay}" />
+
+                    <ToggleSwitch
+                        Header="Move windows from the glasses display to the workspace when it starts"
+                        IsOn="{x:Bind Workspace.MoveWindowsFromGlasses, Mode=TwoWay}" />
+                    <TextBlock
+                        Margin="0,-8,0,0"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap"
+                        Text="Windows go to the primary screen above (screen 1 when the primary monitor is kept). Both take effect at the next start. Windows of apps running as administrator cannot be moved." />
+
+                    <ComboBox
                         Header="Layout"
                         MinWidth="200"
                         ItemsSource="{x:Bind Workspace.PresetNames}"

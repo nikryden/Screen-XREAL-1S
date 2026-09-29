@@ -193,7 +193,7 @@ public sealed class WorkspaceEngine : IAsyncDisposable
                 Info($"virtual screen {virtuals.Count}: {vd.Resolution} → {vd.GdiDeviceName ?? "(not attached)"}");
             }
 
-            await PrepareDesktopAsync(topology, virtuals, glasses, stop).ConfigureAwait(false);
+            await PrepareDesktopAsync(o, topology, virtuals, glasses, stop).ConfigureAwait(false);
 
             var monitors = topology.GetActiveMonitors();
             glasses = GlassesDisplayLocator.FindGlasses(monitors) ?? glasses;
@@ -317,7 +317,7 @@ public sealed class WorkspaceEngine : IAsyncDisposable
                 Info($"virtual monitor {spec.Id}: {vd.Resolution} → {vd.GdiDeviceName ?? "(not attached)"}");
             }
 
-            await PrepareDesktopAsync(topology, virtuals, glasses, stop).ConfigureAwait(false);
+            await PrepareDesktopAsync(o, topology, virtuals, glasses, stop).ConfigureAwait(false);
 
             // Other monitors to the glasses refresh (DWM clock, ADR-0009).
             if (o.SyncDesktopRefresh)
@@ -564,8 +564,44 @@ public sealed class WorkspaceEngine : IAsyncDisposable
     /// monitors reuse ids, so a new 1280×1080 monitor came up at an old 1920×1080 mode and the
     /// reorder failed with ERROR_INVALID_PARAMETER (87) ([verified-hw] 2026-09-26). The order is a
     /// convenience (mouse path), so failing to apply it is logged, not fatal.
+    /// Also makes the chosen virtual screen primary and moves app windows off the glasses monitor.
     /// </summary>
-    private async Task PrepareDesktopAsync(CcdDisplayTopology topology, List<VirtualDisplay> virtuals, DisplayMonitor glasses, CancellationToken stop)
+    private async Task PrepareDesktopAsync(WorkspaceOptions o, CcdDisplayTopology topology, List<VirtualDisplay> virtuals, DisplayMonitor glasses, CancellationToken stop)
+    {
+        await ArrangeDesktopAsync(o, topology, virtuals, glasses, stop).ConfigureAwait(false);
+        if (o.MoveWindowsFromGlasses)
+        {
+            MoveWindowsFromGlasses(o, topology, virtuals);
+        }
+    }
+
+    private void MoveWindowsFromGlasses(WorkspaceOptions o, CcdDisplayTopology topology, List<VirtualDisplay> virtuals)
+    {
+        try
+        {
+            var monitors = topology.GetActiveMonitors();
+            var glasses = GlassesDisplayLocator.FindGlasses(monitors);
+            string? targetName = virtuals.ElementAtOrDefault(Math.Max(0, o.PrimaryScreen - 1))?.GdiDeviceName ?? virtuals.FirstOrDefault()?.GdiDeviceName;
+            var target = monitors.FirstOrDefault(m => m.GdiDeviceName == targetName);
+            if (glasses is null || target is null)
+            {
+                return;
+            }
+
+            static System.Drawing.Rectangle Bounds(DisplayMonitor m) => new(m.X, m.Y, m.Resolution.Width, m.Resolution.Height);
+            int moved = WindowMover.MoveWindows(Bounds(glasses), Bounds(target));
+            if (moved > 0)
+            {
+                Info($"moved {moved} window(s) from the glasses display to virtual screen {virtuals.FindIndex(v => v.GdiDeviceName == targetName) + 1}");
+            }
+        }
+        catch (System.ComponentModel.Win32Exception ex)
+        {
+            Info($"could not move windows off the glasses display: {ex.Message}");
+        }
+    }
+
+    private async Task ArrangeDesktopAsync(WorkspaceOptions o, CcdDisplayTopology topology, List<VirtualDisplay> virtuals, DisplayMonitor glasses, CancellationToken stop)
     {
         await Task.Delay(1000, stop).ConfigureAwait(false);
         foreach (var vd in virtuals.Where(v => v.GdiDeviceName is not null))
@@ -580,11 +616,19 @@ public sealed class WorkspaceEngine : IAsyncDisposable
 
         await Task.Delay(800, stop).ConfigureAwait(false);
         var names = virtuals.Where(v => v.GdiDeviceName is not null).Select(v => v.GdiDeviceName!).ToList();
+        int primaryIndex = o.PrimaryScreen > 0 && virtuals.ElementAtOrDefault(o.PrimaryScreen - 1)?.GdiDeviceName is { } primaryName
+            ? names.IndexOf(primaryName)
+            : -1;
+        if (o.PrimaryScreen > 0)
+        {
+            Info(primaryIndex >= 0 ? $"primary monitor: virtual screen {o.PrimaryScreen}" : $"virtual screen {o.PrimaryScreen} does not exist; primary monitor kept");
+        }
+
         for (int attempt = 1; attempt <= 3; attempt++)
         {
             try
             {
-                topology.ApplyLayout(WorkspaceArrangement.Arrange(topology.GetActiveMonitors(), names, glasses.GdiDeviceName));
+                topology.ApplyLayout(WorkspaceArrangement.Arrange(topology.GetActiveMonitors(), names, glasses.GdiDeviceName, primaryIndex));
                 await Task.Delay(1000, stop).ConfigureAwait(false);
                 return;
             }

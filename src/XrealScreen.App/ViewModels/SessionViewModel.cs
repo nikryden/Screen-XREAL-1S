@@ -70,6 +70,55 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         ApplySettings(_lastSaved);
         RefreshSavedWorkspaces(App.Preferences.LastWorkspaceName);
         _recovery = RecoverAsync();
+
+        // Glasses plugged in while XrealScreen runs → optionally start the selected workspace.
+        _glassesConnected = GlassesSignal.CurrentResolution() is not null;
+        _glassesTimer = dispatcher.CreateTimer();
+        _glassesTimer.Interval = TimeSpan.FromSeconds(2);
+        _glassesTimer.Tick += (_, _) => CheckGlassesConnection();
+        _glassesTimer.Start();
+    }
+
+    private readonly DispatcherQueueTimer _glassesTimer;
+    private bool _glassesConnected;
+    private bool _autoStartPending;
+
+    private void CheckGlassesConnection()
+    {
+        bool connected = GlassesSignal.CurrentResolution() is not null;
+        bool justConnected = connected && !_glassesConnected;
+        _glassesConnected = connected;
+        if (justConnected && IsIdle && !_starting && !_autoStartPending && App.Preferences.StartWorkspaceWhenGlassesConnect)
+        {
+            _ = StartAfterGlassesConnectedAsync();
+        }
+    }
+
+    private async Task StartAfterGlassesConnectedAsync()
+    {
+        _autoStartPending = true;
+        try
+        {
+            ShowInfo("Glasses connected", SelectedWorkspace is { } name ? $"Starting \"{name}\"…" : "Starting the workspace…");
+            await Task.Delay(3000).ConfigureAwait(true); // let Windows finish setting up the glasses monitor
+            if (!_glassesConnected || !IsIdle || _starting)
+            {
+                return;
+            }
+
+            if (SelectedWorkspace is { } selected && _library.Load(selected) is { } options)
+            {
+                ApplySettings(options);
+                SaveIfChanged();
+                _workspace.RefreshGlassesSignal();
+            }
+
+            await StartAsync().ConfigureAwait(true);
+        }
+        finally
+        {
+            _autoStartPending = false;
+        }
     }
 
     /// <summary>"Start the latest workspace when XrealScreen starts": waits for the crash-safe restore first.</summary>
@@ -123,8 +172,29 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
 
     public bool IsIdle => State is WorkspaceState.Stopped or WorkspaceState.Faulted;
 
+    /// <summary>A start is in progress (the engine reports Starting asynchronously; this blocks a second start meanwhile).</summary>
+    private bool _starting;
+
     [RelayCommand(CanExecute = nameof(IsIdle))]
     private async Task StartAsync()
+    {
+        if (_starting)
+        {
+            return;
+        }
+
+        _starting = true;
+        try
+        {
+            await StartCoreAsync().ConfigureAwait(true);
+        }
+        finally
+        {
+            _starting = false;
+        }
+    }
+
+    private async Task StartCoreAsync()
     {
         if (_tracking.IsRunning)
         {
@@ -178,6 +248,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
     public void Dispose()
     {
         _autoSaveTimer.Stop();
+        _glassesTimer.Stop();
         SaveIfChanged();
         StopBlocking();
         _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
@@ -283,6 +354,8 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         AnchorGapPixels = (int)Math.Round(_workspace.AnchorGapPixels),
         AnchorAspect = _workspace.AnchorAspect,
         ScreenCount = (int)Math.Clamp(Math.Round(double.IsNaN(_workspace.ScreenCount) ? 1 : _workspace.ScreenCount), 1, WorkspaceLayout.MaxScreens),
+        PrimaryScreen = Math.Clamp(_workspace.PrimaryScreenIndex, 0, WorkspaceLayout.MaxScreens),
+        MoveWindowsFromGlasses = _workspace.MoveWindowsFromGlasses,
         Mode = _workspace.UltrawideMode,
         Preset = _workspace.PresetIndex == 1 ? LayoutPreset.Grid : LayoutPreset.Arc,
         DistanceMeters = (float)_workspace.DistanceMeters,
@@ -307,6 +380,8 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         _workspace.AnchorAspectIndex = (int)o.AnchorAspect;
         _workspace.MarkScreenSettingsApplied();
         _workspace.ScreenCount = o.ScreenCount;
+        _workspace.PrimaryScreenIndex = Math.Clamp(o.PrimaryScreen, 0, WorkspaceLayout.MaxScreens);
+        _workspace.MoveWindowsFromGlasses = o.MoveWindowsFromGlasses;
         _workspace.UltrawideModeIndex = Math.Max(0, UltrawideModes.All.ToList().IndexOf(o.Mode));
         _workspace.PresetIndex = o.Preset == LayoutPreset.Grid ? 1 : 0;
         _workspace.DistanceMeters = o.DistanceMeters;

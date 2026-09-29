@@ -34,6 +34,12 @@ public sealed record WorkspaceOptions
 
     public int ScreenCount { get; init; } = 3;
 
+    /// <summary>Virtual screen (1-based) that becomes the Windows primary monitor during the session; 0 = keep.</summary>
+    public int PrimaryScreen { get; init; }
+
+    /// <summary>Move app windows off the glasses monitor (the workspace covers it) onto the workspace at start.</summary>
+    public bool MoveWindowsFromGlasses { get; init; } = true;
+
     /// <summary>Glasses anchor: pixels between the screens.</summary>
     public int AnchorGapPixels { get; init; } = 10;
 

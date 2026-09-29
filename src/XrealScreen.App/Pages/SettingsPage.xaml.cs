@@ -19,6 +19,7 @@ public sealed partial class SettingsPage : Page
         };
         TrayToggle.IsOn = App.Preferences.KeepRunningInTray;
         StartWorkspaceToggle.IsOn = App.Preferences.StartWorkspaceOnLaunch;
+        GlassesConnectToggle.IsOn = App.Preferences.StartWorkspaceWhenGlassesConnect;
         Loaded += async (_, _) =>
         {
             await LoadStartupStateAsync().ConfigureAwait(true);
@@ -84,6 +85,12 @@ public sealed partial class SettingsPage : Page
     private void StartWorkspace_Toggled(object sender, RoutedEventArgs e)
     {
         App.Preferences.StartWorkspaceOnLaunch = StartWorkspaceToggle.IsOn;
+        App.Preferences.Save();
+    }
+
+    private void GlassesConnect_Toggled(object sender, RoutedEventArgs e)
+    {
+        App.Preferences.StartWorkspaceWhenGlassesConnect = GlassesConnectToggle.IsOn;
         App.Preferences.Save();
     }
 

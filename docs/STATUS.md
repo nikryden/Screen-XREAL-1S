@@ -17,10 +17,11 @@
 - **Less lag + no nod bobbing (App head tracking)**: gyro-speed stabilizer, 20 ms prediction (ADR-0009), tilt correction only when the head is nearly still (ADR-0007 `RateGate`) — verified with the user in the glasses.
 - **Crash-safe restore**: at app start (and `xrs recover`) leftover virtual monitors are removed and layout + refresh rates restored ([verified-local] hard-kill test).
 - **Settings + workspaces (M6)**: all settings autosave (0.5 s after a change) and load at start (theme too); named workspaces (`%LOCALAPPDATA%\XrealScreen\workspaces\<name>.json`, Home page: save / load / delete / import / export one JSON bundle, `WorkspaceLibrary`); Settings: "Start the latest workspace when XrealScreen starts"; **Exit** item in the navigation footer quits for real. Not yet tested by the user.
-- 96/96 tests.
+- **Glasses connect / primary / windows (M6, 2026-09-29, not yet tested on hardware)**: Settings "Start the selected workspace when the glasses are connected" (app polls the glasses monitor every 2 s; loads the selected saved workspace, then starts); Screens "Primary monitor while the workspace runs" (`WorkspaceOptions.PrimaryScreen`, layout shifted so that virtual screen is at 0,0; original layout restored on stop); "Move windows from the glasses display" (`WindowMover`, default on; elevated apps' windows cannot be moved).
+- 102/102 tests.
 
 ## Next 3 steps
-1. M6: user test of tray icon / start with Windows / Ctrl+Alt+W (2026-09-27) and of saved workspaces / import-export / start latest workspace / Exit (2026-09-29); then optional "start workspace when glasses connect".
+1. M6: user test of tray icon / start with Windows / Ctrl+Alt+W (2026-09-27) and of saved workspaces / import-export / start latest workspace / Exit / start on glasses connect / primary screen / window move (2026-09-29).
 2. M7: clean-PC install test in Windows Sandbox (`installer\test\Start-SandboxTest.ps1` -> `artifacts\sandbox\results\report.txt`). **First run 2026-09-27 stalled** right after "PASS no driver before install", inside `Install-XrealScreen.ps1 -Yes` (no output for 9 min) - probably a dialog in the Sandbox (driver install prompt or Add-AppxPackage). Next: look at the Sandbox window, log each install step separately with timeouts in `Run-InSandbox.ps1`, rerun. Then trusted signing for a public release.
 3. App head tracking: glasses A/B of prediction 20 vs 26 ms (measured latch→scan-out ≈ 22 ms, ADR-0009); optional Strong vs Balanced for the last nod bob. Removing DWM (always composed here) needs exclusive fullscreen or DirectComposition — deferred.
 
@@ -54,4 +55,4 @@
 | 2026-09-27 | Claude | Lag work: gyro-speed stabilizer, late latch, 20 ms prediction; nod bobbing fixed with Madgwick rate gate (glasses A/B). |
 | 2026-09-27 | Claude | Latency measurement in presenter stats (latch→scan-out ≈ 22 ms, always DWM-composed); late latch default back to 0 (no gain while composed). |
 | 2026-09-27 | Claude | M7 phase 2: driver built from source (rustup, WDK, LLVM 18), separate driver cert, Install-Driver.ps1 (SetupAPI root device), package bundles the driver. |
-| 2026-09-29 | Claude | M6: autosave of all settings, saved workspaces with import/export, start latest workspace at launch, Exit in the window; Host.Tests project. |
+| 2026-09-29 | Claude | M6: autosave of all settings, saved workspaces with import/export, start latest workspace at launch, Exit in the window; Host.Tests project; start on glasses connect, primary virtual screen, move windows off the glasses. |

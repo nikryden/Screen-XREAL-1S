@@ -15,6 +15,9 @@ public sealed class AppPreferences
     /// <summary>Start the latest workspace (the last used settings) when XrealScreen starts.</summary>
     public bool StartWorkspaceOnLaunch { get; set; }
 
+    /// <summary>Start the selected saved workspace (or the latest settings) when the glasses are plugged in.</summary>
+    public bool StartWorkspaceWhenGlassesConnect { get; set; }
+
     /// <summary>Saved workspace last saved or loaded (preselected on the Home page).</summary>
     public string? LastWorkspaceName { get; set; }
 
