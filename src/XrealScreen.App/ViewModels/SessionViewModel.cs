@@ -9,6 +9,9 @@ using XrealScreen.Host;
 
 namespace XrealScreen.App.ViewModels;
 
+/// <summary>A message for the tray balloon.</summary>
+public sealed record SessionNotification(string Title, string Message);
+
 /// <summary>
 /// Owns the workspace session (WorkspaceEngine): builds options from the Screens and Tracking pages,
 /// persists them, and reports state/log/pose to the UI thread.
@@ -83,11 +86,44 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
     private bool _glassesConnected;
     private bool _autoStartPending;
 
+    /// <summary>Raised for messages that should also reach a user who is not looking at the window (tray balloon).</summary>
+    public event EventHandler<SessionNotification>? Notification;
+
+    /// <summary>A start was refused because the glasses are not in UltraWide mode (Glasses anchor); starts when they are.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(StopCommand))]
+    public partial bool IsWaitingForGlassesMode { get; set; }
+
+    /// <summary>Why the chosen workspace type cannot use the glasses' current mode, or null when it can (or no glasses are found).</summary>
+    private string? GlassesModeProblem()
+    {
+        if (!_workspace.IsGlassesAnchor || GlassesSignal.CurrentResolution() is not { } r || AnchorSplit.IsUltrawideSignal(r))
+        {
+            return null;
+        }
+
+        return $"The glasses send {r} (UltraWide Off). Glasses anchor needs UltraWide: in the glasses menu set Spatial Screen → UltraWide Mode to 32:9, 21:9 or 16:18. The workspace starts automatically when you do. Stop cancels.";
+    }
+
     private void CheckGlassesConnection()
     {
         bool connected = GlassesSignal.CurrentResolution() is not null;
         bool justConnected = connected && !_glassesConnected;
         _glassesConnected = connected;
+        if (IsWaitingForGlassesMode)
+        {
+            if (!_workspace.IsGlassesAnchor)
+            {
+                IsWaitingForGlassesMode = false; // the user switched to App head tracking: start manually
+            }
+            else if (connected && GlassesModeProblem() is null && !_autoStartPending)
+            {
+                _ = StartAfterModeChangeAsync();
+            }
+
+            return;
+        }
+
         if (justConnected && IsIdle && !_starting && !_autoStartPending && App.Preferences.StartWorkspaceWhenGlassesConnect)
         {
             _ = StartAfterGlassesConnectedAsync();
@@ -107,6 +143,24 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
             }
 
             await StartAutoStartWorkspaceAsync().ConfigureAwait(true);
+        }
+        finally
+        {
+            _autoStartPending = false;
+        }
+    }
+
+    private async Task StartAfterModeChangeAsync()
+    {
+        _autoStartPending = true;
+        try
+        {
+            ShowInfo("Glasses in UltraWide mode", "Starting the workspace…");
+            await Task.Delay(2500).ConfigureAwait(true); // the glasses re-enumerate when UltraWide changes
+            if (IsWaitingForGlassesMode && IsIdle && !_starting)
+            {
+                await StartAsync().ConfigureAwait(true);
+            }
         }
         finally
         {
@@ -214,6 +268,21 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
 
     private async Task StartCoreAsync()
     {
+        if (GlassesModeProblem() is { } problem)
+        {
+            // Glasses anchor with UltraWide Off: wait; CheckGlassesConnection starts once the mode is switched.
+            IsWaitingForGlassesMode = true;
+            StatusTitle = "Waiting for UltraWide mode — workspace not started";
+            StatusMessage = problem;
+            Severity = InfoBarSeverity.Warning;
+            AddLog("not started: glasses are not in UltraWide mode; waiting for the mode change");
+            Notification?.Invoke(this, new SessionNotification(
+                "Workspace not started: UltraWide is Off",
+                "Glasses anchor needs UltraWide. In the glasses menu set Spatial Screen → UltraWide Mode to 32:9, 21:9 or 16:18; the workspace then starts automatically."));
+            return;
+        }
+
+        IsWaitingForGlassesMode = false;
         if (_tracking.IsRunning)
         {
             await _tracking.StopCommand.ExecuteAsync(null).ConfigureAwait(true);
@@ -241,9 +310,18 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         }
     }
 
-    [RelayCommand(CanExecute = nameof(IsRunning))]
+    private bool CanStop => IsRunning || IsWaitingForGlassesMode;
+
+    [RelayCommand(CanExecute = nameof(CanStop))]
     private async Task StopAsync()
     {
+        if (IsWaitingForGlassesMode)
+        {
+            IsWaitingForGlassesMode = false;
+            ShowInfo("Workspace not started", "Stopped waiting for UltraWide mode.");
+            return;
+        }
+
         try
         {
             await Task.Run(_engine.StopAsync).ConfigureAwait(true);

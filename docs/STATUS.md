@@ -18,6 +18,7 @@
 - **Crash-safe restore**: at app start (and `xrs recover`) leftover virtual monitors are removed and layout + refresh rates restored ([verified-local] hard-kill test).
 - **Settings + workspaces (M6)**: all settings autosave (0.5 s after a change) and load at start (theme too); named workspaces (`%LOCALAPPDATA%\XrealScreen\workspaces\<name>.json`, Home page: save / load / delete / import / export one JSON bundle, `WorkspaceLibrary`); **Exit** item in the navigation footer quits for real. Not yet tested by the user.
 - **Glasses connect / primary / windows (M6, 2026-09-29, not yet tested on hardware)**: Settings "Workspace to start automatically" (latest settings or a saved workspace; `AppPreferences.AutoStartWorkspaceName`) used by "Start it when XrealScreen starts" and "Start it when the glasses are connected" (app polls the glasses monitor every 2 s); Screens "Primary monitor while the workspace runs" (`WorkspaceOptions.PrimaryScreen`, layout shifted so that virtual screen is at 0,0; original layout restored on stop); "Move windows from the glasses display" (`WindowMover`, default on; elevated apps' windows cannot be moved).
+- **UltraWide guard (2026-09-29, not yet tested on hardware)**: Glasses anchor with UltraWide Off does not start; Home shows a warning, the tray shows a balloon, and the app starts the workspace once the glasses report an UltraWide signal (2 s poll + 2.5 s settle); Stop cancels the wait.
 - 102/102 tests.
 
 ## Next 3 steps

@@ -64,6 +64,7 @@ public partial class App : Application
 
         _tray = new TrayIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.ico"), "XrealScreen — workspace stopped");
         _tray.CommandInvoked += OnTrayCommand;
+        Session.Notification += (_, n) => _tray?.ShowNotification(n.Title, n.Message);
         Session.PropertyChanged += (_, e) =>
         {
             // The tray is gone once the app is exiting, but stopping the session still raises State changes.
