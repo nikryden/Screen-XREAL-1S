@@ -86,9 +86,9 @@
                     </StackPanel>
 
                     <ComboBox
-                        Header="Primary monitor while the workspace runs (taskbar, new windows)"
+                        Header="Primary monitor while the workspace runs (taskbar, new windows) — numbers as in the preview"
                         MinWidth="280"
-                        ItemsSource="{x:Bind Workspace.PrimaryScreenNames}"
+                        ItemsSource="{x:Bind Workspace.PrimaryScreenNames, Mode=OneWay}"
                         SelectedIndex="{x:Bind Workspace.PrimaryScreenIndex, Mode=TwoWay}" />
 
                     <ToggleSwitch

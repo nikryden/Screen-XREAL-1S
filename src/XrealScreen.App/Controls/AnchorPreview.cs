@@ -84,7 +84,7 @@ public sealed partial class AnchorPreview : UserControl
 
             var label = new TextBlock
             {
-                Text = $"{n++}\n{r.Width}×{r.Height}",
+                Text = n == _workspace.PrimaryScreenIndex ? $"{n++} · primary\n{r.Width}×{r.Height}" : $"{n++}\n{r.Width}×{r.Height}",
                 Foreground = (Brush)res["TextOnAccentFillColorPrimaryBrush"],
                 FontSize = 12,
                 TextAlignment = TextAlignment.Center,

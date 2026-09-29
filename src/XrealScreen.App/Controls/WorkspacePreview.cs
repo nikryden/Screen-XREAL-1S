@@ -96,7 +96,8 @@ public sealed partial class WorkspacePreview : UserControl
             Canvas.SetTop(rect, cy - p.PitchDegrees * sy - rect.Height / 2);
             _canvas.Children.Add(rect);
 
-            var label = new TextBlock { Text = p.ScreenId.ToString(System.Globalization.CultureInfo.CurrentCulture), Foreground = textBrush, FontSize = 12 };
+            string number = p.ScreenId.ToString(System.Globalization.CultureInfo.CurrentCulture);
+            var label = new TextBlock { Text = p.ScreenId == App.Workspace.PrimaryScreenIndex ? number + " · primary" : number, Foreground = textBrush, FontSize = 12 };
             Canvas.SetLeft(label, Canvas.GetLeft(rect) + 6);
             Canvas.SetTop(label, Canvas.GetTop(rect) + 4);
             _canvas.Children.Add(label);

@@ -89,18 +89,102 @@ public sealed partial class WorkspaceViewModel : ObservableObject
         AnchorCanvasIsExample = current is not { } r || !XrealScreen.Core.Workspace.AnchorSplit.IsUltrawideSignal(r);
         AnchorCanvas = AnchorCanvasIsExample ? new XrealScreen.Core.Workspace.Resolution(3840, 1080) : current!.Value;
         AnchorRects = XrealScreen.Core.Workspace.AnchorSplit.Split(AnchorCanvas, count, gap, AnchorAspect);
+        RebuildPrimaryScreenNames();
         AnchorPreviewChanged?.Invoke(this, EventArgs.Empty);
     }
 
     [ObservableProperty]
     public partial double ScreenCount { get; set; } = 3;
 
-    /// <summary>Index = WorkspaceOptions.PrimaryScreen (0 = keep the current primary monitor).</summary>
-    public IReadOnlyList<string> PrimaryScreenNames { get; } =
-        ["Keep my current primary monitor", .. Enumerable.Range(1, WorkspaceLayout.MaxScreens).Select(i => $"Screen {i}")];
+    private const string KeepPrimary = "Keep my current primary monitor";
 
+    /// <summary>
+    /// "Keep…" plus one entry per screen of the current layout, named like the numbers in the preview
+    /// ("Screen 1 — left"). Index = WorkspaceOptions.PrimaryScreen.
+    /// </summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<string> PrimaryScreenNames { get; set; } = [KeepPrimary];
+
+    /// <summary>0 = keep the current primary monitor, n = virtual screen n (as numbered in the preview).</summary>
     [ObservableProperty]
     public partial int PrimaryScreenIndex { get; set; }
+
+    private bool _rebuildingPrimaryNames;
+    private int _primaryBeforeRebuild;
+
+    partial void OnPrimaryScreenIndexChanged(int value)
+    {
+        if (_rebuildingPrimaryNames)
+        {
+            return;
+        }
+
+        LayoutChanged?.Invoke(this, EventArgs.Empty);
+        AnchorPreviewChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Screen centers of the current layout (x to the right, y down), in screen-number order.</summary>
+    private List<(double X, double Y)> ScreenCenters() => IsGlassesAnchor
+        ? [.. AnchorRects.Select(r => (r.X + r.Width / 2.0, r.Y + r.Height / 2.0))]
+        : [.. Placements.OrderBy(p => p.ScreenId).Select(p => (-(double)p.YawDegrees, -(double)p.PitchDegrees))]; // positive yaw = left
+
+    private void RebuildPrimaryScreenNames()
+    {
+        var centers = ScreenCenters();
+        IReadOnlyList<string> names = [KeepPrimary, .. centers.Select((c, i) => $"Screen {i + 1} — {DescribePosition(centers, i)}")];
+        if (names.SequenceEqual(PrimaryScreenNames))
+        {
+            return;
+        }
+
+        // A new list resets the ComboBox selection; put the chosen screen back (or "keep" when it no longer exists).
+        _primaryBeforeRebuild = PrimaryScreenIndex;
+        _rebuildingPrimaryNames = true;
+        PrimaryScreenNames = names;
+        _rebuildingPrimaryNames = false;
+        PrimaryScreenIndex = _primaryBeforeRebuild < names.Count ? _primaryBeforeRebuild : 0;
+        OnPropertyChanged(nameof(PrimaryScreenIndex));
+    }
+
+    /// <summary>"left", "middle", "top right", "only screen", … from where the screen sits among the others.</summary>
+    private static string DescribePosition(List<(double X, double Y)> centers, int index)
+    {
+        if (centers.Count == 1)
+        {
+            return "the only screen";
+        }
+
+        static List<double> Distinct(IEnumerable<double> values) =>
+            values.Order().Aggregate(new List<double>(), (list, v) =>
+            {
+                if (list.Count == 0 || v - list[^1] > 1)
+                {
+                    list.Add(v);
+                }
+
+                return list;
+            });
+
+        var columns = Distinct(centers.Select(c => c.X));
+        var rows = Distinct(centers.Select(c => c.Y));
+        int col = columns.FindLastIndex(x => centers[index].X - x >= -1);
+        int row = rows.FindLastIndex(y => centers[index].Y - y >= -1);
+
+        string horizontal = columns.Count switch
+        {
+            1 => string.Empty,
+            2 => col == 0 ? "left" : "right",
+            3 => col switch { 0 => "left", 1 => "middle", _ => "right" },
+            _ => $"{col + 1}. from the left",
+        };
+        string vertical = rows.Count switch
+        {
+            1 => string.Empty,
+            2 => row == 0 ? "top" : "bottom",
+            _ => row switch { 0 => "top", 1 => "middle row", _ => "bottom" },
+        };
+        return string.Join(' ', new[] { vertical, horizontal }.Where(s => s.Length > 0));
+    }
 
     /// <summary>Move app windows from the glasses display onto the workspace when it starts.</summary>
     [ObservableProperty]
@@ -152,6 +236,7 @@ public sealed partial class WorkspaceViewModel : ObservableObject
         var res = UltrawideModes.GetResolution(UltrawideMode);
         float left = Placements.Max(p => p.YawDegrees + p.WidthMeters / p.DistanceMeters * 90f / MathF.PI);
         Summary = $"{count} × {res} ({UltrawideModes.GetDisplayName(UltrawideMode)}) · spans ±{left:F0}° · virtual monitors created in M2";
+        RebuildPrimaryScreenNames();
         LayoutChanged?.Invoke(this, EventArgs.Empty);
     }
 }
