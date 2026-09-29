@@ -20,19 +20,24 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         TextWrapping="Wrap"
                         Visibility="Collapsed" />
+                    <ComboBox
+                        x:Name="AutoStartWorkspaceBox"
+                        Header="Workspace to start automatically"
+                        MinWidth="280"
+                        SelectionChanged="AutoStartWorkspace_SelectionChanged" />
                     <ToggleSwitch
                         x:Name="StartWorkspaceToggle"
-                        Header="Start the latest workspace when XrealScreen starts"
+                        Header="Start it when XrealScreen starts"
                         Toggled="StartWorkspace_Toggled" />
                     <ToggleSwitch
                         x:Name="GlassesConnectToggle"
-                        Header="Start the selected workspace when the glasses are connected"
+                        Header="Start it when the glasses are connected"
                         Toggled="GlassesConnect_Toggled" />
                     <TextBlock
                         Margin="0,-8,0,0"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         TextWrapping="Wrap"
-                        Text="Uses the workspace selected under Saved workspaces on the Home page, or your latest settings when none is selected. XrealScreen must be running (for example in the tray)." />
+                        Text="Save workspaces on the Home page to choose them here. &quot;Latest settings&quot; uses whatever you used last. For the glasses, XrealScreen must be running (for example in the tray)." />
                     <ToggleSwitch
                         x:Name="TrayToggle"
                         Header="Keep running in the tray when the window is closed"

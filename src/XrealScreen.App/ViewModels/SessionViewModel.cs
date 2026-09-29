@@ -99,21 +99,14 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         _autoStartPending = true;
         try
         {
-            ShowInfo("Glasses connected", SelectedWorkspace is { } name ? $"Starting \"{name}\"…" : "Starting the workspace…");
+            ShowInfo("Glasses connected", $"Starting {AutoStartDescription}…");
             await Task.Delay(3000).ConfigureAwait(true); // let Windows finish setting up the glasses monitor
             if (!_glassesConnected || !IsIdle || _starting)
             {
                 return;
             }
 
-            if (SelectedWorkspace is { } selected && _library.Load(selected) is { } options)
-            {
-                ApplySettings(options);
-                SaveIfChanged();
-                _workspace.RefreshGlassesSignal();
-            }
-
-            await StartAsync().ConfigureAwait(true);
+            await StartAutoStartWorkspaceAsync().ConfigureAwait(true);
         }
         finally
         {
@@ -121,14 +114,39 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         }
     }
 
-    /// <summary>"Start the latest workspace when XrealScreen starts": waits for the crash-safe restore first.</summary>
+    /// <summary>"Start a workspace when XrealScreen starts": waits for the crash-safe restore first.</summary>
     public async Task StartOnLaunchAsync()
     {
         await _recovery.ConfigureAwait(true);
         if (IsIdle)
         {
-            await StartAsync().ConfigureAwait(true);
+            await StartAutoStartWorkspaceAsync().ConfigureAwait(true);
         }
+    }
+
+    private static string AutoStartDescription =>
+        App.Preferences.AutoStartWorkspaceName is { } name ? $"\"{name}\"" : "the latest workspace";
+
+    /// <summary>Loads the workspace chosen in Settings (none = keep the latest settings), then starts.</summary>
+    private async Task StartAutoStartWorkspaceAsync()
+    {
+        if (App.Preferences.AutoStartWorkspaceName is { } name)
+        {
+            if (_library.Load(name) is { } options)
+            {
+                ApplySettings(options);
+                SaveIfChanged();
+                _workspace.RefreshGlassesSignal();
+                RememberWorkspace(name);
+                AddLog($"automatic start: \"{name}\"");
+            }
+            else
+            {
+                AddLog($"automatic start: saved workspace \"{name}\" not found; using the latest settings");
+            }
+        }
+
+        await StartAsync().ConfigureAwait(true);
     }
 
     /// <summary>Crash-safe restore: clean up a session that did not end normally (app crash, power loss).</summary>

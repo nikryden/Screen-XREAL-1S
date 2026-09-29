@@ -20,6 +20,7 @@ public sealed partial class SettingsPage : Page
         TrayToggle.IsOn = App.Preferences.KeepRunningInTray;
         StartWorkspaceToggle.IsOn = App.Preferences.StartWorkspaceOnLaunch;
         GlassesConnectToggle.IsOn = App.Preferences.StartWorkspaceWhenGlassesConnect;
+        LoadAutoStartWorkspaces();
         Loaded += async (_, _) =>
         {
             await LoadStartupStateAsync().ConfigureAwait(true);
@@ -86,6 +87,36 @@ public sealed partial class SettingsPage : Page
     {
         App.Preferences.StartWorkspaceOnLaunch = StartWorkspaceToggle.IsOn;
         App.Preferences.Save();
+    }
+
+    private const string LatestSettings = "Latest settings (what you used last)";
+
+    private void LoadAutoStartWorkspaces()
+    {
+        List<string> items = [LatestSettings, .. App.Session.SavedWorkspaces];
+        string? chosen = App.Preferences.AutoStartWorkspaceName;
+        if (chosen is not null && !items.Contains(chosen))
+        {
+            items.Add(chosen); // deleted meanwhile: keep showing it; the start falls back to the latest settings
+        }
+
+        AutoStartWorkspaceBox.ItemsSource = items;
+        AutoStartWorkspaceBox.SelectedItem = chosen ?? LatestSettings;
+    }
+
+    private void AutoStartWorkspace_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (AutoStartWorkspaceBox.SelectedItem is not string item)
+        {
+            return;
+        }
+
+        string? name = item == LatestSettings ? null : item;
+        if (App.Preferences.AutoStartWorkspaceName != name)
+        {
+            App.Preferences.AutoStartWorkspaceName = name;
+            App.Preferences.Save();
+        }
     }
 
     private void GlassesConnect_Toggled(object sender, RoutedEventArgs e)
