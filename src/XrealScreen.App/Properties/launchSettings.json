@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "XrealScreen.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "XrealScreen.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

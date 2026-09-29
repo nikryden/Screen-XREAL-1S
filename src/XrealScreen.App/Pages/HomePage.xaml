@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="XrealScreen.App.Pages.HomePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:XrealScreen.App.Controls">
+
+    <ScrollViewer>
+        <StackPanel Padding="24,16,24,24" Spacing="16" MaxWidth="1100" HorizontalAlignment="Stretch">
+            <TextBlock Style="{StaticResource PageTitleStyle}" Text="Workspace" />
+
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="12">
+                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Workspace in the glasses" />
+                    <InfoBar
+                        IsClosable="False"
+                        IsOpen="True"
+                        Message="{x:Bind Session.StatusMessage, Mode=OneWay}"
+                        Severity="{x:Bind Session.Severity, Mode=OneWay}"
+                        Title="{x:Bind Session.StatusTitle, Mode=OneWay}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button AutomationProperties.Name="Start workspace" Command="{x:Bind Session.StartCommand}" Style="{StaticResource AccentButtonStyle}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="14" Glyph="&#xE768;" />
+                                <TextBlock Text="Start workspace" />
+                            </StackPanel>
+                        </Button>
+                        <Button AutomationProperties.Name="Stop workspace" Command="{x:Bind Session.StopCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="14" Glyph="&#xE71A;" />
+                                <TextBlock Text="Stop" />
+                            </StackPanel>
+                        </Button>
+                        <Button AutomationProperties.Name="Recenter workspace" Command="{x:Bind Session.RecenterCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="14" Glyph="&#xE7AD;" />
+                                <TextBlock Text="Recenter" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    <Expander Header="Log" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                        <ScrollViewer MaxHeight="200">
+                            <ItemsControl ItemsSource="{x:Bind Session.Log}" />
+                        </ScrollViewer>
+                    </Expander>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CardStyle}">
+                <Grid RowSpacing="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="320" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Layout preview" />
+                    <controls:WorkspacePreview Grid.Row="1" />
+                    <TextBlock Grid.Row="2" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind Workspace.Summary, Mode=OneWay}" TextWrapping="Wrap" />
+                </Grid>
+            </Border>
+
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Head-tracking preview" />
+                        <TextBlock Text="{x:Bind Tracking.Status, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Command="{x:Bind Tracking.StartCommand}" Content="Start" Style="{StaticResource AccentButtonStyle}" />
+                            <Button Command="{x:Bind Tracking.StopCommand}" Content="Stop" />
+                            <Button AutomationProperties.Name="Recenter preview" Command="{x:Bind Tracking.RecenterCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon FontSize="14" Glyph="&#xE7AD;" />
+                                    <TextBlock Text="Recenter" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Glasses" />
+                        <TextBlock Text="{x:Bind Device.StatusTitle, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <Button Command="{x:Bind Device.CheckCommand}" Content="Check connection" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

@@ -1,0 +1,57 @@
+# Project Status
+
+> Read this first. Update it at the end of every task (see skill `docs-handoff`).
+
+## Current
+- **Milestone:** M4/M5 (workspace in the app) — **mostly done**; M6 started (crash-safe restore). Last updated 2026-09-27.
+- The app is usable end to end: Start menu → **XrealScreen** → Home → **Start workspace**.
+
+## Done
+- M0–M3: protocol, virtual monitors, capture, head-tracked rendering (see ROADMAP).
+- **Two workspace types** (Screens page, ADR-0010):
+  - **Glasses anchor** (user's preferred): glasses OSD Anchor + UltraWide; app splits the glasses image into 1–3 pixel-exact virtual screens with a gap (default 10 px) and aspect (16:9 default); preview picture + **Apply screen settings** button; auto-restart when the glasses UltraWide changes.
+  - **App head tracking**: curved screens, stabilizer presets (default Strong), tracking axes (default Turning + level; Full is most comfortable per user), neck model, Ctrl+Alt+Plus/Minus distance, desk refresh sync.
+- Engine hardening: no NaN before the first IMU sample, watchdog for glasses re-enumeration, catch-all session errors, forced virtual-monitor resolutions (fixes SetDisplayConfig 87), crash log `%LOCALAPPDATA%\XrealScreen\crash.log`.
+- **Tray + background (M6)**: tray icon (Open / Start / Stop / Recenter / Exit), close-to-tray, Ctrl+Alt+W toggles the workspace, Start with Windows (MSIX StartupTask, starts hidden in tray); app preferences in `%LOCALAPPDATA%\XrealScreen\app.json`.
+- **Installer (M7 phases 1 + 2)**: `installer\driver\Build-Driver.ps1` → `artifacts\driver\` (virtual-display-rs 0.4 built from source, signed with a separate test certificate); `installer\Build-Package.ps1` → `artifacts\installer\` (signed self-contained MSIX + driver + scripts). Install keeps an existing driver, otherwise asks and installs ours ([verified-local]: keep-existing path; fresh install not yet tested).
+- **Less lag + no nod bobbing (App head tracking)**: gyro-speed stabilizer, 20 ms prediction (ADR-0009), tilt correction only when the head is nearly still (ADR-0007 `RateGate`) — verified with the user in the glasses.
+- **Crash-safe restore**: at app start (and `xrs recover`) leftover virtual monitors are removed and layout + refresh rates restored ([verified-local] hard-kill test).
+- 85/85 tests.
+
+## Next 3 steps
+1. M6: user test of tray icon / start with Windows / Ctrl+Alt+W (implemented 2026-09-27); then optional "start workspace when glasses connect".
+2. M7: clean-PC install test in Windows Sandbox (`installer\test\Start-SandboxTest.ps1` -> `artifacts\sandbox\results\report.txt`). **First run 2026-09-27 stalled** right after "PASS no driver before install", inside `Install-XrealScreen.ps1 -Yes` (no output for 9 min) - probably a dialog in the Sandbox (driver install prompt or Add-AppxPackage). Next: look at the Sandbox window, log each install step separately with timeouts in `Run-InSandbox.ps1`, rerun. Then trusted signing for a public release.
+esults
+eport.txt`. Then trusted signing for a public release.
+3. App head tracking: glasses A/B of prediction 20 vs 26 ms (measured latch→scan-out ≈ 22 ms, ADR-0009); optional Strong vs Balanced for the last nod bob. Removing DWM (always composed here) needs exclusive fullscreen or DirectComposition — deferred.
+
+## Blockers
+- None.
+
+## Open questions / known gaps
+- virtual-display-rs is installed on this PC by VertoXR (self-signed); distribution/signing for other PCs → M7 (ADR-0008).
+- In App head tracking, partial axis modes (YawRoll/YawPitch) can cause motion sickness; Full felt best; lag is now "a little" (2026-09-27). Glasses anchor avoids this.
+- `missed` frame counter in presenter stats is noisy; p99 frame time is the reliable number.
+- Control port 52999 not implemented (glasses-side recenter/UltraWide switching from the app would need it).
+- Real lean tracking needs a camera (roadmap "Later").
+
+## Last hardware verification
+- **2026-09-26 · XREAL 1S · PID 0x043E · fw 15.01.03.522** — NCM link, ports, IMU framing/units/axes, live tracking in app. Details: `docs/findings/xreal-one-protocol.md`, `docs/findings/xreal-1s-hardware.md`.
+- **2026-09-27 · XREAL 1S · fw 15.01.03.522** — App head tracking lag A/B (latch/prediction) and nod A/B (tilt-correction rate gate); nod IMU fixture recorded.
+- **2026-09-26/27 · XREAL 1S · fw 15.01.03.522** — both workspace types in the glasses with the user: anchor split 2×/3× screens with gap in 32:9 and 21:9, UltraWide auto-restart, app head tracking comfort A/B, mouse, crash recovery.
+
+## Session log
+| Date | Agent | Summary |
+|------|-------|---------|
+| 2026-09-26 | Claude | M0: research, plan, solution, app, docs, CI. |
+| 2026-09-26 | Claude | M1 hardware test on 1S: protocol verified, axis mapping/pitch/bias fixed, fixtures + tests, docs updated. |
+| 2026-09-26 | Claude | M2: Display project, glasses EDID detection, ADR-0008 virtual-display-rs provider verified on hardware. |
+| 2026-09-26 | Claude | M2 done: layout snapshot/restore, 1S mode table, WGC capture of virtual monitors. |
+| 2026-09-26 | Claude | M3: renderer in the glasses; user A/B tests → tracker tuning, stabilizer presets, desktop refresh sync (ADR-0009 update). |
+| 2026-09-26 | Claude | M3 done: drift test 5 min OK, mouse fixed (desktop order), all verified with the user in the glasses. |
+| 2026-09-26 | Claude | M4/M5 start: WorkspaceEngine (Host), app Start/Stop workspace, stabilizer UI, settings persistence. |
+| 2026-09-26/27 | Claude | M4/M5: engine + app Start/Stop; user feedback → axes modes, neck model, stabilizer, NaN fix, glasses-anchor workspace (ADR-0010) with gap/aspect/preview/apply, crash-safe restore. |
+| 2026-09-27 | Claude | M6 tray/autostart/hotkey; M7 phase 1: icon, signed self-contained MSIX, install scripts. |
+| 2026-09-27 | Claude | Lag work: gyro-speed stabilizer, late latch, 20 ms prediction; nod bobbing fixed with Madgwick rate gate (glasses A/B). |
+| 2026-09-27 | Claude | Latency measurement in presenter stats (latch→scan-out ≈ 22 ms, always DWM-composed); late latch default back to 0 (no gain while composed). |
+| 2026-09-27 | Claude | M7 phase 2: driver built from source (rustup, WDK, LLVM 18), separate driver cert, Install-Driver.ps1 (SetupAPI root device), package bundles the driver. |
