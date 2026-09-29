@@ -228,8 +228,42 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsRunning), nameof(IsIdle))]
-    [NotifyCanExecuteChangedFor(nameof(StartCommand), nameof(StopCommand), nameof(RecenterCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StartCommand), nameof(StopCommand), nameof(RecenterCommand), nameof(TakeScreenshotCommand))]
     public partial WorkspaceState State { get; set; }
+
+    /// <summary>Last saved screenshot (shown on the Home page), or null.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasScreenshot))]
+    public partial string? LastScreenshotPath { get; set; }
+
+    public bool HasScreenshot => LastScreenshotPath is not null;
+
+    /// <summary>Saves what the glasses show to Pictures\XrealScreen (also Ctrl+Alt+P and the tray menu).</summary>
+    [RelayCommand(CanExecute = nameof(IsRunning))]
+    private async Task TakeScreenshotAsync()
+    {
+        try
+        {
+            string path = await Task.Run(() => GlassesScreenshot.SaveAsync(null, CancellationToken.None)).ConfigureAwait(true);
+            LastScreenshotPath = path;
+            AddLog($"screenshot saved: {path}");
+            Notification?.Invoke(this, new SessionNotification("Screenshot saved", path));
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        {
+            AddLog($"screenshot failed: {ex.Message}");
+            Notification?.Invoke(this, new SessionNotification("Screenshot failed", ex.Message));
+        }
+    }
+
+    [RelayCommand]
+    private void OpenScreenshotFolder()
+    {
+        string argument = LastScreenshotPath is { } path && File.Exists(path)
+            ? $"/select,\"{path}\""
+            : $"\"{Directory.CreateDirectory(GlassesScreenshot.DefaultFolder).FullName}\"";
+        using var _ = System.Diagnostics.Process.Start("explorer.exe", argument);
+    }
 
     [ObservableProperty]
     public partial string StatusTitle { get; set; } = "Workspace stopped";

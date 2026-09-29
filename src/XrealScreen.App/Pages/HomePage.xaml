@@ -37,6 +37,23 @@
                                 <TextBlock Text="Recenter" />
                             </StackPanel>
                         </Button>
+                        <Button
+                            AutomationProperties.Name="Screenshot of the glasses"
+                            Command="{x:Bind Session.TakeScreenshotCommand}"
+                            ToolTipService.ToolTip="Save what the glasses show to Pictures\XrealScreen (Ctrl+Alt+P)">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="14" Glyph="&#xE722;" />
+                                <TextBlock Text="Screenshot" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8" Visibility="{x:Bind Session.HasScreenshot, Mode=OneWay}">
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind Session.LastScreenshotPath, Mode=OneWay}"
+                            TextTrimming="CharacterEllipsis" />
+                        <HyperlinkButton Command="{x:Bind Session.OpenScreenshotFolderCommand}" Content="Open folder" />
                     </StackPanel>
                     <Expander Header="Log" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                         <ScrollViewer MaxHeight="200">

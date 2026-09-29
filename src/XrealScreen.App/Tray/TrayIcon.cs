@@ -13,6 +13,9 @@ public enum TrayCommand
 
     /// <summary>Ctrl+Alt+W: start when stopped, stop when running.</summary>
     ToggleWorkspace = 6,
+
+    /// <summary>Ctrl+Alt+P: screenshot of what the glasses show.</summary>
+    Screenshot = 7,
 }
 
 /// <summary>
@@ -24,6 +27,7 @@ public sealed unsafe partial class TrayIcon : IDisposable
 {
     private const uint WM_APP_TRAY = 0x8000 + 1; // WM_APP + 1
     private const int HotkeyToggle = 1;
+    private const int HotkeyScreenshot = 2;
     private static TrayIcon? s_current;
 
     private readonly uint _taskbarCreated;
@@ -50,6 +54,7 @@ public sealed unsafe partial class TrayIcon : IDisposable
         _hwnd = CreateWindowEx(0, "XrealScreenTray", "XrealScreen tray", 0, 0, 0, 0, 0, new IntPtr(-3) /* HWND_MESSAGE */, IntPtr.Zero, GetModuleHandle(IntPtr.Zero), IntPtr.Zero);
         _icon = LoadImage(IntPtr.Zero, iconPath, 1 /* IMAGE_ICON */, 0, 0, 0x10 | 0x40 /* LR_LOADFROMFILE | LR_DEFAULTSIZE */);
         HotkeyAvailable = RegisterHotKey(_hwnd, HotkeyToggle, 0x0002 | 0x0001 | 0x4000 /* CTRL | ALT | NOREPEAT */, 0x57 /* W */);
+        ScreenshotHotkeyAvailable = RegisterHotKey(_hwnd, HotkeyScreenshot, 0x0002 | 0x0001 | 0x4000, 0x50 /* P */);
         Tooltip = tooltip;
         Add();
     }
@@ -59,6 +64,9 @@ public sealed unsafe partial class TrayIcon : IDisposable
 
     /// <summary>False when Ctrl+Alt+W is already taken by another program.</summary>
     public bool HotkeyAvailable { get; }
+
+    /// <summary>False when Ctrl+Alt+P is already taken by another program.</summary>
+    public bool ScreenshotHotkeyAvailable { get; }
 
     /// <summary>Workspace state for the menu (Start vs Stop enabled).</summary>
     public bool WorkspaceRunning { get; set; }
@@ -123,6 +131,7 @@ public sealed unsafe partial class TrayIcon : IDisposable
         AppendMenu(menu, WorkspaceRunning ? MF_GRAYED : MF_STRING, (IntPtr)TrayCommand.StartWorkspace, "Start workspace\tCtrl+Alt+W");
         AppendMenu(menu, WorkspaceRunning ? MF_STRING : MF_GRAYED, (IntPtr)TrayCommand.StopWorkspace, "Stop workspace\tCtrl+Alt+W");
         AppendMenu(menu, WorkspaceRunning ? MF_STRING : MF_GRAYED, (IntPtr)TrayCommand.Recenter, "Recenter");
+        AppendMenu(menu, WorkspaceRunning ? MF_STRING : MF_GRAYED, (IntPtr)TrayCommand.Screenshot, "Screenshot of the glasses\tCtrl+Alt+P");
         AppendMenu(menu, MF_SEPARATOR, IntPtr.Zero, null);
         AppendMenu(menu, MF_STRING, (IntPtr)TrayCommand.Exit, "Exit");
 
@@ -165,6 +174,12 @@ public sealed unsafe partial class TrayIcon : IDisposable
                 return 0;
             }
 
+            if (msg == 0x0312 /* WM_HOTKEY */ && wParam == HotkeyScreenshot)
+            {
+                self.CommandInvoked?.Invoke(TrayCommand.Screenshot);
+                return 0;
+            }
+
             if (msg == self._taskbarCreated)
             {
                 self.Add(); // Explorer restarted: put the icon back
@@ -187,6 +202,7 @@ public sealed unsafe partial class TrayIcon : IDisposable
         if (_hwnd != IntPtr.Zero)
         {
             UnregisterHotKey(_hwnd, HotkeyToggle);
+            UnregisterHotKey(_hwnd, HotkeyScreenshot);
             DestroyWindow(_hwnd);
             _hwnd = IntPtr.Zero;
         }

@@ -153,6 +153,13 @@ public partial class App : Application
             case TrayCommand.Recenter:
                 Session.RecenterCommand.Execute(null);
                 break;
+            case TrayCommand.Screenshot:
+                if (Session.TakeScreenshotCommand.CanExecute(null))
+                {
+                    Session.TakeScreenshotCommand.Execute(null);
+                }
+
+                break;
             case TrayCommand.ToggleWorkspace:
                 if (Session.IsRunning)
                 {

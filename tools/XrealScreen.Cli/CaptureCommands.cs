@@ -8,14 +8,35 @@ using XrealScreen.Render.Capture;
 
 namespace XrealScreen.Cli;
 
-/// <summary>Windows.Graphics.Capture spike (M2). Prints statistics only; frames are never saved.</summary>
+/// <summary>Capture tests (M2 WGC spike: statistics only) and glasses screenshots.</summary>
 internal static class CaptureCommands
 {
     public static Command Create()
     {
-        var capture = new Command("capture", "Capture tests (Windows.Graphics.Capture).");
+        var capture = new Command("capture", "Capture tests (Windows.Graphics.Capture) and glasses screenshots.");
         capture.Subcommands.Add(CreateTest());
+        capture.Subcommands.Add(CreateGlasses());
         return capture;
+    }
+
+    private static Command CreateGlasses()
+    {
+        var folder = new Option<string?>("--out") { Description = @"Folder (default: Pictures\XrealScreen)." };
+        var command = new Command("glasses", "Save a screenshot of what the glasses show (PNG).") { folder };
+        command.SetAction(async (parse, ct) =>
+        {
+            try
+            {
+                Console.WriteLine(await XrealScreen.Host.GlassesScreenshot.SaveAsync(parse.GetValue(folder), ct).ConfigureAwait(false));
+                return 0;
+            }
+            catch (InvalidOperationException ex)
+            {
+                Console.Error.WriteLine(ex.Message);
+                return 2;
+            }
+        });
+        return command;
     }
 
     private static Command CreateTest()
