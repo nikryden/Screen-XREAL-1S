@@ -201,6 +201,7 @@ public sealed class WorkspaceEngine : IAsyncDisposable
 
             using var gd = GraphicsDevice.CreateForMonitor(MonitorCapture.MonitorAt(glasses.X, glasses.Y));
             using var scene = new WorkspaceScene(gd) { ClearColor = new Vortice.Mathematics.Color4(0f, 0f, 0f, 1f) };
+            using var stopCapturesFirst = new CaptureScope(captures); // declared after gd/scene → disposed before them
             await MonitorCapture.RequestBorderlessAsync().ConfigureAwait(false);
             for (int i = 0; i < virtuals.Count; i++)
             {
@@ -358,6 +359,7 @@ public sealed class WorkspaceEngine : IAsyncDisposable
             using var gd = GraphicsDevice.CreateForMonitor(MonitorCapture.MonitorAt(glasses.X, glasses.Y));
             Info($"GPU: {gd.AdapterName}");
             using var scene = new WorkspaceScene(gd) { ClearColor = new Vortice.Mathematics.Color4(0.02f, 0.02f, 0.03f, 1f) };
+            using var stopCapturesFirst = new CaptureScope(captures); // declared after gd/scene → disposed before them
             await MonitorCapture.RequestBorderlessAsync().ConfigureAwait(false);
             for (int i = 0; i < virtuals.Count; i++)
             {
@@ -665,6 +667,21 @@ public sealed class WorkspaceEngine : IAsyncDisposable
         catch (Exception ex) when (ex is IOException or TimeoutException or System.ComponentModel.Win32Exception)
         {
             Info($"cleanup incomplete: {ex.Message} — run `xrs vdd clear` / `xrs display restore`.");
+        }
+    }
+
+    /// <summary>
+    /// Disposes the captures before the scene and GPU device their frame handlers copy into. Without it, switching
+    /// the glasses' UltraWide mode (which ends the session) let a late frame hit the disposed device ([verified-hw] crash).
+    /// </summary>
+    private sealed class CaptureScope(List<MonitorCapture> captures) : IDisposable
+    {
+        public void Dispose()
+        {
+            foreach (var c in captures)
+            {
+                c.Dispose();
+            }
         }
     }
 }

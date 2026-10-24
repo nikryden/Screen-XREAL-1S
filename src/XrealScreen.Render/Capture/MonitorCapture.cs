@@ -18,6 +18,9 @@ public sealed class MonitorCapture : IDisposable
     private readonly GraphicsCaptureItem _item;
     private readonly Direct3D11CaptureFramePool _pool;
     private readonly GraphicsCaptureSession _session;
+    // Held while a frame is handed out, so no FrameArrived handler runs after Dispose returns
+    // (handlers copy into scene textures that are disposed right after the captures).
+    private readonly Lock _frameLock = new();
     private bool _disposed;
 
     public MonitorCapture(ID3D11Device device, IntPtr hmonitor, bool borderless = true, bool captureCursor = true)
@@ -65,24 +68,36 @@ public sealed class MonitorCapture : IDisposable
 
     private void OnFrameArrived(Direct3D11CaptureFramePool sender, object args)
     {
-        using var frame = sender.TryGetNextFrame();
-        if (frame is null || _disposed)
+        lock (_frameLock)
         {
-            return;
-        }
+            if (_disposed)
+            {
+                return;
+            }
 
-        using var texture = CaptureInterop.GetTexture(frame.Surface);
-        FrameArrived?.Invoke(new CapturedFrame(texture, frame.ContentSize.Width, frame.ContentSize.Height, frame.SystemRelativeTime));
+            using var frame = sender.TryGetNextFrame();
+            if (frame is null)
+            {
+                return;
+            }
+
+            using var texture = CaptureInterop.GetTexture(frame.Surface);
+            FrameArrived?.Invoke(new CapturedFrame(texture, frame.ContentSize.Width, frame.ContentSize.Height, frame.SystemRelativeTime));
+        }
     }
 
     public void Dispose()
     {
-        if (_disposed)
+        lock (_frameLock)
         {
-            return;
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
         }
 
-        _disposed = true;
         _pool.FrameArrived -= OnFrameArrived;
         _session.Dispose();
         _pool.Dispose();
