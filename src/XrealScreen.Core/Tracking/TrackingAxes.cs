@@ -12,10 +12,16 @@ public enum TrackingAxes
     /// </summary>
     YawRoll,
 
-    /// <summary>Only turning left/right moves the screens; tilting and nodding are ignored (screens tilt with the head).</summary>
+    /// <summary>
+    /// Screens stay in place for turning only; nodding and tilting are ignored, so the screens stay in front of
+    /// the eyes for those (no neck-model shift either, see <c>ViewMath.ComposeView</c>).
+    /// </summary>
     YawOnly,
 
-    /// <summary>Turning and nodding; tilting the head to a shoulder does not rotate the screens.</summary>
+    /// <summary>
+    /// Screens stay in place for turning and looking up/down, like a real monitor; tilting the head to a
+    /// shoulder does not rotate them.
+    /// </summary>
     YawPitch,
 
     /// <summary>Screens fixed in space for all rotations.</summary>

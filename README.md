@@ -9,7 +9,7 @@ A Windows 11 app that turns **XREAL 1S** (also One / One Pro) AR glasses into a 
 ## Features
 - **Two workspace types**
   - **Glasses anchor** (most stable): the glasses hold their own UltraWide image still (OSD Anchor + UltraWide 32:9, 21:9 or 16:18); XrealScreen splits it into 1–3 pixel-exact virtual screens with an adjustable gap and shape.
-  - **App head tracking**: up to 6 curved screens in an arc or grid, head-tracked by the app (stabilizer presets, tracking axes incl. **Turning only** where nodding and tilting leave the screens still, neck model, auto center with dead-zone, distance Ctrl+Alt+Plus/Minus, screen tilt Ctrl+Alt+PageUp/PageDown).
+  - **App head tracking**: up to 6 curved screens in an arc or grid, head-tracked by the app (stabilizer presets, tracking axes: which head movements the screens stay in place for, e.g. **Left/right and up/down** like a real monitor, neck model, auto center with dead-zone, distance Ctrl+Alt+Plus/Minus, screen tilt Ctrl+Alt+PageUp/PageDown).
 - **Real virtual monitors**: Windows sees extra monitors, so you drag windows onto them as usual. Your monitor layout and refresh rates are always restored when the workspace stops, even after a crash.
 - **Saved workspaces**: save, load, delete, **import and export** your setups. All settings are saved automatically and loaded at start.
 - **Automatic start**: start a chosen workspace when XrealScreen starts and/or **when the glasses are connected**. A Glasses anchor workspace waits (with a message on the Home page and in the tray) until the glasses are in UltraWide mode, then starts by itself.

@@ -50,10 +50,10 @@ public sealed partial class TrackingViewModel : ObservableObject, IDisposable
     /// <summary>Same order as <see cref="XrealScreen.Core.Tracking.TrackingAxes"/>.</summary>
     public IReadOnlyList<string> AxesNames { get; } =
     [
-        "Turning + level: screens stay level when you tilt your head, no up/down (recommended)",
-        "Turning only: screens stay still when you nod or tilt your head; only turning left/right moves them",
-        "Turning and nodding: screens tilt with your head",
-        "Full: turning, nodding and tilting — like monitors fixed in the room",
+        "Left/right + level: screens stay in place when you turn and stay level when you tilt your head; they follow your head up/down (recommended)",
+        "Left/right only: screens stay in place when you turn; when you look up/down or tilt your head they stay in front of your eyes",
+        "Left/right and up/down: screens stay in place when you turn or look up/down, like a real monitor; tilting your head to a shoulder does not rotate them",
+        "Full: screens stay in place for every head movement, including tilting — like monitors fixed in the room",
     ];
 
     /// <summary>Index into <see cref="AxesNames"/> = (int)TrackingAxes.</summary>

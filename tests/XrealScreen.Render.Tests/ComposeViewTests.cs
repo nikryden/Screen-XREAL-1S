@@ -27,6 +27,18 @@ public sealed class ComposeViewTests
         Assert.True(Vector3.Distance(Seen(level, p), Seen(nodTilt, p)) < 1e-4f, $"{Seen(level, p)} vs {Seen(nodTilt, p)}");
     }
 
+    [Theory]
+    [InlineData(TrackingAxes.YawPitch)]
+    [InlineData(TrackingAxes.Full)]
+    public void LookingUpAndDown_LeavesTheScreensInPlace(TrackingAxes axes)
+    {
+        // Looking 15° down at a screen straight ahead: it appears 15° above the view center, as a real monitor would.
+        var view = ViewMath.ComposeView(Head(20, downDeg: 15), axes, 0, Vector3.Zero);
+        var screen = Seen(view, Vector3.Transform(new Vector3(1.5f, 0, 0), QuaternionMath.FromYaw(20 * Deg)));
+        Assert.Equal(15f, MathF.Atan2(screen.Z, screen.X) / Deg, 2);
+        Assert.Equal(0f, screen.Y, 4);
+    }
+
     [Fact]
     public void YawRoll_KeepsTheNeckModel_ForLeaningIn()
     {

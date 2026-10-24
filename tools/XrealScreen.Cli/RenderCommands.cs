@@ -25,7 +25,7 @@ internal static class RenderCommands
         var gate = new Option<float>("--accel-gate") { Description = "Skip tilt correction when | |a| - g | exceeds this (m/s²); 0 = off.", DefaultValueFactory = _ => 0.6f };
         var rateGate = new Option<float>("--rate-gate") { Description = "Skip tilt correction while the head turns faster than this (rad/s; stops up/down bobbing when nodding); 0 = off.", DefaultValueFactory = _ => 0.09f };
         var stabilize = new Option<string>("--stabilize") { Description = "Pose stabilizer: off | balanced | strong | ultra.", DefaultValueFactory = _ => "strong" };
-        var axes = new Option<TrackingAxes>("--axes") { Description = "Head rotations that move the screens: YawRoll (level, no up/down) | YawOnly | YawPitch | Full.", DefaultValueFactory = _ => TrackingAxes.YawRoll };
+        var axes = new Option<TrackingAxes>("--axes") { Description = "Head rotations the screens stay in place for: YawRoll (left/right, level) | YawOnly (left/right) | YawPitch (left/right + up/down, like a real monitor) | Full (also tilting).", DefaultValueFactory = _ => TrackingAxes.YawRoll };
         var tilt = new Option<float>("--tilt") { Description = "Screens up (+) / down (-) in degrees, ±30 (Ctrl+Alt+PageUp/PageDown change it live).", DefaultValueFactory = _ => 0f };
         var neck = new Option<bool>("--neck-model") { Description = "Neck model: screens come closer when you lean/nod in.", DefaultValueFactory = _ => true };
         var syncDesktop = new Option<bool>("--sync-desktop") { Description = "Set other monitors to the glasses refresh for the session (avoids judder; restored on exit).", DefaultValueFactory = _ => true };
