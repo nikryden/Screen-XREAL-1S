@@ -24,6 +24,10 @@ internal static unsafe partial class Win32
     public const int HotkeyFarther = 4;
     public const int HotkeyCloserNumpad = 5;
     public const int HotkeyFartherNumpad = 6;
+    public const int HotkeyTiltUp = 7;
+    public const int HotkeyTiltDown = 8;
+    public const int VK_PRIOR = 0x21;
+    public const int VK_NEXT = 0x22;
     public const int VK_OEM_PLUS = 0xBB;
     public const int VK_OEM_MINUS = 0xBD;
     public const int VK_ADD = 0x6B;

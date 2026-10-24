@@ -51,7 +51,7 @@ public sealed partial class TrackingViewModel : ObservableObject, IDisposable
     public IReadOnlyList<string> AxesNames { get; } =
     [
         "Turning + level: screens stay level when you tilt your head, no up/down (recommended)",
-        "Turning only: screens tilt with your head",
+        "Turning only: screens stay still when you nod or tilt your head; only turning left/right moves them",
         "Turning and nodding: screens tilt with your head",
         "Full: turning, nodding and tilting — like monitors fixed in the room",
     ];
@@ -59,6 +59,10 @@ public sealed partial class TrackingViewModel : ObservableObject, IDisposable
     /// <summary>Index into <see cref="AxesNames"/> = (int)TrackingAxes.</summary>
     [ObservableProperty]
     public partial int AxesIndex { get; set; }
+
+    /// <summary>Screens up (+) / down (−) in degrees; Ctrl+Alt+PageUp/PageDown change it live (WorkspaceOptions.TiltDegrees).</summary>
+    [ObservableProperty]
+    public partial double TiltDegrees { get; set; }
 
     /// <summary>Screens come closer when you lean or nod in (the 1S measures rotation only).</summary>
     [ObservableProperty]

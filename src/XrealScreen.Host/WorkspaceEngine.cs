@@ -54,8 +54,33 @@ public sealed class WorkspaceEngine : IAsyncDisposable
     private HeadPose _latest = new(0, Quaternion.Identity, Quaternion.Identity, Vector3.Zero);
     private WorkspaceState _state = WorkspaceState.Stopped;
     private Action<float>? _setDistance;
+    private float _tiltDegrees;
 
-    /// <summary>Current viewing distance in metres (changes with Ctrl+Alt+Up/Down or <see cref="SetDistance"/>).</summary>
+    /// <summary>Current screen tilt in degrees, + = screens higher (changes with Ctrl+Alt+PageUp/PageDown or <see cref="SetTilt"/>).</summary>
+    public float TiltDegrees => Volatile.Read(ref _tiltDegrees);
+
+    /// <summary>Raised when the screen tilt changes (any thread).</summary>
+    public event EventHandler<float>? TiltChanged;
+
+    /// <summary>Moves the screens up/down (App head tracking; ±<see cref="WorkspaceOptions.MaxTiltDegrees"/>); applies live while running.</summary>
+    public void SetTilt(float degrees)
+    {
+        float clamped = Math.Clamp(MathF.Round(degrees, 1), -WorkspaceOptions.MaxTiltDegrees, WorkspaceOptions.MaxTiltDegrees);
+        if (Volatile.Read(ref _tiltDegrees) == clamped)
+        {
+            return;
+        }
+
+        Volatile.Write(ref _tiltDegrees, clamped);
+        if (_state == WorkspaceState.Running)
+        {
+            Info($"tilt {clamped:+0.#;-0.#;0}°");
+        }
+
+        TiltChanged?.Invoke(this, clamped);
+    }
+
+    /// <summary>Current viewing distance in metres (changes with Ctrl+Alt+Plus/Minus or <see cref="SetDistance"/>).</summary>
     public float DistanceMeters { get; private set; }
 
     /// <summary>Raised when the viewing distance changes (any thread).</summary>
@@ -411,6 +436,7 @@ public sealed class WorkspaceEngine : IAsyncDisposable
             var stabilizer = _stabilizer;
             bool fixedPose = o.Source == TrackingSource.Fixed;
             long lastLatch = 0;
+            Volatile.Write(ref _tiltDegrees, Math.Clamp(o.TiltDegrees, -WorkspaceOptions.MaxTiltDegrees, WorkspaceOptions.MaxTiltDegrees));
             var neckToEye = o.NeckModel ? ViewMath.DefaultNeckToEye : Vector3.Zero;
             HeadView Latch()
             {
@@ -431,9 +457,8 @@ public sealed class WorkspaceEngine : IAsyncDisposable
                 float dt = lastLatch == 0 ? 0f : (float)Stopwatch.GetElapsedTime(lastLatch, now).TotalSeconds;
                 lastLatch = now;
                 var full = stabilizer.Filter(predicted, dt, speed);
-                // Eye position from the full head rotation (lean-in still brings screens closer),
-                // view orientation limited to the axes the user wants the screens to follow.
-                return new HeadView(o.Axes.Constrain(full), ViewMath.EyeOffset(full, neckToEye));
+                // View limited to the axes the user wants the screens to follow, plus the manual tilt.
+                return ViewMath.ComposeView(full, o.Axes, Volatile.Read(ref _tiltDegrees), neckToEye);
             }
 
             // Present until stopped.
@@ -449,13 +474,14 @@ public sealed class WorkspaceEngine : IAsyncDisposable
                 DistanceChanged?.Invoke(this, DistanceMeters);
             };
             presenter.DistanceStepRequested += step => _setDistance?.Invoke(DistanceMeters + step * 0.1f);
+            presenter.TiltStepRequested += step => SetTilt(TiltDegrees + step);
             presenter.Start();
             if (presenter.UnavailableHotkeys.Count > 0)
             {
                 Info($"hotkeys taken by another program: {string.Join(", ", presenter.UnavailableHotkeys)}");
             }
 
-            Info($"running: {captures.Count} screen(s), stabilizer {o.Stabilizer}, axes {o.Axes}, neck model {(o.NeckModel ? "on" : "off")} — Ctrl+Alt+R recenter, Ctrl+Alt+Plus/Minus closer/farther, Ctrl+Alt+Q stop");
+            Info($"running: {captures.Count} screen(s), stabilizer {o.Stabilizer}, axes {o.Axes}, tilt {TiltDegrees:+0.#;-0.#;0}°, neck model {(o.NeckModel ? "on" : "off")} — Ctrl+Alt+R recenter, Ctrl+Alt+Plus/Minus closer/farther, Ctrl+Alt+PageUp/PageDown screens up/down, Ctrl+Alt+Q stop");
             SetState(WorkspaceState.Running);
             _running?.TrySetResult();
 

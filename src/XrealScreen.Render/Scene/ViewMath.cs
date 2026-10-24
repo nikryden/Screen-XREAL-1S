@@ -1,4 +1,5 @@
 using System.Numerics;
+using XrealScreen.Core.Tracking;
 using XrealScreen.Core.Workspace;
 
 namespace XrealScreen.Render.Scene;
@@ -39,6 +40,21 @@ public static class ViewMath
     /// <summary>Eye position (world FLU, relative to the eye position when looking straight ahead) for a head orientation.</summary>
     public static Vector3 EyeOffset(Quaternion headRelative, Vector3 neckToEye) =>
         Vector3.Transform(neckToEye, Quaternion.Normalize(headRelative)) - neckToEye;
+
+    /// <summary>
+    /// The per-frame view for a head orientation: rotations limited to <paramref name="axes"/>, then tilted by
+    /// <paramref name="tiltDegrees"/> in the head frame (positive = screens higher; corrects glasses that sit
+    /// tilted on the nose). The neck model uses the full rotation so leaning in brings the screens closer, except
+    /// with <see cref="TrackingAxes.YawOnly"/>, where nodding and tilting must not move the screens at all.
+    /// </summary>
+    public static HeadView ComposeView(Quaternion headRelative, TrackingAxes axes, float tiltDegrees, Vector3 neckToEye)
+    {
+        var constrained = axes.Constrain(headRelative);
+        var oriented = tiltDegrees == 0f
+            ? constrained
+            : Quaternion.Normalize(QuaternionMath.Multiply(constrained, Quaternion.CreateFromAxisAngle(Vector3.UnitY, tiltDegrees * MathF.PI / 180f)));
+        return new HeadView(oriented, EyeOffset(axes == TrackingAxes.YawOnly ? constrained : headRelative, neckToEye));
+    }
 
     /// <summary>World → clip transform for a head orientation (relative to the workspace center).</summary>
     /// <param name="neckToEye">Neck-model offset; <see cref="Vector3.Zero"/> = rotate about the eyes (no parallax).</param>

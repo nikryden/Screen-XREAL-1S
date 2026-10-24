@@ -22,7 +22,8 @@ public sealed record PresenterStats(long Frames, double Seconds, double FrameMsP
 /// <summary>
 /// Borderless fullscreen window on the glasses monitor with a flip-model swapchain.
 /// A dedicated render thread waits for the glasses' vblank, late-latches the head pose, renders and presents.
-/// Global hotkeys: Ctrl+Alt+R = recenter, Ctrl+Alt+Q = stop, Ctrl+Alt+Plus/Minus = screens closer/farther
+/// Global hotkeys: Ctrl+Alt+R = recenter, Ctrl+Alt+Q = stop, Ctrl+Alt+Plus/Minus = screens closer/farther,
+/// Ctrl+Alt+PageUp/PageDown = screens up/down
 /// (Ctrl+Alt+arrows are usually taken by the graphics driver for screen rotation, [verified-hw]).
 /// When the window has focus also Esc / R.
 /// </summary>
@@ -75,6 +76,9 @@ public sealed unsafe class GlassesPresenter : IDisposable
 
     /// <summary>Raised for Ctrl+Alt+Plus (-1 = closer) / Ctrl+Alt+Minus (+1 = farther).</summary>
     public event Action<int>? DistanceStepRequested;
+
+    /// <summary>Raised for Ctrl+Alt+PageUp (+1 = screens 1° higher) / Ctrl+Alt+PageDown (-1 = lower).</summary>
+    public event Action<int>? TiltStepRequested;
 
     /// <summary>Hotkeys that could not be registered (already taken by another program).</summary>
     public IReadOnlyList<string> UnavailableHotkeys => _unavailableHotkeys;
@@ -169,6 +173,8 @@ public sealed unsafe class GlassesPresenter : IDisposable
         Register(Win32.HotkeyFarther, ctrlAlt, Win32.VK_OEM_MINUS, "Ctrl+Alt+Minus");
         Register(Win32.HotkeyCloserNumpad, ctrlAlt, Win32.VK_ADD, "Ctrl+Alt+Numpad Plus");
         Register(Win32.HotkeyFartherNumpad, ctrlAlt, Win32.VK_SUBTRACT, "Ctrl+Alt+Numpad Minus");
+        Register(Win32.HotkeyTiltUp, ctrlAlt, Win32.VK_PRIOR, "Ctrl+Alt+PageUp");
+        Register(Win32.HotkeyTiltDown, ctrlAlt, Win32.VK_NEXT, "Ctrl+Alt+PageDown");
 
         Win32.MSG msg;
         while (Win32.GetMessage(&msg, IntPtr.Zero, 0, 0) > 0)
@@ -217,6 +223,12 @@ public sealed unsafe class GlassesPresenter : IDisposable
             case Win32.WM_HOTKEY when wParam == Win32.HotkeyFarther || wParam == Win32.HotkeyFartherNumpad:
                 self?.DistanceStepRequested?.Invoke(+1);
                 return 0;
+            case Win32.WM_HOTKEY when wParam == Win32.HotkeyTiltUp:
+                self?.TiltStepRequested?.Invoke(+1);
+                return 0;
+            case Win32.WM_HOTKEY when wParam == Win32.HotkeyTiltDown:
+                self?.TiltStepRequested?.Invoke(-1);
+                return 0;
             case Win32.WM_HOTKEY when wParam == Win32.HotkeyStop:
                 Win32.PostMessage(hwnd, Win32.WM_CLOSE, 0, 0);
                 return 0;
@@ -234,7 +246,7 @@ public sealed unsafe class GlassesPresenter : IDisposable
 
                 Win32.UnregisterHotKey(hwnd, Win32.HotkeyRecenter);
                 Win32.UnregisterHotKey(hwnd, Win32.HotkeyStop);
-                for (int id = Win32.HotkeyRecenter; id <= Win32.HotkeyFartherNumpad; id++)
+                for (int id = Win32.HotkeyRecenter; id <= Win32.HotkeyTiltDown; id++)
                 {
                     Win32.UnregisterHotKey(hwnd, id);
                 }

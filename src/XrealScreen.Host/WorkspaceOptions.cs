@@ -77,6 +77,14 @@ public sealed record WorkspaceOptions
     /// <summary>Which head rotations move the screens (default: turning, level with the horizon, no up/down).</summary>
     public TrackingAxes Axes { get; init; } = TrackingAxes.YawRoll;
 
+    /// <summary>
+    /// App head tracking: moves the screens up (+) or down (−) by this angle, for glasses that sit tilted on
+    /// the nose; ±<see cref="MaxTiltDegrees"/>, changed live with Ctrl+Alt+PageUp/PageDown.
+    /// </summary>
+    public float TiltDegrees { get; init; }
+
+    public const float MaxTiltDegrees = 30f;
+
     /// <summary>Neck model: leaning/nodding moves the eyes, so screens come closer when you lean in.</summary>
     public bool NeckModel { get; init; } = true;
 

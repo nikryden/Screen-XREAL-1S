@@ -34,6 +34,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
     private readonly TrackingViewModel _tracking;
     private readonly DispatcherQueueTimer _poseTimer;
     private bool _applyingEngineDistance;
+    private bool _applyingEngineTilt;
 
     public SessionViewModel(DispatcherQueue dispatcher, WorkspaceViewModel workspace, TrackingViewModel tracking)
     {
@@ -46,7 +47,22 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         _engine.StateChanged += (_, state) => _dispatcher.TryEnqueue(() => OnEngineState(state));
         _engine.Log += (_, message) => _dispatcher.TryEnqueue(() => AddLog(message));
 
-        // Distance: hotkeys (Ctrl+Alt+Up/Down) update the slider; the slider moves the screens live.
+        // Tilt: same pattern with Ctrl+Alt+PageUp/PageDown and the Tracking page slider.
+        _engine.TiltChanged += (_, degrees) => _dispatcher.TryEnqueue(() =>
+        {
+            _applyingEngineTilt = true;
+            _tracking.TiltDegrees = degrees;
+            _applyingEngineTilt = false;
+        });
+        _tracking.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(TrackingViewModel.TiltDegrees) && IsRunning && !_applyingEngineTilt)
+            {
+                _engine.SetTilt((float)_tracking.TiltDegrees);
+            }
+        };
+
+        // Distance: hotkeys (Ctrl+Alt+Plus/Minus) update the slider; the slider moves the screens live.
         _engine.DistanceChanged += (_, meters) => _dispatcher.TryEnqueue(() =>
         {
             _applyingEngineDistance = true;
@@ -464,7 +480,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
             StatusTitle = "Workspace running";
             StatusMessage = _workspace.KindIndex == 0
                 ? "Move the mouse right from your desk monitor onto the virtual screens. Recenter: long-press X on the glasses. Ctrl+Alt+Q stops."
-                : "Move the mouse right from your desk monitor onto the virtual screens. Ctrl+Alt+R recenter · Ctrl+Alt+Plus/Minus closer/farther · Ctrl+Alt+Q stop.";
+                : "Move the mouse right from your desk monitor onto the virtual screens. Ctrl+Alt+R recenter · Ctrl+Alt+Plus/Minus closer/farther · Ctrl+Alt+PageUp/PageDown screens up/down · Ctrl+Alt+Q stop.";
             Severity = InfoBarSeverity.Success;
         }
         else if (state is WorkspaceState.Stopped or WorkspaceState.Faulted)
@@ -563,6 +579,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         Stabilizer = _tracking.StabilizerPreset,
         NeckModel = _tracking.NeckModel,
         Axes = (TrackingAxes)Math.Clamp(_tracking.AxesIndex, 0, Enum.GetValues<TrackingAxes>().Length - 1),
+        TiltDegrees = (float)Math.Clamp(double.IsNaN(_tracking.TiltDegrees) ? 0 : _tracking.TiltDegrees, -WorkspaceOptions.MaxTiltDegrees, WorkspaceOptions.MaxTiltDegrees),
         AutoCenter = new AutoCenterSettings
         {
             Policy = _tracking.PolicyIndex == 1 ? RecenterPolicy.Follow : RecenterPolicy.Manual,
@@ -589,6 +606,7 @@ public sealed partial class SessionViewModel : ObservableObject, IDisposable
         _tracking.StabilizerIndex = o.Stabilizer switch { "off" => 0, "balanced" => 1, "ultra" => 3, _ => 2 };
         _tracking.NeckModel = o.NeckModel;
         _tracking.AxesIndex = (int)o.Axes;
+        _tracking.TiltDegrees = o.TiltDegrees;
         _tracking.PolicyIndex = o.AutoCenter.Policy == RecenterPolicy.Follow ? 1 : 0;
         _tracking.DeadZoneDegrees = o.AutoCenter.DeadZoneDegrees;
         _tracking.SmoothingSeconds = o.AutoCenter.SmoothingSeconds;

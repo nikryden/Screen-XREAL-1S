@@ -55,6 +55,17 @@
                 <StackPanel Spacing="12">
                     <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Which head movements move the screens" />
                     <RadioButtons ItemsSource="{x:Bind Tracking.AxesNames}" SelectedIndex="{x:Bind Tracking.AxesIndex, Mode=TwoWay}" />
+                    <Slider
+                        Margin="0,8,0,0"
+                        Header="Screen tilt (degrees, + = higher)"
+                        MaxWidth="480"
+                        HorizontalAlignment="Left"
+                        MinWidth="320"
+                        Maximum="30"
+                        Minimum="-30"
+                        StepFrequency="0.5"
+                        Value="{x:Bind Tracking.TiltDegrees, Mode=TwoWay}" />
+                    <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Moves all screens up or down when they don't sit right in front of your eyes (for example when the glasses sit tilted on your nose). Changes apply live; use Ctrl+Alt+PageUp / PageDown while the workspace runs." />
                     <TextBlock Margin="0,12,0,0" Style="{StaticResource SubtitleTextBlockStyle}" Text="Stabilizer" />
                     <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Smooths tiny head movements so the screens look calm when you hold still. Stronger settings trail a little behind fast turns. Used when the workspace starts." />
                     <RadioButtons ItemsSource="{x:Bind Tracking.StabilizerNames}" SelectedIndex="{x:Bind Tracking.StabilizerIndex, Mode=TwoWay}" />

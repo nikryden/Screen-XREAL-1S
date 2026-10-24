@@ -3,7 +3,7 @@
 > Read this first. Update it at the end of every task (see skill `docs-handoff`).
 
 ## Current
-- **Milestone:** M4/M5 (workspace in the app) — **mostly done**; M6 started (crash-safe restore). Last updated 2026-10-12.
+- **Milestone:** M4/M5 (workspace in the app) — **mostly done**; M6 started (crash-safe restore). Last updated 2026-10-24.
 - The app is usable end to end: Start menu → **XrealScreen** → Home → **Start workspace**.
 
 ## Done
@@ -11,6 +11,7 @@
 - **Two workspace types** (Screens page, ADR-0010):
   - **Glasses anchor** (user's preferred): glasses OSD Anchor + UltraWide; app splits the glasses image into 1–3 pixel-exact virtual screens with a gap (default 10 px) and aspect (16:9 default); preview picture + **Apply screen settings** button; auto-restart when the glasses UltraWide changes.
   - **App head tracking**: curved screens, stabilizer presets (default Strong), tracking axes (default Turning + level; Full is most comfortable per user), neck model, Ctrl+Alt+Plus/Minus distance, desk refresh sync.
+  - **Turning only + screen tilt (2026-10-24, not yet tested in the glasses)**: Turning only now ignores nodding and head tilt completely (the neck-model eye shift follows the constrained view too, `ViewMath.ComposeView`); Tracking page **Screen tilt** slider (±30°, `WorkspaceOptions.TiltDegrees`, saved) moves all screens up/down in the head frame for glasses that sit tilted; **Ctrl+Alt+PageUp/PageDown** = 1° steps live (slider follows); `xrs render --tilt`.
 - Engine hardening: no NaN before the first IMU sample, watchdog for glasses re-enumeration, catch-all session errors, forced virtual-monitor resolutions (fixes SetDisplayConfig 87), crash log `%LOCALAPPDATA%\XrealScreen\crash.log`.
 - **Tray + background (M6)**: tray icon (Open / Start / Stop / Recenter / Exit), close-to-tray, Ctrl+Alt+W toggles the workspace, Start with Windows (MSIX StartupTask, starts hidden in tray); app preferences in `%LOCALAPPDATA%\XrealScreen\app.json`.
 - **Installer (M7 phases 1 + 2)**: `installer\driver\Build-Driver.ps1` → `artifacts\driver\` (virtual-display-rs 0.4 built from source, signed with a separate test certificate); `installer\Build-Package.ps1` → `artifacts\installer\` (signed self-contained MSIX + driver + scripts). Install keeps an existing driver, otherwise asks and installs ours ([verified-local]: keep-existing path; fresh install not yet tested).
@@ -26,9 +27,10 @@
 - **Microsoft Store package (2026-10-11, ADR-0005 update)**: `installer\Build-StorePackage.ps1` → unsigned self-contained `.msixbundle` (x64 + ARM64, ~207 MB) in `artifacts\store\` [verified-local] (build + bundle; placeholder identity). Identity from `installer\store\StoreIdentity.json` (placeholders until the name is reserved in Partner Center); submission notes + capability justifications in `installer\store\README.md`. No driver in the Store package: Home shows **Virtual display driver not installed / Get the driver** (→ GitHub releases/latest) and Start refuses with an explanation (`Host.VirtualDisplayDriver`; not yet seen in the app — this PC has the driver). `installer\Build-DriverPackage.ps1` → `XrealScreen-Driver.zip` (not yet run: needs `artifacts\driver`). Manifest now targets Windows.Desktop only.
 - **App looks (2026-10-12, ADR-0014)**: Settings → Look: Classic, Lens, Instrument, **Stage (default)**, switched live; own Home page per look, Stage also on the Screens page; App theme only for Classic. Navigation pane resizable (drag the edge, snaps to icons where the labels end). Screen count limited to 3 in glasses anchor, 6 in app head tracking. [verified-local: screenshots of every look, live switching, both workspace types; not yet used with the glasses].
 - Pitfall: building `src/XrealScreen.App` while the app runs re-registers the dev package and kills the app without cleanup (leftover virtual monitors) — run `xrs recover`.
-- 169/169 tests (RunKeyStartup 7 new).
+- 176/176 tests (ComposeViewTests 6 new: axes + tilt).
 
 ## Next steps
+1. Glasses test of **Turning only + Screen tilt** (App head tracking): nod/tilt → screens still; Ctrl+Alt+PageUp/PageDown move them up/down and the slider follows; value kept after restart.
 1. MSI install test (admin): `msiexec /i artifacts\msi\XrealScreen-0.1.0-x64.msi /l*v install.log` → Start menu entry (two "XrealScreen" entries while the dev MSIX is registered), app starts, tray icon, Settings → Start with Windows (HKCU Run value + sign-in start in tray), workspace in the glasses, Repair, uninstall (Run value gone). Then the driver page in Windows Sandbox or a spare PC (fresh install: certificate + device + driver; uninstall removes them). Payload trimming (Windows App SDK AI components). Signing later (ADR-0013).
 2. Store: reserve the name in Partner Center, fill `installer\store\StoreIdentity.json`, run `Build-StorePackage.ps1 -RunWack` (admin), privacy policy URL, submit. Driver for Store users: EV certificate + attestation signing, then a GitHub release with `XrealScreen-Driver.zip` (the app links to releases/latest). Check the driver-missing banner on a PC without the driver (Sandbox).
 3. **Publish the SDK to nuget.org (user, in progress 2026-10-11):** metadata ready (MIT, authors, repo URL, tags, READMEs with absolute GitHub links); all six IDs free on nuget.org (checked 2026-10-11). User steps: nuget.org API key (Push, glob `XrealScreen.*`) → `Remove-Item artifacts
@@ -66,3 +68,4 @@ uget\*.nupkg" --api-key $key --source https://api.nuget.org/v3/index.json --skip
 | 2026-10-11 | Claude | NuGet publishing prep: package README links made absolute, IDs checked free on nuget.org; push steps for the user in Next steps. |
 | 2026-10-12 | Claude | App: navigation pane resizable by dragging its edge (collapses to icons below 160 px, reopens at the last width; saved in app.json). |
 | 2026-10-12 | Claude | App looks (ADR-0014): Classic / Lens / Instrument / Stage (default) picked in Settings and switched live; Stage monitor view on Home and Screens. |
+| 2026-10-24 | Claude | App head tracking: Turning only leaves screens fully still on nod/tilt; Screen tilt setting (±30°) + Ctrl+Alt+PageUp/PageDown. |
