@@ -73,7 +73,7 @@
         <p><strong>Förhandsversion.</strong> XrealScreen fungerar hela vägen med XREAL 1S, och installationsprogrammet testas fortfarande. Förhandsversionerna är inte kodsignerade än, så Windows SmartScreen kan varna: välj <em>Mer information → Kör ändå</em>. Om en nedladdningslänk inte har någon fil än, använd <a href="#source">Bygg från källkod</a>.</p>
       </div>
 
-      <div class="grid grid-3">
+      <div class="grid grid-2">
         <article class="card dl-card">
           <span class="badge">Rekommenderas</span>
           <h2 class="h3">Installationsprogram (MSI)</h2>
@@ -83,13 +83,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
             Ladda ner från GitHub
           </a>
-        </article>
-        <article class="card dl-card">
-          <span class="badge">Kommer snart</span>
-          <h2 class="h3">Microsoft Store</h2>
-          <p>Automatiska uppdateringar via Store, för x64 och ARM64. Store-appar kan inte installera drivrutiner, så du installerar drivrutinen för virtuella skärmar separat. Appen länkar till den.</p>
-          <p class="meta">Windows 11 x64 / ARM64</p>
-          <span class="btn btn-ghost" aria-disabled="true">Inte i Store än</span>
         </article>
         <article class="card dl-card" id="source">
           <span class="badge">Utvecklare</span>
@@ -107,7 +100,7 @@
         <div class="table-wrap">
           <table>
             <tbody>
-              <tr><th scope="row">Windows</th><td>Windows 11, x64 (ARM64 via Store-paketet)</td></tr>
+              <tr><th scope="row">Windows</th><td>Windows 11, x64</td></tr>
               <tr><th scope="row">Glasögon</th><td><strong>XREAL 1S</strong> (testad). XREAL One och One Pro ansluts på samma sätt och bör fungera, men är inte testade än.</td></tr>
               <tr><th scope="row">Anslutning</th><td>En USB-C-port med DisplayPort-bild (DP Alt Mode) som glasögonen kopplas direkt till</td></tr>
               <tr><th scope="row">Drivrutin</th><td>En drivrutin för virtuella skärmar (<a href="https://github.com/MolotovCherry/virtual-display-rs">virtual-display-rs</a>, MIT). MSI-paketet kan installera den. En befintlig kopia behålls.</td></tr>

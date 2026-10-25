@@ -73,7 +73,7 @@
         <p><strong>Preview.</strong> XrealScreen works end to end on the XREAL 1S, and the installer is still being tested. The preview builds are not code-signed yet, so Windows SmartScreen may warn you: select <em>More info → Run anyway</em>. If a download link shows no file yet, use <a href="#source">Build from source</a>.</p>
       </div>
 
-      <div class="grid grid-3">
+      <div class="grid grid-2">
         <article class="card dl-card">
           <span class="badge">Recommended</span>
           <h2 class="h3">Windows installer (MSI)</h2>
@@ -83,13 +83,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
             Download from GitHub
           </a>
-        </article>
-        <article class="card dl-card">
-          <span class="badge">Coming soon</span>
-          <h2 class="h3">Microsoft Store</h2>
-          <p>Automatic updates through the Store, for x64 and ARM64. Store apps can't install drivers, so you install the virtual display driver separately. The app links to it.</p>
-          <p class="meta">Windows 11 x64 / ARM64</p>
-          <span class="btn btn-ghost" aria-disabled="true">Not in the Store yet</span>
         </article>
         <article class="card dl-card" id="source">
           <span class="badge">Developers</span>
@@ -107,7 +100,7 @@
         <div class="table-wrap">
           <table>
             <tbody>
-              <tr><th scope="row">Windows</th><td>Windows 11, x64 (ARM64 through the Store package)</td></tr>
+              <tr><th scope="row">Windows</th><td>Windows 11, x64</td></tr>
               <tr><th scope="row">Glasses</th><td><strong>XREAL 1S</strong> (tested). XREAL One and One Pro use the same connection and should work, but haven't been tested yet.</td></tr>
               <tr><th scope="row">Connection</th><td>A USB-C port with DisplayPort video (DP Alt Mode) that the glasses plug straight into</td></tr>
               <tr><th scope="row">Driver</th><td>A virtual display driver (<a href="https://github.com/MolotovCherry/virtual-display-rs">virtual-display-rs</a>, MIT). The MSI can install it. An existing copy is kept.</td></tr>
