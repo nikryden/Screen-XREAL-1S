@@ -1,5 +1,7 @@
 # XrealScreen (Screen-XREAL-1S)
 
+**Website:** https://xrealscreen.timeonline.se ([svenska](https://xrealscreen.timeonline.se/sv/))
+
 ![Two virtual screens in the XREAL 1S glasses (Glasses anchor, 32:9) — Visual Studio on the left, a console on the right](images/glasses-workspace.png)
 
 *What the glasses show: a Glasses anchor workspace with two virtual screens (captured with the app's Screenshot function, Ctrl+Alt+P). Black areas are see-through in the glasses.*
