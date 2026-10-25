@@ -6,7 +6,7 @@
 
 *What the glasses show: a Glasses anchor workspace with two virtual screens (captured with the app's Screenshot function, Ctrl+Alt+P). Black areas are see-through in the glasses.*
 
-A Windows 11 app that turns **XREAL 1S** (also One / One Pro) AR glasses into a virtual multi-monitor workspace.
+A Windows 11 app that turns **XREAL 1S** AR glasses into a virtual multi-monitor workspace.
 
 ## Features
 - **Two workspace types**
