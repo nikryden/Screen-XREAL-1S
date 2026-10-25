@@ -35,6 +35,7 @@ WinUI templates: `dotnet new install Microsoft.WindowsAppSDK.WinUI.CSharp.Templa
 | `src/XrealScreen.Contracts`, `src/XrealScreen.Sdk.Client` | Local API protocol (JSON-RPC over `\\.\pipe\XrealScreen.Api`) and its .NET client (ADR-0012) |
 | `samples/` | SDK and local API samples (.NET, Python, PowerShell) |
 | `tools/XrealScreen.Cli` | `xrs` hardware/dev tool |
+| `web/` | Website xrealscreen.timeonline.se: static HTML/CSS/JS, English + `/sv/`, deployed over FTPS by `.github/workflows/website.yml` (ADR-0015, `web/README.md`) |
 | `tests/` | `XrealScreen.Core.Tests`, `.Device.Tests`, `.Display.Tests`, `.Host.Tests`, `.Render.Tests`, `.Sdk.Tests`, `.Api.Tests`, `fixtures/` |
 | `docs/` | STATUS, ROADMAP, ARCHITECTURE, `decisions/` (ADRs), `findings/`, `legal/SOURCES.md`, `testing/`, `sdk/` (developer docs) |
 | `.claude/agents/` | Role subagents (architect, winui-dev, device-protocol, graphics-engineer, display-driver-engineer, qa-engineer, tech-writer, legal-security-reviewer) |
