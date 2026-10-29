@@ -130,7 +130,7 @@ internal static class CameraCommands
         {
             double span = (LastNs - FirstNs) / 1e9;
             double fps = span > 0 ? (Frames - 1) / span : 0;
-            // The glasses change the frame rate themselves (60 fps, 15 fps seen in a dim room), so a gap is an
+            // The glasses change the frame rate themselves (60 fps with Gesture Control on, 15 fps off), so a gap is an
             // interval clearly longer than the typical one, not a fixed threshold.
             double median = IntervalsMs.Count > 0 ? IntervalsMs.Order().ElementAt(IntervalsMs.Count / 2) : 0;
             long gaps = IntervalsMs.Count(ms => ms > median * 1.5);
@@ -145,7 +145,7 @@ internal static class CameraCommands
             Console.WriteLine(ok ? $"RESULT: OK, no dropped frames at {fps:F0} fps." : Frames == 0 ? "RESULT: no frames. Is the XREAL Eye attached?" : "RESULT: frames were dropped (see gaps).");
             if (ok && fps < 50)
             {
-                Console.WriteLine("        The glasses sent fewer than 60 fps (seen in a dim room; try more light).");
+                Console.WriteLine("        The glasses sent fewer than 60 fps: they send 15 fps while their Gesture Control is off.");
             }
 
             return ok ? 0 : 3;
