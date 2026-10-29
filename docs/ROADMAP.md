@@ -58,7 +58,7 @@ Deliverables: HDR tone-map, DPI, hybrid GPU, One/One Pro regression, accessibili
 - [ ] v1.0 tagged
 
 ## M9 XREAL Eye camera & hand control (started 2026-10-29, ADR-0016)
-Facts: `docs/findings/xreal-eye-camera.md`. Order: E0 → E1 → E2 → E3 → E4 (user priority: keyboard), then E5–E9. Every camera feature is off by default.
+Facts: `docs/findings/xreal-eye-camera.md`. Order: E0 → E1 → E2 → E3 → E4 (user priority: keyboard), then E10 (60 fps, user: must be investigated), then E5–E9. Every camera feature is off by default.
 
 **Token log** (user request 2026-10-29): after each step, measure with `tools/Get-ClaudeTokenUsage.ps1 -Since <step start> -Until <step end>` and add a row. Cache read = earlier conversation re-read from the prompt cache (cheap); Input + Cache write = new input.
 
@@ -70,12 +70,13 @@ Facts: `docs/findings/xreal-eye-camera.md`. Order: E0 → E1 → E2 → E3 → E
 | Firmware read over port 52999 | 2026-10-29 | 15 | 18,579 | 3,107,941 | 8,760 |
 | Keyboard languages, firmware panel, calibration facts, token log | 2026-10-29 | 14 | 21,425 | 3,179,700 | 16,124 |
 | E0 camera feed + glasses info (code, tests, CLI, app card, 5-min feed check) | 2026-10-29 | 40 | 80,070 | 11,709,060 | 48,082 |
+| E0 frame-rate cause (Gesture Control), 15 fps decision, E10 plan (incl. context summary) | 2026-10-29 | 18 | 65,524 | 2,269,480 | 15,840 |
 
 **E0 Camera feed foundation**
 Built (2026-10-29, `feature/eye-camera-e0`): `EyeFrameFramer`, pooled `EyeFrame`, `XrealEyeCameraSource` (reconnect is left to the caller, like `XrealOneImuSource`) and `.xrcam` (`XrcamWriter`/`XrcamReader`) in `Device.XrealOne`; `xrs camera snapshot | record | live`; tests on synthetic frames (no real room images in the repo); **glasses info**: `ControlWire` + `XrealControlClient` (port 52999, read-only GETs) + `GlassesInfo`/`GlassesCalibration` → `xrs device info` and a **Glasses** card on the app's Device page (software + DSP version, serial number, cameras with field of view, calibration date) — **no update check**.
 Open: the `15.1.03.603` part of the firmware (not on the control port; HID?) and an "Eye attached" indicator that does not read the camera.
 - [x] Firmware shown in `xrs device info` matches https://www.xreal.com/ota/ for the parts we can read (software + DSP, 2026-10-29); app card built, not yet seen by the user
-- [x] `xrs camera live` receives every frame the glasses send — 2026-10-29: 0 dropped frames over 5 min at 15 fps (Gesture Control off) and over 127 s at 60 fps (Gesture Control on); the rate follows the glasses' Gesture Control switch, not light. Open question for E2/E3: hand control at 15 fps, or with Gesture Control on (see ADR-0016)
+- [x] `xrs camera live` receives every frame the glasses send — 2026-10-29: 0 dropped frames over 5 min at 15 fps (Gesture Control off) and over 127 s at 60 fps (Gesture Control on); the rate follows the glasses' Gesture Control switch, not light. Decided (user): E2–E4 at 15 fps with Gesture Control off; 60 fps without it is E10
 - [x] Framer tests: resync after garbage, byte-by-byte and split TCP reads, wrong length, stride < width (`EyeFrameFramerTests`); control wire + fake-server client tests (`ControlPortTests`); `.xrcam` round trip (`XrcamFileTests`)
 
 **E1 Metadata port 52996 (glasses' own 6DoF?)**
@@ -86,11 +87,12 @@ Deliverables: `xrs probe metadata --record`; recordings with Eye on/off, OSD Spa
 Deliverables: `tools/Convert-HandModels.ps1` (MediaPipe hand landmarker → ONNX); `HandTracker` (blur → palm detection → landmarks → One Euro filter) on ONNX Runtime; `PinchDetector` (hysteresis 0.35/0.6 + minimum hold); landmark fixtures; `xrs hands live` (preview window with skeleton).
 - [ ] Same hand-found rates as the Python test (≥ 95 % raised/pinch) on a recorded `.xrcam`
 - [ ] ≤ 15 ms per frame at 30 fps on the dev PC; latency camera → landmarks measured
+- [ ] Pinch and hand-found rates measured on a 15 fps recording (Gesture Control off), not only on 60 fps
 - [ ] Pinch detector: ≥ 95 % of pinches, ≤ 1 false click per minute with the hand idle in view
 
 **E3 Hand control (pointer + click)**
 Deliverables: `HandControlEngine` (SendInput like head look); 5-point calibration; pinch = click, pinch-hold = drag, pinch-drag vertical = scroll; pauses on real mouse/keyboard input and after 3 s without a hand; Ctrl+Alt+J; app **Hands** page (on/off, calibrate, sensitivity, left/right hand, preview) + tray item; camera-in-use indicator; warning to keep the glasses' Gesture Control off.
-- [ ] User can click 10 targets of 40 px on the glasses display, ≤ 1 miss
+- [ ] User can click 10 targets of 40 px on the glasses display, ≤ 1 miss — at 15 fps (Gesture Control off); only if this fails, test with Gesture Control on (60 fps) and check whether the glasses' own pinch double-clicks
 - [ ] Off = camera socket closed, 0 % CPU
 
 **E4 Virtual keyboard**
@@ -121,6 +123,13 @@ Deliverables: decide the legal route first (black-box probing of our glasses vs.
 - [ ] Legal route decided and recorded
 - [ ] One colour frame received on the PC and saved, resolution/format/rate recorded
 - [ ] Colour peek or virtual webcam works with the user
+
+**E10 60 fps camera without the glasses' Gesture Control — research (user: must be investigated)**
+The glasses send 15 fps while Gesture Control is off and 60 fps while it is on (`docs/findings/xreal-eye-camera.md`). Goal: 60 fps with Gesture Control off, so hand control is smooth and the glasses never react to the same pinch.
+Deliverables: read-only first — GET the control-port properties (52999) with Gesture Control on and off and diff them, and check the metadata (52996) and gRPC (50051) ports for a camera-rate or gesture setting; check one-xr (MIT) for a matching command; record findings. Only then, with the user's approval and a recorded way back, try **one** SET that restores the original value after the test (first write to the glasses: legal-security-reviewer and ADR-0006 route decided first, no XREAL SDK code). If it works: `XrealEyeCameraSource` asks for 60 fps while hand control is on and restores the old value when it stops (ADR-0016 update).
+- [ ] The setting behind the frame rate is found, or ruled out for the ports we can reach
+- [ ] If found: 60 fps for 5 min with Gesture Control off, 0 dropped frames, and the glasses' own pinch does nothing
+- [ ] The glasses are back to their original setting after the test and after an app crash (verified by reading it back)
 
 ## Later
 - Own IddCx driver (WDK + EV cert + attestation signing)
