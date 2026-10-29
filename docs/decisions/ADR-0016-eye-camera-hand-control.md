@@ -1,6 +1,6 @@
 # ADR-0016: XREAL Eye camera feed and hand control
 
-- **Status:** Proposed
+- **Status:** Accepted (user, 2026-10-29)
 - **Date:** 2026-10-29
 
 ## Context

@@ -75,4 +75,4 @@ MediaPipe Hand Landmarker (float16 model, Apache-2.0) in Python on the recorded 
 | Feature | firmware gestures with the Eye: hand moves a cursor, pinch (≥ ~300 ms, < ~2.2 cm) clicks, wrist flip turns pages, palm-back opens a menu | vendor docs, [hypothesis] on Windows |
 | Switch | OSD: double-tap X → Additional (Other) → Lab → Gesture Controls → Gesture Control; **off by default**; can be bound to a shortcut key | vendor docs |
 | Conflicts | mutually exclusive with 3D mode; would double-click together with our hand control → keep it off | vendor docs |
-| Feed with it off | the 52997 feed works with default settings (gesture control presumably off) | [verified-hw] 2026-10-29, OSD state to confirm |
+| Feed with it off | the 52997 feed works with Gesture Control OFF (OSD checked by the user) | [verified-hw] 2026-10-29 |

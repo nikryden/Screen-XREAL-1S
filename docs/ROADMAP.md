@@ -57,7 +57,7 @@ Deliverables: HDR tone-map, DPI, hybrid GPU, One/One Pro regression, accessibili
 - [ ] Accessibility pass
 - [ ] v1.0 tagged
 
-## M9 XREAL Eye camera & hand control (planned 2026-10-29, ADR-0016)
+## M9 XREAL Eye camera & hand control (started 2026-10-29, ADR-0016)
 Facts: `docs/findings/xreal-eye-camera.md`. Order: E0 → E1 → E2 → E3 → E4 (user priority: keyboard), then E5–E9. Every camera feature is off by default.
 
 **Token log** (user request 2026-10-29): after each step, measure with `tools/Get-ClaudeTokenUsage.ps1 -Since <step start> -Until <step end>` and add a row. Cache read = earlier conversation re-read from the prompt cache (cheap); Input + Cache write = new input.
