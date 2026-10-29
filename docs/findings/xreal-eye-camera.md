@@ -2,7 +2,7 @@
 
 The Eye is XREAL's clip-on camera for the One series. We read its tracking-camera feed over the glasses' USB network and ran hand tracking on it. Plan: ROADMAP M9, ADR-0016.
 
-Hardware runs on 2026-10-29 used our XREAL 1S (PID 0x043E) with the Eye attached; the firmware was not re-read that day (last recorded 15.01.03.522, possibly updated since — confirm in the OSD before relying on the version).
+Hardware runs on 2026-10-29 used our XREAL 1S (PID 0x043E, USB REV 0409) with the Eye attached, software **1.9.1.20260914175625**, DSP 15.A.01.097_20250430 (read over control port 52999, see `xreal-one-protocol.md`).
 
 ## Hardware (vendor docs)
 | Fact | Value | Tag |

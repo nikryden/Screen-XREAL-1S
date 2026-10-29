@@ -61,7 +61,7 @@ Deliverables: HDR tone-map, DPI, hybrid GPU, One/One Pro regression, accessibili
 Facts: `docs/findings/xreal-eye-camera.md`. Order: E0 → E1 → E2 → E3 → E4 (user priority: keyboard), then E5–E9. Every camera feature is off by default.
 
 **E0 Camera feed foundation**
-Deliverables: `EyeFrameFramer` + `EyeCameraClient` (reconnect like the IMU client) in `Device.XrealOne`; `.xrcam` format (header + 8-bit frames, device timestamps); `xrs camera snapshot | record | live`; tests on synthetic frames (no real room images in the repo); firmware read from the OSD and recorded.
+Deliverables: `EyeFrameFramer` + `EyeCameraClient` (reconnect like the IMU client) in `Device.XrealOne`; `.xrcam` format (header + 8-bit frames, device timestamps); `xrs camera snapshot | record | live`; tests on synthetic frames (no real room images in the repo); `xrs device info` (software + DSP version over control port 52999).
 - [ ] `xrs camera record` keeps 60 fps for 5 min with 0 dropped frames
 - [ ] Framer tests: resync after garbage, split TCP reads, wrong length
 

@@ -40,7 +40,7 @@ uget\*.nupkg" --api-key $key --source https://api.nuget.org/v3/index.json --skip
 4. M6: user test of tray icon / start with Windows / Ctrl+Alt+W (2026-09-27) and of saved workspaces / import-export / start latest workspace / Exit / start on glasses connect / primary screen / window move (2026-09-29).
 5. M7: clean-PC install test in Windows Sandbox (`installer\test\Start-SandboxTest.ps1` -> `artifacts\sandbox\results\report.txt`). **First run 2026-09-27 stalled** right after "PASS no driver before install", inside `Install-XrealScreen.ps1 -Yes` (no output for 9 min) - probably a dialog in the Sandbox (driver install prompt or Add-AppxPackage). Next: look at the Sandbox window, log each install step separately with timeouts in `Run-InSandbox.ps1`, rerun. Then trusted signing for a public release.
 6. App head tracking: glasses A/B of prediction 20 vs 26 ms (measured latch→scan-out ≈ 22 ms, ADR-0009); optional Strong vs Balanced for the last nod bob. Removing DWM (always composed here) needs exclusive fullscreen or DirectComposition — deferred.
-7. **XREAL Eye (M9, ADR-0016):** user approves ADR-0016 → E0 camera feed foundation (`EyeCameraClient`, `.xrcam`, `xrs camera`) → E1 metadata port 52996 → E2 hand engine → E3 hand pointer + pinch click → E4 virtual keyboard. User: read the glasses firmware in the OSD and confirm Gesture Control is OFF.
+7. **XREAL Eye (M9, ADR-0016):** user approves ADR-0016 → E0 camera feed foundation (`EyeCameraClient`, `.xrcam`, `xrs camera`) → E1 metadata port 52996 → E2 hand engine → E3 hand pointer + pinch click → E4 virtual keyboard. User: confirm Gesture Control is OFF in the OSD. Firmware is now read over port 52999 (1.9.1) — add `xrs device info` in E0.
 
 ## Blockers
 - None.
@@ -55,7 +55,7 @@ uget\*.nupkg" --api-key $key --source https://api.nuget.org/v3/index.json --skip
 ## Last hardware verification
 - **2026-09-26 · XREAL 1S · PID 0x043E · fw 15.01.03.522** — NCM link, ports, IMU framing/units/axes, live tracking in app. Details: `docs/findings/xreal-one-protocol.md`, `docs/findings/xreal-1s-hardware.md`.
 - **2026-09-27 · XREAL 1S · fw 15.01.03.522** — App head tracking lag A/B (latch/prediction) and nod A/B (tilt-correction rate gate); nod IMU fixture recorded.
-- **2026-10-29 · XREAL 1S + Eye · fw not re-read (confirm in OSD)** — Eye feed on TCP 52997 decoded (8-bit 512×378, 60 fps); hand tracking test with the user (spoken steps). Details: `docs/findings/xreal-eye-camera.md`.
+- **2026-10-29 · XREAL 1S + Eye · software 1.9.1.20260914175625, DSP 15.A.01.097** (read over control port 52999) — Eye feed on TCP 52997 decoded (8-bit 512×378, 60 fps); hand tracking test with the user (spoken steps). Details: `docs/findings/xreal-eye-camera.md`.
 - **2026-09-26/27 · XREAL 1S · fw 15.01.03.522** — both workspace types in the glasses with the user: anchor split 2×/3× screens with gap in 32:9 and 21:9, UltraWide auto-restart, app head tracking comfort A/B, mouse, crash recovery.
 
 ## Session log
