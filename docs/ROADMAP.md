@@ -71,6 +71,7 @@ Facts: `docs/findings/xreal-eye-camera.md`. Order: E0 → E1 → E2 → E3 → E
 | Keyboard languages, firmware panel, calibration facts, token log | 2026-10-29 | 14 | 21,425 | 3,179,700 | 16,124 |
 | E0 camera feed + glasses info (code, tests, CLI, app card, 5-min feed check) | 2026-10-29 | 40 | 80,070 | 11,709,060 | 48,082 |
 | E0 frame-rate cause (Gesture Control), 15 fps decision, E10 plan (incl. context summary) | 2026-10-29 | 18 | 65,524 | 2,269,480 | 15,840 |
+| XREAL SDK experimental package facts, RGB Blend Mode plan, handoff | 2026-10-29 | 20 | 44,577 | 2,208,479 | 14,855 |
 
 **E0 Camera feed foundation**
 Built (2026-10-29, `feature/eye-camera-e0`): `EyeFrameFramer`, pooled `EyeFrame`, `XrealEyeCameraSource` (reconnect is left to the caller, like `XrealOneImuSource`) and `.xrcam` (`XrcamWriter`/`XrcamReader`) in `Device.XrealOne`; `xrs camera snapshot | record | live`; tests on synthetic frames (no real room images in the repo); **glasses info**: `ControlWire` + `XrealControlClient` (port 52999, read-only GETs) + `GlassesInfo`/`GlassesCalibration` → `xrs device info` and a **Glasses** card on the app's Device page (software + DSP version, serial number, cameras with field of view, calibration date) — **no update check**.
@@ -119,10 +120,12 @@ Deliverables: camera frames + hand events in `XrealScreen.Sdk` and the local API
 
 **E9 Colour (RGB) camera — research, low priority, not for hand tracking**
 The Eye's colour camera has no webcam interface; XREAL's SDK starts it with RPCs to the glasses' gRPC server (`docs/findings/xreal-eye-camera.md`). Hand tracking stays on the grayscale feed (ADR-0016).
-Deliverables: decide the legal route first (black-box probing of our glasses vs. reading message definitions in the unlicensed SDK — legal-security-reviewer, ADR-0006); then `xrs camera rgb` (start, receive, decode, save a PNG); then uses in this order: colour peek (E5), first-person virtual webcam (Windows 11 virtual camera for Teams/Zoom/OBS), text/QR reading (Windows OCR), mixed-reality recording (glasses screenshot + camera), photo key.
+Deliverables: decide the legal route first (black-box probing of our glasses vs. reading message definitions in the unlicensed SDK — legal-security-reviewer, ADR-0006); then `xrs camera rgb` (start, receive, decode, save a PNG); then uses in this order: colour peek (E5), **RGB camera Blend Mode** (user, 2026-10-29), first-person virtual webcam (Windows 11 virtual camera for Teams/Zoom/OBS), text/QR reading (Windows OCR), photo key.
+**Blend Mode** = mixed-reality output that combines the colour camera with what the glasses show (our virtual screens), like XREAL's capture blend modes: **Blend** (screens drawn over the camera image, aligned with the camera calibration and head pose), **Camera only**, **Virtual only**, **Side by side**. Used for photos, video recording and the virtual webcam; picked in the app; off by default like every camera feature.
 - [ ] Legal route decided and recorded
 - [ ] One colour frame received on the PC and saved, resolution/format/rate recorded
 - [ ] Colour peek or virtual webcam works with the user
+- [ ] Blend Mode: a photo and a 30 s video in Blend, Camera only, Virtual only and Side by side; in Blend the virtual screens line up with where they appear in the glasses (checked by the user)
 
 **E10 60 fps camera without the glasses' Gesture Control — research (user: must be investigated)**
 The glasses send 15 fps while Gesture Control is off and 60 fps while it is on (`docs/findings/xreal-eye-camera.md`). Goal: 60 fps with Gesture Control off, so hand control is smooth and the glasses never react to the same pinch.
