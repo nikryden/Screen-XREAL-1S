@@ -31,6 +31,17 @@ Hardware runs on 2026-10-29 used our XREAL 1S (PID 0x043E) with the Eye attached
 | Rate with Eye attached | ~3.4 KB/s, magic `27 31` | [verified-hw] 2026-10-29 |
 | Content (6DoF pose?) | not decoded | [hypothesis] |
 
+## Colour (RGB) camera
+| Fact | Value | Tag |
+|------|-------|-----|
+| Webcam | no USB video (UVC) interface; glasses expose HID ×2, NCM network, CDC ECM (no driver), audio | [verified-hw] 2026-10-29 |
+| More TCP ports | full scan: 1234, 50051, 50052, 50180, 52988–52999 open; all silent on connect except 50051, 52996–52998 | [verified-hw] 2026-10-29 |
+| Port 50051 | gRPC server (HTTP/2 SETTINGS on connect); server reflection not enabled (UNIMPLEMENTED) | [verified-hw] 2026-10-29 |
+| SDK camera control | the SDK's native library starts both cameras with RPCs: `NRRgbCameraCreate`, `…InitSetImageResolution`, `…InitSetPixelFormat`, `…InitSetCompression`, `…InitSetExposureTime`, `…InitSetGain`, `…Stop`; same set for `NRGrayscaleCamera…`; frames are YUV 4:2:0 | [from-sdk:facts-only] |
+| `/frames.service.Frames/StartStreaming` | method name in the SDK; on 50051 it exists (an unknown method returns UNIMPLEMENTED); an empty request gets one reply `10 04` (field 2 = 4, probably an error code) and the stream ends | [verified-hw] 2026-10-29; meaning [hypothesis] |
+| Request format | unknown — needed before a colour frame can be received (ROADMAP M9 E9) | [hypothesis] |
+| Live resolution | SDK: Low = ½, High = 1.5× the device's standard resolution; its recording example uses 1280×720 @ 30 fps | [from-sdk:facts-only] |
+
 ## Hand tracking test (2026-10-29)
 MediaPipe Hand Landmarker (float16 model, Apache-2.0) in Python on the recorded feed (30 fps kept), 3×3 blur first. User wore the glasses and followed spoken steps. [verified-hw] 2026-10-29
 

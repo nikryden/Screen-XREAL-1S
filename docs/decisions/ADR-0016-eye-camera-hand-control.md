@@ -11,6 +11,7 @@ We read the Eye feed ourselves on port 52997 and run hand tracking in-process wi
 
 - **Feed:** `EyeCameraClient` in `Device.XrealOne` (framer shared with the IMU port's shape); `.xrcam` recordings for tests; `xrs camera …`.
 - **Pipeline:** 3×3 blur → palm detection (only when no hand is tracked) → 21 landmarks → One Euro filter → gesture state machine (pinch with hysteresis 0.35 / 0.6 and a minimum hold) → `HandControlEngine`. 30 fps processing is enough; every second frame is used.
+- **Hand tracking uses the grayscale feed only**, never the colour camera (the colour camera is researched separately for other uses, ROADMAP M9 E9).
 - **Click = pinch, not air poke** (no depth with one camera).
 - **Mapping camera → screen:** a 5-point calibration per user (point at targets in the glasses), stored in settings; the camera is rigid with the displays.
 - **Keyboard:** first the Windows on-screen keyboard (`osk.exe`) clicked by hand control; then our own no-activate overlay keyboard (large keys, hover highlight, Unicode input for å ä ö) on the glasses display.
@@ -27,6 +28,7 @@ We read the Eye feed ourselves on port 52997 and run hand tracking in-process wi
 - Follow-up: metadata port 52996 may carry the glasses' own 6DoF pose (M9 E1), which would decide how lean tracking is built.
 
 ## Alternatives
+- Colour (RGB) camera for hand tracking — not exposed without unknown RPCs, 30 fps and compressed (more latency) vs 60 fps raw grayscale, model input is 224 px anyway, extra power/heat; grayscale already finds the hand in 96–100 % of frames.
 - Glasses' built-in Gesture Control — no keyboard, no API, made for phones, cannot be tuned; it would also double-click with ours.
 - XREAL SDK camera API — Unity/Android only, no license.
 - Python + MediaPipe sidecar process — easiest prototype (used for the 2026-10-29 test) but ships a Python runtime and is hard to package.

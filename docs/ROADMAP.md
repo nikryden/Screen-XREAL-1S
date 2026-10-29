@@ -58,7 +58,7 @@ Deliverables: HDR tone-map, DPI, hybrid GPU, One/One Pro regression, accessibili
 - [ ] v1.0 tagged
 
 ## M9 XREAL Eye camera & hand control (planned 2026-10-29, ADR-0016)
-Facts: `docs/findings/xreal-eye-camera.md`. Order: E0 → E1 → E2 → E3 → E4 (user priority: keyboard), then E5–E8. Every camera feature is off by default.
+Facts: `docs/findings/xreal-eye-camera.md`. Order: E0 → E1 → E2 → E3 → E4 (user priority: keyboard), then E5–E9. Every camera feature is off by default.
 
 **E0 Camera feed foundation**
 Deliverables: `EyeFrameFramer` + `EyeCameraClient` (reconnect like the IMU client) in `Device.XrealOne`; `.xrcam` format (header + 8-bit frames, device timestamps); `xrs camera snapshot | record | live`; tests on synthetic frames (no real room images in the repo); firmware read from the OSD and recorded.
@@ -100,6 +100,13 @@ Deliverables: position from 52996 if E1 found it, otherwise visual-inertial odom
 **E8 SDK, local API, docs, privacy**
 Deliverables: camera frames + hand events in `XrealScreen.Sdk` and the local API (opt-in, ADR-0012 update); docs/sdk pages + sample; website privacy policy and FAQ (EN + SV); Store notes; legal-security-reviewer pass before merge.
 - [ ] Privacy policy states what the camera is used for and that nothing leaves the PC
+
+**E9 Colour (RGB) camera — research, low priority, not for hand tracking**
+The Eye's colour camera has no webcam interface; XREAL's SDK starts it with RPCs to the glasses' gRPC server (`docs/findings/xreal-eye-camera.md`). Hand tracking stays on the grayscale feed (ADR-0016).
+Deliverables: decide the legal route first (black-box probing of our glasses vs. reading message definitions in the unlicensed SDK — legal-security-reviewer, ADR-0006); then `xrs camera rgb` (start, receive, decode, save a PNG); then uses in this order: colour peek (E5), first-person virtual webcam (Windows 11 virtual camera for Teams/Zoom/OBS), text/QR reading (Windows OCR), mixed-reality recording (glasses screenshot + camera), photo key.
+- [ ] Legal route decided and recorded
+- [ ] One colour frame received on the PC and saved, resolution/format/rate recorded
+- [ ] Colour peek or virtual webcam works with the user
 
 ## Later
 - Own IddCx driver (WDK + EV cert + attestation signing)
