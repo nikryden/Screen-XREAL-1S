@@ -14,7 +14,8 @@ We read the Eye feed ourselves on port 52997 and run hand tracking in-process wi
 - **Hand tracking uses the grayscale feed only**, never the colour camera (the colour camera is researched separately for other uses, ROADMAP M9 E9).
 - **Click = pinch, not air poke** (no depth with one camera).
 - **Mapping camera → screen:** a 5-point calibration per user (point at targets in the glasses), stored in settings; the camera is rigid with the displays.
-- **Keyboard:** first the Windows on-screen keyboard (`osk.exe`) clicked by hand control; then our own no-activate overlay keyboard (large keys, hover highlight, Unicode input for å ä ö) on the glasses display.
+- **Keyboard:** first the Windows on-screen keyboard (`osk.exe`) clicked by hand control; then our own no-activate overlay keyboard (large keys, hover highlight) on the glasses display.
+- **Keyboard languages:** each layout is a data file (`Keyboards/<culture>.json`: rows, keys, Shift/AltGr levels, dead keys), so a new language is a new file, not code. **Swedish (`sv-SE`) and English (`en-US`) ship first.** Characters are sent as Unicode (`KEYEVENTF_UNICODE`), so what you click is what you get whatever the active Windows layout is; a globe key and a setting switch layouts, default = the Windows input language if a layout for it exists, else English.
 - **Safety and privacy:** hand control and every camera feature are **off by default**; Ctrl+Alt+J toggles hand control, a visible indicator shows while the camera is read; no frames leave the PC or are stored unless the user records; real mouse/keyboard input pauses hand control; the app tells the user to keep the glasses' own Gesture Control off.
 - The camera feed and hand events are exposed in the SDK and local API later, behind the same opt-in.
 

@@ -20,7 +20,7 @@ Hardware runs on 2026-10-29 used our XREAL 1S (PID 0x043E, USB REV 0409) with th
 | Framing | magic `27 48`, then **u32 big-endian** body length (193,856) — same shape as the IMU port | [verified-hw] 2026-10-29 |
 | Body | 320-byte header + one **8-bit grayscale 512×378** image (row stride 512) | [verified-hw] 2026-10-29 |
 | Header u64 LE @17 | device timestamp, ns (no separate frame counter found) | [verified-hw] 2026-10-29 |
-| Header @5 / @9 / @14 | 504, 378, 2 (usable width? height, camera count?) | [hypothesis] |
+| Header @5 / @9 / @14 | 504 (usable width, matches calibration), 378 (height), 2 (unknown) | [verified-hw] 2026-10-29 for 504/378; @14 [hypothesis] |
 | Cameras | one view per frame; no left/right alternation seen | [verified-hw] 2026-10-29 |
 | Image noise | pixel-level checkerboard noise; must be smoothed (3×3 Gaussian) before ML models | [verified-hw] 2026-10-29 |
 | Other glasses | One Pro + Nebula beta reportedly send 4-bit stereo 512×378 and need OSD Spatial Anchor (Aloim, research-only) | [hypothesis] for us |
@@ -41,6 +41,18 @@ Hardware runs on 2026-10-29 used our XREAL 1S (PID 0x043E, USB REV 0409) with th
 | `/frames.service.Frames/StartStreaming` | method name in the SDK; on 50051 it exists (an unknown method returns UNIMPLEMENTED); an empty request gets one reply `10 04` (field 2 = 4, probably an error code) and the stream ends | [verified-hw] 2026-10-29; meaning [hypothesis] |
 | Request format | unknown — needed before a colour frame can be received (ROADMAP M9 E9) | [hypothesis] |
 | Live resolution | SDK: Low = ½, High = 1.5× the device's standard resolution; its recording example uses 1280×720 @ 30 fps | [from-sdk:facts-only] |
+
+## Factory calibration (control port GET config `0x271F`)
+A ~220 KB JSON with keys `FSN` (serial — keep out of the repo), `IMU`, `RGB_camera`, `SLAM_camera`, `display`, `display_distortion`, `glasses_version` (7), `last_modified_time`. [verified-hw] 2026-10-29
+
+| Fact | Value | Tag |
+|------|-------|-----|
+| `RGB_camera` | 1 camera, 2016×1512, radial model, fx≈fy≈960, cx/cy≈1007/759 | [verified-hw] 2026-10-29 |
+| `SLAM_camera` | 1 camera, **504×378**, fx≈fy≈240, cx/cy≈252/190, same distortion coefficients | [verified-hw] 2026-10-29 |
+| Same sensor? | SLAM = RGB scaled by ¼ (resolution, focal length, centre, distortion all match) → the grayscale feed is the colour camera binned | [hypothesis] |
+| Field of view | from the intrinsics ≈ 93° horizontal × 76° vertical (both cameras) | [verified-hw] calibration, computed |
+| Usable width | 504 of the 512-byte rows in the 52997 feed (header @5 = 504 confirmed by calibration) | [verified-hw] 2026-10-29 |
+| Camera ↔ IMU | `imu_p_cam` ≈ (−25, 14, 4) mm and `imu_q_cam` (JPL quaternion, ≈ identity) — usable for drift correction / lean tracking | [verified-hw] 2026-10-29 |
 
 ## Hand tracking test (2026-10-29)
 MediaPipe Hand Landmarker (float16 model, Apache-2.0) in Python on the recorded feed (30 fps kept), 3×3 blur first. User wore the glasses and followed spoken steps. [verified-hw] 2026-10-29

@@ -60,8 +60,19 @@ Deliverables: HDR tone-map, DPI, hybrid GPU, One/One Pro regression, accessibili
 ## M9 XREAL Eye camera & hand control (planned 2026-10-29, ADR-0016)
 Facts: `docs/findings/xreal-eye-camera.md`. Order: E0 → E1 → E2 → E3 → E4 (user priority: keyboard), then E5–E9. Every camera feature is off by default.
 
+**Token log** (user request 2026-10-29): after each step, measure with `tools/Get-ClaudeTokenUsage.ps1 -Since <step start> -Until <step end>` and add a row. Cache read = earlier conversation re-read from the prompt cache (cheap); Input + Cache write = new input.
+
+| Step | Date | Requests | Input + cache write | Cache read | Output |
+|------|------|---------:|--------------------:|-----------:|-------:|
+| Investigation + hand tests (before the plan) | 2026-10-29 | 45 | 94,977 | 3,957,178 | 42,598 |
+| Plan: M9, ADR-0016, finding | 2026-10-29 | 19 | 34,195 | 2,669,863 | 19,255 |
+| Colour camera research, E9 | 2026-10-29 | 22 | 42,284 | 3,842,015 | 20,127 |
+| Firmware read over port 52999 | 2026-10-29 | 15 | 18,579 | 3,107,941 | 8,760 |
+| Keyboard languages, firmware panel, calibration facts, token log | 2026-10-29 | 14 | 21,425 | 3,179,700 | 16,124 |
+
 **E0 Camera feed foundation**
-Deliverables: `EyeFrameFramer` + `EyeCameraClient` (reconnect like the IMU client) in `Device.XrealOne`; `.xrcam` format (header + 8-bit frames, device timestamps); `xrs camera snapshot | record | live`; tests on synthetic frames (no real room images in the repo); `xrs device info` (software + DSP version over control port 52999).
+Deliverables: `EyeFrameFramer` + `EyeCameraClient` (reconnect like the IMU client) in `Device.XrealOne`; `.xrcam` format (header + 8-bit frames, device timestamps); `xrs camera snapshot | record | live`; tests on synthetic frames (no real room images in the repo); **glasses info**: `XrealControlClient` (port 52999, read-only GETs) → `xrs device info` and an app panel (Settings → Glasses) showing model, firmware (software + DSP; the `15.1.03.603` part once its source is found), Eye attached, camera resolution — **no update check** at this stage.
+- [ ] Firmware shown in `xrs device info` and in the app matches https://www.xreal.com/ota/ for the parts we can read
 - [ ] `xrs camera record` keeps 60 fps for 5 min with 0 dropped frames
 - [ ] Framer tests: resync after garbage, split TCP reads, wrong length
 
@@ -81,9 +92,10 @@ Deliverables: `HandControlEngine` (SendInput like head look); 5-point calibratio
 - [ ] Off = camera socket closed, 0 % CPU
 
 **E4 Virtual keyboard**
-Deliverables: phase a — open `osk.exe` on the glasses display from the Hands page; phase b — own no-activate overlay keyboard (large keys, hover highlight, pinch press, key repeat, Shift/symbols, Swedish and English layouts, Unicode input for å ä ö, click sound), Ctrl+Alt+K to show/hide.
-- [ ] User types a 20-character sentence with ≤ 2 errors (target ≥ 5 words/min)
+Deliverables: phase a — open `osk.exe` on the glasses display from the Hands page; phase b — own no-activate overlay keyboard (large keys, hover highlight, pinch press, key repeat, Shift/AltGr/symbols, click sound), Ctrl+Alt+K to show/hide; **layouts as data files** (`Keyboards/<culture>.json`, schema + loader + tests) with **Swedish (`sv-SE`) and English (`en-US`) first**, globe key + setting to switch, default from the Windows input language; Unicode input so å ä ö work under any Windows layout; docs on adding a language.
+- [ ] User types a 20-character sentence with ≤ 2 errors (target ≥ 5 words/min) — in Swedish (with å ä ö) and in English
 - [ ] Focus stays in the target app while typing
+- [ ] A third layout can be added by dropping in a JSON file (tested with a test layout)
 
 **E5 Passthrough peek**
 Deliverables: hotkey/tray shows the camera feed as a panel (top-most window on the glasses in Glasses anchor; texture in the scene in App head tracking), optional hand skeleton.

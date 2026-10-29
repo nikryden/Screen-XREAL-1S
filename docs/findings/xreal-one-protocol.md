@@ -44,8 +44,10 @@ Request: u16 BE magic, u32 BE length (= body + 4), u32 BE transaction id with th
 |-------|---------|---------------------|
 | `0x271D` | GET software version | `1.9.1.20260914175625` [verified-hw] |
 | `0x272D` | GET DSP version | `15.A.01.097_20250430` [verified-hw] |
+| `0x2729` | GET ID | serial number (string; keep out of the repo) [verified-hw] |
+| `0x271F` | GET config | ~220 KB factory calibration JSON (see `xreal-eye-camera.md`) [verified-hw] |
 
-The OSD showed `15.01.03.522` on 2026-09-26 (different numbering; which component it names is [hypothesis]).
+XREAL's updater (https://www.xreal.com/ota/) shows the full firmware as `15.1.03.603_20260914_15.A.01.097_20250430_1.9.1.20260914175625` on 2026-10-29 (user): `15.1.03.603_20260914` + DSP + software. The first part is not in any reply above; where it comes from (MCU over HID?) is [hypothesis] — found in M9 E0. The OSD's `15.01.03.522` on 2026-09-26 is probably that first part before an update [hypothesis].
 
 ## Control features (one-xr reports) [from-source:MIT], all [hypothesis] for 1S
 - `zeroView()` / recalibrate (recenter)
