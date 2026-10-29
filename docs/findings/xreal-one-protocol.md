@@ -8,8 +8,8 @@ Applies to XREAL One / One Pro per community sources and **verified on XREAL 1S*
 | Data link | USB NCM network adapter "UsbNcm Host Device" (USB interface MI_01) | one-xr, SamiMitwalli | [verified-hw] 1S fw 15.01.03.522 |
 | Glasses IP | `169.254.2.1` | one-xr, SamiMitwalli | [verified-hw] 1S fw 15.01.03.522 |
 | PC IP | `169.254.2.10/24` | one-xr | [verified-hw] 1S fw 15.01.03.522 |
-| TCP 52996 | metadata (content not yet read) | one-xr, Grayscale-Feed port list | port open: [verified-hw] 1S fw 15.01.03.522 |
-| TCP 52997 | camera (Eye accessory) | Grayscale-Feed port list | port open: [verified-hw] 1S fw 15.01.03.522 |
+| TCP 52996 | metadata (~3.4 KB/s with the Eye, magic `27 31`; content not yet read) | one-xr, Grayscale-Feed port list | port open: [verified-hw] 1S fw 15.01.03.522; rate [verified-hw] 2026-10-29 |
+| TCP 52997 | Eye camera: 8-bit grayscale 512×378 at 60 fps, same framing shape (see `xreal-eye-camera.md`) | Grayscale-Feed port list; own decoding | [verified-hw] 2026-10-29 |
 | TCP 52998 | IMU stream: 1000.0 Hz IMU (dt 0.98–1.02 ms, no gaps) + ~400 Hz magnetometer reports | one-xr, SamiMitwalli | [verified-hw] 1S fw 15.01.03.522 |
 | TCP 52999 | control (request/response) | one-xr | port open [verified-hw]; protocol [from-source:MIT] only |
 | Video | USB-C DP alt mode, monitor EDID `MRG4102` "XREAL 1S" | vendor | [verified-hw] 1S fw 15.01.03.522 |

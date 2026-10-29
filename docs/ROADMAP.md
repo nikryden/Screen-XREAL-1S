@@ -57,9 +57,53 @@ Deliverables: HDR tone-map, DPI, hybrid GPU, One/One Pro regression, accessibili
 - [ ] Accessibility pass
 - [ ] v1.0 tagged
 
+## M9 XREAL Eye camera & hand control (planned 2026-10-29, ADR-0016)
+Facts: `docs/findings/xreal-eye-camera.md`. Order: E0 → E1 → E2 → E3 → E4 (user priority: keyboard), then E5–E8. Every camera feature is off by default.
+
+**E0 Camera feed foundation**
+Deliverables: `EyeFrameFramer` + `EyeCameraClient` (reconnect like the IMU client) in `Device.XrealOne`; `.xrcam` format (header + 8-bit frames, device timestamps); `xrs camera snapshot | record | live`; tests on synthetic frames (no real room images in the repo); firmware read from the OSD and recorded.
+- [ ] `xrs camera record` keeps 60 fps for 5 min with 0 dropped frames
+- [ ] Framer tests: resync after garbage, split TCP reads, wrong length
+
+**E1 Metadata port 52996 (glasses' own 6DoF?)**
+Deliverables: `xrs probe metadata --record`; recordings with Eye on/off, OSD Spatial Anchor on/off, head moved forward/back 20 cm; finding updated.
+- [ ] Content of 52996 described, position present or ruled out
+
+**E2 Hand tracking engine**
+Deliverables: `tools/Convert-HandModels.ps1` (MediaPipe hand landmarker → ONNX); `HandTracker` (blur → palm detection → landmarks → One Euro filter) on ONNX Runtime; `PinchDetector` (hysteresis 0.35/0.6 + minimum hold); landmark fixtures; `xrs hands live` (preview window with skeleton).
+- [ ] Same hand-found rates as the Python test (≥ 95 % raised/pinch) on a recorded `.xrcam`
+- [ ] ≤ 15 ms per frame at 30 fps on the dev PC; latency camera → landmarks measured
+- [ ] Pinch detector: ≥ 95 % of pinches, ≤ 1 false click per minute with the hand idle in view
+
+**E3 Hand control (pointer + click)**
+Deliverables: `HandControlEngine` (SendInput like head look); 5-point calibration; pinch = click, pinch-hold = drag, pinch-drag vertical = scroll; pauses on real mouse/keyboard input and after 3 s without a hand; Ctrl+Alt+J; app **Hands** page (on/off, calibrate, sensitivity, left/right hand, preview) + tray item; camera-in-use indicator; warning to keep the glasses' Gesture Control off.
+- [ ] User can click 10 targets of 40 px on the glasses display, ≤ 1 miss
+- [ ] Off = camera socket closed, 0 % CPU
+
+**E4 Virtual keyboard**
+Deliverables: phase a — open `osk.exe` on the glasses display from the Hands page; phase b — own no-activate overlay keyboard (large keys, hover highlight, pinch press, key repeat, Shift/symbols, Swedish and English layouts, Unicode input for å ä ö, click sound), Ctrl+Alt+K to show/hide.
+- [ ] User types a 20-character sentence with ≤ 2 errors (target ≥ 5 words/min)
+- [ ] Focus stays in the target app while typing
+
+**E5 Passthrough peek**
+Deliverables: hotkey/tray shows the camera feed as a panel (top-most window on the glasses in Glasses anchor; texture in the scene in App head tracking), optional hand skeleton.
+- [ ] Peek opens in < 200 ms and shows the keyboard/desk when looking down
+
+**E6 Camera drift correction (App head tracking)**
+Deliverables: visual yaw estimate from feature tracking fused with the gyro (ADR-0007 update); A/B in the glasses.
+- [ ] Yaw drift over 10 min reduced vs gyro-only (measured)
+
+**E7 Lean tracking / 6DoF for workspace and games**
+Deliverables: position from 52996 if E1 found it, otherwise visual-inertial odometry research; lean-in parallax in App head tracking; opentrack UDP output on the Games page (ADR-0011 update).
+- [ ] Lean 10 cm toward a screen → visible parallax; works in one sim via opentrack
+
+**E8 SDK, local API, docs, privacy**
+Deliverables: camera frames + hand events in `XrealScreen.Sdk` and the local API (opt-in, ADR-0012 update); docs/sdk pages + sample; website privacy policy and FAQ (EN + SV); Store notes; legal-security-reviewer pass before merge.
+- [ ] Privacy policy states what the camera is used for and that nothing leaves the PC
+
 ## Later
 - Own IddCx driver (WDK + EV cert + attestation signing)
 - Air-series HID support
 - SBS stereo
-- 6DoF (Eye camera)
-- **Lean tracking (6DoF-lite)**: the 1S measures rotation only; real lean-in parallax needs head position, e.g. from a webcam (face tracking) or the XREAL Eye camera. Today: neck model + Ctrl+Alt+Up/Down distance (user request 2026-09-26).
+- Pin virtual screens next to the real monitor (detect it in the Eye feed)
+- Hand gestures beyond pinch (palm menu, swipe between screens)

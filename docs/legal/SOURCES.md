@@ -7,7 +7,10 @@ Every external source consulted. **How used:** `facts` (IDs/constants/behaviour 
 | XREAL SDK com.xreal.xr 3.1.0 | local `E:\XREAL SDK\com.xreal.xr.tar` | none shipped; license-key gated | facts | 2026-09-26 |
 | Skarian/one-xr | https://github.com/Skarian/one-xr | MIT | code-ported (stream framer, `OneReportFramer.cs`); reference for axes/units | 2026-09-26 |
 | SamiMitwalli/One-Pro-IMU-Retriever-Demo | https://github.com/SamiMitwalli/One-Pro-IMU-Retriever-Demo | MIT | reference | 2026-09-26 |
-| Aloim Grayscale-Feed | https://github.com/Aloim/Grayscale-Feed-Xreal-One-Pro-Eye-Windows-Nebula-Beta-needed- | research-only | facts (port list) | 2026-09-26 |
+| Aloim Grayscale-Feed | https://github.com/Aloim/Grayscale-Feed-Xreal-One-Pro-Eye-Windows-Nebula-Beta-needed- | research-only | facts (port list; README claims about One Pro feed format and prerequisites, 2026-10-29) | 2026-09-26 |
+| XREAL developer docs: Camera, Access RGB Camera | https://docs.xreal.com/Camera/Camera | web page | facts (SDK camera API is Unity/Android only) | 2026-10-29 |
+| XREAL tutorials: Eye specs/FAQ, One-series Gesture Control pages | https://tutorials.xreal.com/docs/accessories/eye/spec, https://tutorials.xreal.com/docs/glasses/one-series/gesture/gesture-setting/ | web page | facts (Eye specs, gesture OSD switch, pinch thresholds) | 2026-10-29 |
+| Google MediaPipe Hand Landmarker model (float16) | https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker | Apache-2.0 | used in the 2026-10-29 hand test (Python, not in the repo); planned: model converted to ONNX and shipped (ADR-0016) | 2026-10-29 |
 | wheaney/XRLinuxDriver | https://github.com/wheaney/XRLinuxDriver | GPL-3.0 | facts (PIDs) | 2026-09-26 |
 | ar-drivers-rs | https://github.com/badicsalex/ar-drivers-rs | MIT | reference | 2026-09-26 |
 | MSmithDev/AirAPI_Windows | https://github.com/MSmithDev/AirAPI_Windows | GPL-3.0 | facts | 2026-09-26 |

@@ -27,6 +27,7 @@
 - **App looks (2026-10-12, ADR-0014)**: Settings → Look: Classic, Lens, Instrument, **Stage (default)**, switched live; own Home page per look, Stage also on the Screens page; App theme only for Classic. Navigation pane resizable (drag the edge, snaps to icons where the labels end). Screen count limited to 3 in glasses anchor, 6 in app head tracking. [verified-local: screenshots of every look, live switching, both workspace types; not yet used with the glasses].
 - **Website (2026-10-25, ADR-0015)**: `web/` static HTML5/CSS/JS for https://xrealscreen.timeonline.se (Linux LiteSpeed): Home, Download + setup guide, Developers, FAQ, Privacy policy (also the Store privacy URL), 404; English + Swedish (`/sv/`); Stage-look colours, light/dark, works without JS; `.htaccess` HTTPS + strict CSP; `tools/check-website.py` (structure, ids, links, anchors); `.github/workflows/website.yml` checks PRs and uploads `main` over FTPS with lftp. [verified-local: all pages rendered in headless Edge at desktop and 390 px, light and dark; checker 12/12 clean] — **not yet deployed** (needs the FTP secrets).
 - Pitfall: building `src/XrealScreen.App` while the app runs re-registers the dev package and kills the app without cleanup (leftover virtual monitors) — run `xrs recover`.
+- **XREAL Eye investigation (2026-10-29, plan only, no code):** the 1S streams the Eye's 8-bit grayscale 512×378 60 fps feed on TCP 52997 without vendor software; MediaPipe hand tracking finds the hand in 96–100 % of frames after a 3×3 blur (`docs/findings/xreal-eye-camera.md`). Plan: ROADMAP **M9**, ADR-0016 **Proposed**.
 - 169/169 tests (RunKeyStartup 7 new).
 
 ## Next steps
@@ -39,6 +40,7 @@ uget\*.nupkg" --api-key $key --source https://api.nuget.org/v3/index.json --skip
 4. M6: user test of tray icon / start with Windows / Ctrl+Alt+W (2026-09-27) and of saved workspaces / import-export / start latest workspace / Exit / start on glasses connect / primary screen / window move (2026-09-29).
 5. M7: clean-PC install test in Windows Sandbox (`installer\test\Start-SandboxTest.ps1` -> `artifacts\sandbox\results\report.txt`). **First run 2026-09-27 stalled** right after "PASS no driver before install", inside `Install-XrealScreen.ps1 -Yes` (no output for 9 min) - probably a dialog in the Sandbox (driver install prompt or Add-AppxPackage). Next: look at the Sandbox window, log each install step separately with timeouts in `Run-InSandbox.ps1`, rerun. Then trusted signing for a public release.
 6. App head tracking: glasses A/B of prediction 20 vs 26 ms (measured latch→scan-out ≈ 22 ms, ADR-0009); optional Strong vs Balanced for the last nod bob. Removing DWM (always composed here) needs exclusive fullscreen or DirectComposition — deferred.
+7. **XREAL Eye (M9, ADR-0016):** user approves ADR-0016 → E0 camera feed foundation (`EyeCameraClient`, `.xrcam`, `xrs camera`) → E1 metadata port 52996 → E2 hand engine → E3 hand pointer + pinch click → E4 virtual keyboard. User: read the glasses firmware in the OSD and confirm Gesture Control is OFF.
 
 ## Blockers
 - None.
@@ -48,17 +50,17 @@ uget\*.nupkg" --api-key $key --source https://api.nuget.org/v3/index.json --skip
 - In App head tracking, partial axis modes (YawRoll/YawPitch) can cause motion sickness; Full felt best; lag is now "a little" (2026-09-27). Glasses anchor avoids this.
 - `missed` frame counter in presenter stats is noisy; p99 frame time is the reliable number.
 - Control port 52999 not implemented (glasses-side recenter/UltraWide switching from the app would need it).
-- Real lean tracking needs a camera (roadmap "Later").
+- Real lean tracking needs the Eye camera or the glasses' own 6DoF pose (ROADMAP M9 E1/E7).
 
 ## Last hardware verification
 - **2026-09-26 · XREAL 1S · PID 0x043E · fw 15.01.03.522** — NCM link, ports, IMU framing/units/axes, live tracking in app. Details: `docs/findings/xreal-one-protocol.md`, `docs/findings/xreal-1s-hardware.md`.
 - **2026-09-27 · XREAL 1S · fw 15.01.03.522** — App head tracking lag A/B (latch/prediction) and nod A/B (tilt-correction rate gate); nod IMU fixture recorded.
+- **2026-10-29 · XREAL 1S + Eye · fw not re-read (confirm in OSD)** — Eye feed on TCP 52997 decoded (8-bit 512×378, 60 fps); hand tracking test with the user (spoken steps). Details: `docs/findings/xreal-eye-camera.md`.
 - **2026-09-26/27 · XREAL 1S · fw 15.01.03.522** — both workspace types in the glasses with the user: anchor split 2×/3× screens with gap in 32:9 and 21:9, UltraWide auto-restart, app head tracking comfort A/B, mouse, crash recovery.
 
 ## Session log
 | Date | Agent | Summary |
 |------|-------|---------|
-| 2026-10-10 | Claude | Head look for games (ADR-0011): HeadMouseMapper (Look/Stick) + SendInput injector + `xrs imu mouse`. |
 | 2026-10-10 | Claude | Head look worked in Skyrim; games on the glasses: glasses primary while head look runs (crash-safe), Ctrl+Alt+G moves the active window. |
 | 2026-10-10 | Claude | `xrs imu mouse` waits for and reconnects to the glasses' IMU instead of exiting on a connect timeout. |
 | 2026-10-10 | Claude | Games page in the app for head look; loop moved to `HeadLookEngine` (shared with `xrs imu mouse`). |
@@ -69,3 +71,4 @@ uget\*.nupkg" --api-key $key --source https://api.nuget.org/v3/index.json --skip
 | 2026-10-12 | Claude | App: navigation pane resizable by dragging its edge (collapses to icons below 160 px, reopens at the last width; saved in app.json). |
 | 2026-10-12 | Claude | App looks (ADR-0014): Classic / Lens / Instrument / Stage (default) picked in Settings and switched live; Stage monitor view on Home and Screens. |
 | 2026-10-25 | Claude | Website (ADR-0015): static `web/` site in English + Swedish, privacy policy, `.htaccess`, link checker, FTPS deploy workflow. |
+| 2026-10-29 | Claude | XREAL Eye: feed on 52997 decoded, hand tracking test with the user; finding, ADR-0016 (Proposed), ROADMAP M9 plan. |

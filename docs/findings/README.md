@@ -18,6 +18,7 @@ When a hypothesis is confirmed or refuted, edit the line in place (change the ta
 | [xreal-sdk.md](xreal-sdk.md) | XREAL Unity SDK 3.1.0: what is (not) usable |
 | [xreal-1s-hardware.md](xreal-1s-hardware.md) | XREAL 1S specs and OSD features |
 | [xreal-one-protocol.md](xreal-one-protocol.md) | One-series USB network protocol (IMU/control) |
+| [xreal-eye-camera.md](xreal-eye-camera.md) | XREAL Eye camera feed (port 52997), hand tracking test, glasses' Gesture Control |
 | [vertoxr-cleanroom.md](vertoxr-cleanroom.md) | Competitor architecture, observed only |
 | [virtual-display-drivers.md](virtual-display-drivers.md) | IddCx driver options |
 | [capture-render.md](capture-render.md) | Capture and rendering pipeline |
