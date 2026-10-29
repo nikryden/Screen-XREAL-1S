@@ -17,6 +17,7 @@ Hardware runs on 2026-10-29 used our XREAL 1S (PID 0x043E, USB REV 0409) with th
 |------|-------|-----|
 | Availability | Streams as soon as a client connects; no Nebula beta, no extra OSD setting needed on the 1S | [verified-hw] 2026-10-29 |
 | Rate | ~11.6 MB/s, 60 fps (device timestamps 16.68 ms apart), 0 gaps over 127 s | [verified-hw] 2026-10-29 |
+| Variable rate | the glasses change the rate themselves: 15.0 fps (66.7 ms, ~2.9 MB/s) for 5 min with 0 gaps in a dim room (mean brightness ~45) the same evening; cause (auto-exposure in low light?) | rate [verified-hw] 2026-10-29; cause [hypothesis] |
 | Framing | magic `27 48`, then **u32 big-endian** body length (193,856) — same shape as the IMU port | [verified-hw] 2026-10-29 |
 | Body | 320-byte header + one **8-bit grayscale 512×378** image (row stride 512) | [verified-hw] 2026-10-29 |
 | Header u64 LE @17 | device timestamp, ns (no separate frame counter found) | [verified-hw] 2026-10-29 |

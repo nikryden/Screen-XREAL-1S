@@ -5,7 +5,7 @@ Every external source consulted. **How used:** `facts` (IDs/constants/behaviour 
 | Source | URL | License | How used | Accessed |
 |--------|-----|---------|----------|----------|
 | XREAL SDK com.xreal.xr 3.1.0 | local `E:\XREAL SDK\com.xreal.xr.tar` | none shipped; license-key gated | facts | 2026-09-26 |
-| Skarian/one-xr | https://github.com/Skarian/one-xr | MIT | code-ported (stream framer, `OneReportFramer.cs`); reference for axes/units | 2026-09-26 |
+| Skarian/one-xr | https://github.com/Skarian/one-xr | MIT | code-ported (stream framer `OneReportFramer.cs`; control-port framing `ControlWire.cs`, 2026-10-29); reference for axes/units | 2026-09-26 |
 | SamiMitwalli/One-Pro-IMU-Retriever-Demo | https://github.com/SamiMitwalli/One-Pro-IMU-Retriever-Demo | MIT | reference | 2026-09-26 |
 | Aloim Grayscale-Feed | https://github.com/Aloim/Grayscale-Feed-Xreal-One-Pro-Eye-Windows-Nebula-Beta-needed- | research-only | facts (port list; README claims about One Pro feed format and prerequisites, 2026-10-29) | 2026-09-26 |
 | XREAL developer docs: Camera, Access RGB Camera | https://docs.xreal.com/Camera/Camera | web page | facts (SDK camera API is Unity/Android only) | 2026-10-29 |

@@ -69,12 +69,14 @@ Facts: `docs/findings/xreal-eye-camera.md`. Order: E0 → E1 → E2 → E3 → E
 | Colour camera research, E9 | 2026-10-29 | 22 | 42,284 | 3,842,015 | 20,127 |
 | Firmware read over port 52999 | 2026-10-29 | 15 | 18,579 | 3,107,941 | 8,760 |
 | Keyboard languages, firmware panel, calibration facts, token log | 2026-10-29 | 14 | 21,425 | 3,179,700 | 16,124 |
+| E0 camera feed + glasses info (code, tests, CLI, app card, 5-min feed check) | 2026-10-29 | 40 | 80,070 | 11,709,060 | 48,082 |
 
 **E0 Camera feed foundation**
-Deliverables: `EyeFrameFramer` + `EyeCameraClient` (reconnect like the IMU client) in `Device.XrealOne`; `.xrcam` format (header + 8-bit frames, device timestamps); `xrs camera snapshot | record | live`; tests on synthetic frames (no real room images in the repo); **glasses info**: `XrealControlClient` (port 52999, read-only GETs) → `xrs device info` and an app panel (Settings → Glasses) showing model, firmware (software + DSP; the `15.1.03.603` part once its source is found), Eye attached, camera resolution — **no update check** at this stage.
-- [ ] Firmware shown in `xrs device info` and in the app matches https://www.xreal.com/ota/ for the parts we can read
-- [ ] `xrs camera record` keeps 60 fps for 5 min with 0 dropped frames
-- [ ] Framer tests: resync after garbage, split TCP reads, wrong length
+Built (2026-10-29, `feature/eye-camera-e0`): `EyeFrameFramer`, pooled `EyeFrame`, `XrealEyeCameraSource` (reconnect is left to the caller, like `XrealOneImuSource`) and `.xrcam` (`XrcamWriter`/`XrcamReader`) in `Device.XrealOne`; `xrs camera snapshot | record | live`; tests on synthetic frames (no real room images in the repo); **glasses info**: `ControlWire` + `XrealControlClient` (port 52999, read-only GETs) + `GlassesInfo`/`GlassesCalibration` → `xrs device info` and a **Glasses** card on the app's Device page (software + DSP version, serial number, cameras with field of view, calibration date) — **no update check**.
+Open: the `15.1.03.603` part of the firmware (not on the control port; HID?) and an "Eye attached" indicator that does not read the camera.
+- [x] Firmware shown in `xrs device info` matches https://www.xreal.com/ota/ for the parts we can read (software + DSP, 2026-10-29); app card built, not yet seen by the user
+- [ ] `xrs camera live --seconds 300` keeps 60 fps for 5 min with 0 dropped frames — 2026-10-29: 0 dropped frames over 5 min, but the glasses sent 15 fps (dim room); rerun in a lit room (user)
+- [x] Framer tests: resync after garbage, byte-by-byte and split TCP reads, wrong length, stride < width (`EyeFrameFramerTests`); control wire + fake-server client tests (`ControlPortTests`); `.xrcam` round trip (`XrcamFileTests`)
 
 **E1 Metadata port 52996 (glasses' own 6DoF?)**
 Deliverables: `xrs probe metadata --record`; recordings with Eye on/off, OSD Spatial Anchor on/off, head moved forward/back 20 cm; finding updated.
