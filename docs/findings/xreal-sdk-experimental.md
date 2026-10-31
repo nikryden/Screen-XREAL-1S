@@ -32,3 +32,13 @@ Function names only. The wire command behind each one is not in the C# and is no
 | Sensor property messages `MSG_SENSOR_SET_PROPERTY`, `REQ/RESP_SENSOR_GET_PROPERTY` exist | [from-sdk:facts-only] |
 | gRPC is linked; the only XREAL gRPC method name found is `/frames.service.Frames/StartStreaming` (same as on port 50051); address strings `169.254.1.10`, `127.0.0.1` | [from-sdk:facts-only] |
 | Wire format of the camera RPCs (port, message bytes): **not in the strings**; would need disassembly or watching the traffic of an XREAL program | — |
+
+## "AXR" message family (second read, 2026-10-31)
+| Fact | Tag |
+|------|-----|
+| ~100 protobuf message types `proto.NRAxr<Area><Name>` in `libnr_api.dll` (none in the other DLLs). Areas: Envelope (`ProtocolVersion`, **`RequestToFrames` / `ResponseFromFrames`**), Sensor (`GetCapabilities`, `SensorCapability`, **`ReceiveSensorStream` + `SensorStreamRequestParameters`**, `SensorSample`), Camera (`GetCapabilities`), DeviceState (`ObserveState`: wear state, brightness, battery, volume, product/software info, key metadata), Display (capabilities, brightness, dimming, auto-brightness, power mode, distortion mesh, angular offset), Calibration, Composition (head tracking), Input (key events), Audio, Time (sync, PTP), Logging, Blob, Settings (system time), Monitor (ping), **Firmware** (`StartSession`, `WriteData`, `GetFileChecksum`, `EndSession`) | [from-sdk:facts-only] |
+| The envelope names match the glasses' only XREAL gRPC method, `/frames.service.Frames/StartStreaming` (port 50051): most likely a two-way stream of `RequestToFrames` / `ResponseFromFrames` envelopes carrying these requests. Our empty request got `10 04` back (2026-10-29) | [hypothesis] |
+| A sensor stream is requested **with parameters** (`SensorStreamRequestParameters`), so the stream rate may be one of them → candidate for 60 fps without Gesture Control (E10) | [hypothesis] |
+| Field names/numbers are **not** in readable strings (compact binary tables); reading them would mean decoding the binary = disassembly-level → not done (ADR-0006) | [verified-local] |
+| **Do not guess-probe this service:** the same envelope carries firmware-write requests, and a blind GET on the control port already hung the glasses (0x2711, `xreal-one-protocol.md`) | [verified-local] reasoning |
+| Other levers in the names: `NRSetGlassesCpuFrequencyMode` / `NRPowerSetGlassesCpuFrequencyMode` (glasses CPU performance mode — a low-power mode could be why the camera runs at 15 fps), `NRGlassesControlSetRgbCameraState`, `NRImuSetFrequencyExt`; the HelloMR sample switches tracking type 0DoF / 0DoF-stab / 3DoF / **6DoF** (6DoF on the PC needs the grayscale camera) | [from-sdk:facts-only]; CPU-mode link [hypothesis] |
