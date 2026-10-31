@@ -73,6 +73,7 @@ Facts: `docs/findings/xreal-eye-camera.md`. Order: E0 → E1 → E2 → E3 → E
 | E0 frame-rate cause (Gesture Control), 15 fps decision, E10 plan (incl. context summary) | 2026-10-29 | 18 | 65,524 | 2,269,480 | 15,840 |
 | XREAL SDK experimental package facts, RGB Blend Mode plan, handoff | 2026-10-29 | 20 | 44,577 | 2,208,479 | 14,855 |
 | E10 read-only probe (control scan stopped at 0x2711, listen-only 52996/camera with Gesture Control on/off), SDK AXR facts | 2026-10-31 | 72 | 187,686 | 12,869,378 | 36,545 |
+| XREAL SDK C#/Unity read as reference + E2 hand tracking (prototype, engine, tests, CLI, 3 live pinch tests) | 2026-10-31 | 103 | 227,536 | 35,296,450 | 119,671 |
 
 **E0 Camera feed foundation**
 Built (2026-10-29, `feature/eye-camera-e0`): `EyeFrameFramer`, pooled `EyeFrame`, `XrealEyeCameraSource` (reconnect is left to the caller, like `XrealOneImuSource`) and `.xrcam` (`XrcamWriter`/`XrcamReader`) in `Device.XrealOne`; `xrs camera snapshot | record | live`; tests on synthetic frames (no real room images in the repo); **glasses info**: `ControlWire` + `XrealControlClient` (port 52999, read-only GETs) + `GlassesInfo`/`GlassesCalibration` → `xrs device info` and a **Glasses** card on the app's Device page (software + DSP version, serial number, cameras with field of view, calibration date) — **no update check**.
