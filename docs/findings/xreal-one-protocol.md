@@ -46,6 +46,10 @@ Request: u16 BE magic, u32 BE length (= body + 4), u32 BE transaction id with th
 | `0x272D` | GET DSP version | `15.A.01.097_20250430` [verified-hw] |
 | `0x2729` | GET ID | serial number (string; keep out of the repo) [verified-hw] |
 | `0x271F` | GET config | ~220 KB factory calibration JSON (see `xreal-eye-camera.md`) [verified-hw] |
+| `0x2700`–`0x2710` | GET (unknown ids) | no reply at all, service keeps working [verified-hw] 2026-10-31 |
+| **`0x2711`** | **GET (unknown id) — do not send** | no reply, and the whole control service stops answering (TCP still accepts; replies never come, connections hang in FIN_WAIT2) until the USB cable is replugged; IMU and camera keep working [verified-hw] 2026-10-31 |
+
+**Unknown ids are not safe to probe:** a GET (`18 00`) on an id that is not a property can still trigger something (0x2711 stops the service), so the control port is not scanned blindly; only ids with a known meaning are sent [verified-hw] 2026-10-31.
 
 XREAL's updater (https://www.xreal.com/ota/) shows the full firmware as `15.1.03.603_20260914_15.A.01.097_20250430_1.9.1.20260914175625` on 2026-10-29 (user): `15.1.03.603_20260914` + DSP + software. The first part is not in any reply above; where it comes from (MCU over HID?) is [hypothesis] — found in M9 E0. The OSD's `15.01.03.522` on 2026-09-26 is probably that first part before an update [hypothesis].
 
