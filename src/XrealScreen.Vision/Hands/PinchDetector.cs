@@ -16,14 +16,24 @@ public sealed class PinchDetector
 {
     private bool _closingSeen;
     private double _closingSince;
+    private bool _openingSeen;
+    private double _openingSince;
     private double _lastHandSeconds;
 
-    public float CloseRatio { get; init; } = 0.35f;
+    // Live test 2026-10-31 (1S + Eye, 15 fps): pinched 0.06–0.12, relaxed open hand 0.4–0.55, lowest idle value 0.29.
+    // 0.25 / 0.45 found 11 of 11 pinches with 0 false clicks in an idle minute; 0.35 / 0.6 missed one and false-clicked once.
+    public float CloseRatio { get; init; } = 0.25f;
 
-    public float OpenRatio { get; init; } = 0.6f;
+    public float OpenRatio { get; init; } = 0.45f;
 
     /// <summary>How long the ratio must stay closed before a press. At 15 fps one frame is 67 ms, so 0 = the first closed frame.</summary>
     public TimeSpan MinHold { get; init; } = TimeSpan.Zero;
+
+    /// <summary>
+    /// How long the ratio must stay open before a release. A closed pinch seen by the Eye jumps open for single
+    /// frames (live test 2026-10-31: press–release–press within 0.1–0.3 s), so one open frame must not release.
+    /// </summary>
+    public TimeSpan MinRelease { get; init; } = TimeSpan.FromMilliseconds(150);
 
     public TimeSpan LostRelease { get; init; } = TimeSpan.FromMilliseconds(300);
 
@@ -49,8 +59,22 @@ public sealed class PinchDetector
         {
             if (ratio > OpenRatio)
             {
-                IsPressed = false;
-                return PinchEvent.Released;
+                if (!_openingSeen)
+                {
+                    _openingSeen = true;
+                    _openingSince = timeSeconds;
+                }
+
+                if (timeSeconds - _openingSince >= MinRelease.TotalSeconds)
+                {
+                    IsPressed = false;
+                    _openingSeen = false;
+                    return PinchEvent.Released;
+                }
+            }
+            else
+            {
+                _openingSeen = false;
             }
 
             return PinchEvent.None;
@@ -83,5 +107,6 @@ public sealed class PinchDetector
     {
         IsPressed = false;
         _closingSeen = false;
+        _openingSeen = false;
     }
 }

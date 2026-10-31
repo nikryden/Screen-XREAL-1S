@@ -1,5 +1,6 @@
 using System.CommandLine;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json;
 using XrealScreen.Device.XrealOne;
 using XrealScreen.Vision.Hands;
@@ -157,7 +158,8 @@ internal static class HandsCommands
         var host = new Option<string>("--host") { Description = "Glasses IP.", DefaultValueFactory = _ => OneEndpoints.Default.Host };
         var models = ModelsOption();
         var threads = ThreadsOption();
-        var command = new Command("live", "Track the hand live from the XREAL Eye; prints hand/pinch state every second and pinch events.") { seconds, window, host, models, threads };
+        var log = new Option<string>("--log") { Description = "Write one CSV line per frame (time, found, pinch ratio, position; numbers only, no image)." };
+        var command = new Command("live", "Track the hand live from the XREAL Eye; prints hand/pinch state every second and pinch events.") { seconds, window, host, models, threads, log };
         command.SetAction(async (parse, ct) =>
         {
             using var tracker = CreateTracker(parse.GetValue(models), parse.GetValue(threads));
@@ -175,6 +177,12 @@ internal static class HandsCommands
             using var preview = parse.GetValue(window) ? HandPreviewWindow.Start(cts.Cancel) : null;
             var source = new XrealEyeCameraSource(new XrealEyeCameraOptions { Endpoints = OneEndpoints.Default with { Host = parse.GetValue(host)! } });
             var pinch = new PinchDetector();
+            await using var csv = parse.GetValue(log) is { } logPath ? new StreamWriter(logPath) : null;
+            if (csv is not null)
+            {
+                await csv.WriteLineAsync("unixSeconds,deviceSeconds,found,pinchRatio,x,y,scale,presence,pressed,event".AsMemory(), ct).ConfigureAwait(false);
+            }
+
             var sw = Stopwatch.StartNew();
             long lastPrint = 0, frames = 0, foundFrames = 0;
             double msSum = 0;
@@ -191,6 +199,13 @@ internal static class HandsCommands
                         frames++;
                         foundFrames += hand is null ? 0 : 1;
                         var ev = pinch.Update(hand?.PinchRatio ?? float.NaN, frame.TimestampNs / 1e9);
+                        if (csv is not null)
+                        {
+                            string line = string.Create(CultureInfo.InvariantCulture,
+                                $"{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0:F3},{frame.TimestampNs / 1e9:F3},{(hand is null ? 0 : 1)},{hand?.PinchRatio ?? float.NaN:F3},{hand?.PinchPoint.X ?? float.NaN:F1},{hand?.PinchPoint.Y ?? float.NaN:F1},{hand?.Scale ?? float.NaN:F1},{hand?.Presence ?? 0:F2},{(pinch.IsPressed ? 1 : 0)},{ev}");
+                            await csv.WriteLineAsync(line.AsMemory(), ct).ConfigureAwait(false);
+                        }
+
                         if (ev != PinchEvent.None)
                         {
                             Console.WriteLine($"  {sw.Elapsed.TotalSeconds,6:F1} s  PINCH {ev.ToString().ToUpperInvariant()}");

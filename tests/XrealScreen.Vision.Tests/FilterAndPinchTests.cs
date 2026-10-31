@@ -61,12 +61,25 @@ public class FilterAndPinchTests
         var p = new PinchDetector();
 
         Assert.Equal(PinchEvent.None, p.Update(1.0f, 0));
-        Assert.Equal(PinchEvent.None, p.Update(0.4f, Frame));        // between thresholds: still open
+        Assert.Equal(PinchEvent.None, p.Update(0.3f, Frame));        // between thresholds: still open
         Assert.Equal(PinchEvent.Pressed, p.Update(0.2f, 2 * Frame));
-        Assert.Equal(PinchEvent.None, p.Update(0.5f, 3 * Frame));    // between thresholds: still pressed
+        Assert.Equal(PinchEvent.None, p.Update(0.4f, 3 * Frame));    // between thresholds: still pressed
         Assert.True(p.IsPressed);
-        Assert.Equal(PinchEvent.Released, p.Update(0.8f, 4 * Frame));
+        Assert.Equal(PinchEvent.None, p.Update(0.8f, 4 * Frame));    // open, but not yet for 150 ms
+        Assert.Equal(PinchEvent.None, p.Update(0.8f, 6 * Frame));
+        Assert.Equal(PinchEvent.Released, p.Update(0.8f, 7 * Frame));
         Assert.False(p.IsPressed);
+    }
+
+    [Fact]
+    public void Pinch_SingleOpenFrameWhilePinched_DoesNotRelease()
+    {
+        // live test 2026-10-31: a closed pinch jumped to 0.6 for one frame and gave press-release-press
+        var p = new PinchDetector();
+        float[] ratios = [1.0f, 0.2f, 0.1f, 0.62f, 0.1f, 0.15f, 0.62f, 0.12f, 0.9f, 0.9f, 0.9f, 0.9f];
+        var events = ratios.Select((r, i) => p.Update(r, i * Frame)).Where(e => e != PinchEvent.None).ToList();
+
+        Assert.Equal([PinchEvent.Pressed, PinchEvent.Released], events);
     }
 
     [Fact]

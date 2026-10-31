@@ -29,7 +29,7 @@
 - Pitfall: building `src/XrealScreen.App` while the app runs re-registers the dev package and kills the app without cleanup (leftover virtual monitors) — run `xrs recover`.
 - **XREAL Eye (M9, 2026-10-29):** the 1S streams the Eye's 8-bit grayscale 512×378 feed (60 fps with the glasses' Gesture Control on, 15 fps with it off; hand control is built for 15 fps, 60 fps without Gesture Control is research step E10) on TCP 52997 without vendor software; MediaPipe hand tracking finds the hand in 96–100 % of frames after a 3×3 blur (`docs/findings/xreal-eye-camera.md`). Plan: ROADMAP **M9**, ADR-0016 **Accepted**. Colour camera: no webcam interface; started by RPCs on the glasses' gRPC server (port 50051, `Frames/StartStreaming` exists, request format unknown) → research step E9, not for hand tracking.
 - **M9 E0 camera feed + glasses info (2026-10-29, `feature/eye-camera-e0`):** `XrealEyeCameraSource`/`EyeFrameFramer`/`.xrcam`, `XrealControlClient` + `GlassesInfo` (software/DSP version, serial, camera calibration), `xrs camera snapshot|record|live`, `xrs device info`, Glasses card on the Device page (no update check). [verified-hw] `xrs device info` and `xrs camera snapshot` on the 1S; app card not yet seen by the user.
-- 188/188 tests (19 new: Eye framer, control port, .xrcam).
+- 215/215 tests (27 new in E2: hand tracking).
 
 ## Next steps
 0. **Website deploy (user):** add the GitHub secrets `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR` (`web/README.md`), merge the website PR (or Actions → Website → Run workflow), then check https://xrealscreen.timeonline.se in a browser (HTTPS certificate, CSP headers, `/sv/`, 404). Update the download text once the first GitHub release exists.
@@ -42,7 +42,7 @@
 7. **XREAL Eye (M9, ADR-0016) — START HERE next session (stopped 2026-10-29):**
    1. **60 fps / colour camera (E10/E9):** 2026-10-31 read-only probing done — blind control-port GETs are unsafe (0x2711 hangs the service), 52996 is 90 Hz timing (no pose), Gesture Control ON stops our feed (no fallback). The XREAL SDK points to its "AXR" requests over gRPC `Frames/StartStreaming` (sensor stream with parameters); bytes only learnable by watching an XREAL program → **user decides route (b) throwaway DLL caller outside the repo or (c) XREAL software**, then legal-security-reviewer + ADR. No Unity, no disassembly. Reference of what XREAL solved: `docs/findings/xreal-sdk-reference.md` (ready-wait, glasses-side reprojection, Blend Mode also on grayscale, events, never-send list).
    2. User: open the app's Device page → Read glasses info (card not yet seen). Merge PRs: `docs/eye-camera-plan` first, then `feature/eye-camera-e0`.
-   3. Then **E1** metadata port 52996 → E2 hand engine (built for 15 fps, Gesture Control OFF) → E3 pointer + pinch → E4 keyboard (sv + en) → E10 60 fps → E5–E9 (E9 now includes RGB camera **Blend Mode**). Log tokens per step (ROADMAP M9 token table, `tools/Get-ClaudeTokenUsage.ps1`).
+   3. **E2 hand tracking built** (`feature/hand-tracking-e2`): `XrealScreen.Vision` + `xrs hands eval|live [--window] [--log]`; recording at 15 fps = MediaPipe (pinch 97.8 %), 9.2 ms/frame; live pinch test 11/11, 0 false clicks/min. Open in E2: end-to-end latency; hand drop-outs during fast movement. Next: E3 pointer + pinch click → E4 keyboard (sv + en) → E10 → E5–E9; E1 rest (Anchor on, head moved). Log tokens per step.
 
 ## Blockers
 - None.
@@ -79,3 +79,4 @@
 | 2026-10-29 | Claude | Eye feed rate follows the glasses' Gesture Control (60 on / 15 off, verified); user chose 15 fps with it off for E2–E4; 60 fps research added as M9 E10. |
 | 2026-10-29 | Claude | XREAL SDK experimental package read (facts only): glasses control calls, camera RPCs, PC-side SLAM + hand tracking; RGB Blend Mode added to E9; next: legal route for camera RPCs. |
 | 2026-10-31 | Claude | E10 read-only probe (0x2711 hangs control service; 52996 = 90 Hz timing; Gesture Control ON stops feed); XREAL SDK C#/Unity read as reference → `xreal-sdk-reference.md`, grayscale Blend Mode + reprojection ideas in plan. |
+| 2026-10-31 | Claude | M9 E2: hand tracking engine (MediaPipe on ONNX Runtime) in XrealScreen.Vision, xrs hands eval/live, model conversion script; live pinch test with spoken count → thresholds 0.25/0.45 + 150 ms release. |

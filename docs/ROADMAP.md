@@ -92,7 +92,8 @@ Deliverables: `tools/Convert-HandModels.ps1` (MediaPipe hand landmarker → ONNX
 - [x] Same hand-found rates as the Python test (≥ 95 % raised/pinch) on a recorded `.xrcam` — still 100 %, pinch 97.8 % at 15 fps (2026-10-31)
 - [ ] ≤ 15 ms per frame at 30 fps on the dev PC; latency camera → landmarks measured — time per frame met (9.2 ms median, 11.9 ms p95, Debug build); end-to-end latency still to measure live
 - [x] Pinch and hand-found rates measured on a 15 fps recording (Gesture Control off), not only on 60 fps — `--step 2` of the 30 fps recording (2026-10-31)
-- [ ] Pinch detector: ≥ 95 % of pinches, ≤ 1 false click per minute with the hand idle in view
+- [x] Pinch detector: ≥ 95 % of pinches, ≤ 1 false click per minute with the hand idle in view — live test with the user 2026-10-31 (spoken count, `xrs hands live --log`): 11 of 11 pinches, 0 false clicks in an idle minute with close 0.25 / open 0.45 / 150 ms release delay (replayed from the frame log; the first live runs showed press–release chatter and a relaxed open hand at only 0.4–0.55, which the old 0.35 / 0.6 handled badly). One user, small sample: recheck in E3
+- [ ] Hand lost for ~1 s during fast free movement (found 62–82 % in the idle minute): improve in E3 (e.g. run the palm detector while tracking is weak, keep the region a few frames)
 
 **E3 Hand control (pointer + click)**
 Deliverables: `HandControlEngine` (SendInput like head look); 5-point calibration; pinch = click, pinch-hold = drag, pinch-drag vertical = scroll; pauses on real mouse/keyboard input and after 3 s without a hand; Ctrl+Alt+J; app **Hands** page (on/off, calibrate, sensitivity, left/right hand, preview) + tray item; camera-in-use indicator; warning to keep the glasses' Gesture Control off.
