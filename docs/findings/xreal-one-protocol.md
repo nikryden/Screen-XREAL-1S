@@ -8,7 +8,7 @@ Applies to XREAL One / One Pro per community sources and **verified on XREAL 1S*
 | Data link | USB NCM network adapter "UsbNcm Host Device" (USB interface MI_01) | one-xr, SamiMitwalli | [verified-hw] 1S fw 15.01.03.522 |
 | Glasses IP | `169.254.2.1` | one-xr, SamiMitwalli | [verified-hw] 1S fw 15.01.03.522 |
 | PC IP | `169.254.2.10/24` | one-xr | [verified-hw] 1S fw 15.01.03.522 |
-| TCP 52996 | metadata (~3.4 KB/s with the Eye, magic `27 31`; content not yet read) | one-xr, Grayscale-Feed port list | port open: [verified-hw] 1S fw 15.01.03.522; rate [verified-hw] 2026-10-29 |
+| TCP 52996 | metadata: magic `27 31`, 32-byte messages at 90 Hz (timestamp + counter, no pose; see `xreal-eye-camera.md`) | one-xr, Grayscale-Feed port list | port open: [verified-hw] 1S fw 15.01.03.522; rate [verified-hw] 2026-10-29 |
 | TCP 52997 | Eye camera: 8-bit grayscale 512×378, 60 fps (Gesture Control on) or 15 fps (off), same framing shape (see `xreal-eye-camera.md`) | Grayscale-Feed port list; own decoding | [verified-hw] 2026-10-29 |
 | TCP 50051 | gRPC server (camera control, `frames.service.Frames`; see `xreal-eye-camera.md`) | own scan; SDK method names | [verified-hw] 2026-10-29 |
 | TCP 1234, 50052, 50180, 52988–52995 | open, silent on connect; purpose unknown | own scan | [verified-hw] 2026-10-29 |

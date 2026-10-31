@@ -10,7 +10,7 @@ The user has the XREAL Eye on the 1S and wants a virtual keyboard clicked by han
 We read the Eye feed ourselves on port 52997 and run hand tracking in-process with MediaPipe's hand models (Apache-2.0) converted to ONNX and executed by ONNX Runtime (MIT; DirectML when available, CPU otherwise). Hands drive Windows through `SendInput` like head look (ADR-0011): the pinch point moves the pointer and a pinch clicks; a virtual keyboard is clicked the same way.
 
 - **Feed:** `EyeCameraClient` in `Device.XrealOne` (framer shared with the IMU port's shape); `.xrcam` recordings for tests; `xrs camera …`.
-- **Frame rate (user, 2026-10-29):** hand control is built for **15 fps with the glasses' Gesture Control off** (no double clicks from the glasses); the pipeline processes every frame it gets and leans on the One Euro filter and short prediction to hide the 67 ms interval. Getting 60 fps with Gesture Control off is researched later (ROADMAP M9 E10); turning Gesture Control on is the fallback only if 15 fps fails the E3 targets.
+- **Frame rate (user, 2026-10-29):** hand control is built for **15 fps with the glasses' Gesture Control off** (no double clicks from the glasses); the pipeline processes every frame it gets and leans on the One Euro filter and short prediction to hide the 67 ms interval. Getting 60 fps with Gesture Control off is researched later (ROADMAP M9 E10); Gesture Control on is **no** fallback: on 2026-10-31 it stopped our feed instead of raising it to 60 fps (`xreal-eye-camera.md`).
 - **Pipeline:** 3×3 blur → palm detection (only when no hand is tracked) → 21 landmarks → One Euro filter → gesture state machine (pinch with hysteresis 0.35 / 0.6 and a minimum hold) → `HandControlEngine`. Processes up to 30 fps (every second frame at 60 fps, every frame at 15 fps).
 - **Hand tracking uses the grayscale feed only**, never the colour camera (the colour camera is researched separately for other uses, ROADMAP M9 E9).
 - **Click = pinch, not air poke** (no depth with one camera).
@@ -32,7 +32,7 @@ We read the Eye feed ourselves on port 52997 and run hand tracking in-process wi
 
 ## Alternatives
 - Colour (RGB) camera for hand tracking — not exposed without unknown RPCs, 30 fps and compressed (more latency) vs 60 fps raw grayscale, model input is 224 px anyway, extra power/heat; grayscale already finds the hand in 96–100 % of frames.
-- Turn the glasses' Gesture Control on just to get 60 fps — its own pinch may click at the same time as ours; kept as the fallback, tested in E3 only if 15 fps is not good enough.
+- Turn the glasses' Gesture Control on just to get 60 fps — its own pinch may click at the same time as ours, and on 2026-10-31 it stopped our feed (0 frames) instead of giving 60 fps; rejected.
 - Glasses' built-in Gesture Control — no keyboard, no API, made for phones, cannot be tuned; it would also double-click with ours.
 - XREAL SDK camera API — Unity/Android only, no license.
 - Python + MediaPipe sidecar process — easiest prototype (used for the 2026-10-29 test) but ships a Python runtime and is hard to package.

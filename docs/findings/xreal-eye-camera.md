@@ -17,7 +17,7 @@ Hardware runs on 2026-10-29 used our XREAL 1S (PID 0x043E, USB REV 0409) with th
 |------|-------|-----|
 | Availability | Streams as soon as a client connects; no Nebula beta, no extra OSD setting needed on the 1S | [verified-hw] 2026-10-29 |
 | Rate | ~11.6 MB/s, 60 fps (device timestamps 16.68 ms apart), 0 gaps over 127 s | [verified-hw] 2026-10-29 |
-| Rate follows Gesture Control | **Gesture Control ON → 60 fps, OFF → 15.0 fps** (66.7 ms, ~2.9 MB/s); 0 gaps either way; light is not the cause (15 fps at mean brightness ~45 and ~70) | [verified-hw] 2026-10-29 |
+| Rate and Gesture Control | **OFF → 15.0 fps** (66.7 ms, ~2.9 MB/s), 0 gaps; light is not the cause (15 fps at mean brightness ~45 and ~70). **ON is not reliable:** 60 fps on 2026-10-29, but on 2026-10-31 the feed stopped (0 frames, port still open) within ~5 s of switching it on, twice; once it came back at 15 fps after switching off, once it stayed at 0 after switching off (IMU and control port fine). Gesture Control ON is no fallback for 60 fps | [verified-hw] 2026-10-29, 2026-10-31 |
 | Framing | magic `27 48`, then **u32 big-endian** body length (193,856) — same shape as the IMU port | [verified-hw] 2026-10-29 |
 | Body | 320-byte header + one **8-bit grayscale 512×378** image (row stride 512) | [verified-hw] 2026-10-29 |
 | Header u64 LE @17 | device timestamp, ns (no separate frame counter found) | [verified-hw] 2026-10-29 |
@@ -30,7 +30,8 @@ Hardware runs on 2026-10-29 used our XREAL 1S (PID 0x043E, USB REV 0409) with th
 | Fact | Value | Tag |
 |------|-------|-----|
 | Rate with Eye attached | ~3.4 KB/s, magic `27 31` | [verified-hw] 2026-10-29 |
-| Content (6DoF pose?) | not decoded | [hypothesis] |
+| Content | 32-byte messages at **90 Hz** (11.11 ms): u64 LE device timestamp ns at offset 8, u32 LE counter at 16 (keeps counting across connections), all other bytes 0. Probably display timing; **no 6DoF pose** | [verified-hw] 2026-10-31 |
+| Gesture Control on vs off | same layout and rate; no byte differs between the two states | [verified-hw] 2026-10-31 |
 
 ## Colour (RGB) camera
 | Fact | Value | Tag |

@@ -81,6 +81,7 @@ Open: the `15.1.03.603` part of the firmware (not on the control port; HID?) and
 - [x] Framer tests: resync after garbage, byte-by-byte and split TCP reads, wrong length, stride < width (`EyeFrameFramerTests`); control wire + fake-server client tests (`ControlPortTests`); `.xrcam` round trip (`XrcamFileTests`)
 
 **E1 Metadata port 52996 (glasses' own 6DoF?)**
+2026-10-31 (Eye attached, Anchor off): 32-byte messages at 90 Hz, only a timestamp and a counter, no pose; same with Gesture Control on/off. Still to check: OSD Anchor on, head moved.
 Deliverables: `xrs probe metadata --record`; recordings with Eye on/off, OSD Spatial Anchor on/off, head moved forward/back 20 cm; finding updated.
 - [ ] Content of 52996 described, position present or ruled out
 
@@ -93,7 +94,7 @@ Deliverables: `tools/Convert-HandModels.ps1` (MediaPipe hand landmarker → ONNX
 
 **E3 Hand control (pointer + click)**
 Deliverables: `HandControlEngine` (SendInput like head look); 5-point calibration; pinch = click, pinch-hold = drag, pinch-drag vertical = scroll; pauses on real mouse/keyboard input and after 3 s without a hand; Ctrl+Alt+J; app **Hands** page (on/off, calibrate, sensitivity, left/right hand, preview) + tray item; camera-in-use indicator; warning to keep the glasses' Gesture Control off.
-- [ ] User can click 10 targets of 40 px on the glasses display, ≤ 1 miss — at 15 fps (Gesture Control off); only if this fails, test with Gesture Control on (60 fps) and check whether the glasses' own pinch double-clicks
+- [ ] User can click 10 targets of 40 px on the glasses display, ≤ 1 miss — at 15 fps (Gesture Control off); if this fails, E10 (60 fps) moves before E4
 - [ ] Off = camera socket closed, 0 % CPU
 
 **E4 Virtual keyboard**
