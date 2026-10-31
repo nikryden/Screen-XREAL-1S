@@ -11,6 +11,7 @@ root.Subcommands.Add(DeviceCommands.CreateDevices());
 root.Subcommands.Add(DeviceCommands.CreateProbe());
 root.Subcommands.Add(DeviceCommands.CreateDevice());
 root.Subcommands.Add(CameraCommands.Create());
+root.Subcommands.Add(HandsCommands.Create());
 root.Subcommands.Add(ImuCommands.Create());
 root.Subcommands.Add(DisplayCommands.Create());
 root.Subcommands.Add(VddCommands.Create());

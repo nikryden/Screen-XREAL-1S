@@ -87,10 +87,11 @@ Deliverables: `xrs probe metadata --record`; recordings with Eye on/off, OSD Spa
 - [ ] Content of 52996 described, position present or ruled out
 
 **E2 Hand tracking engine**
+Built (2026-10-31, `feature/hand-tracking-e2`): `tools/Convert-HandModels.ps1` → `artifacts/models/hands`; `src/XrealScreen.Vision` (`HandTracker`, `PalmDecoder`, `HandRoi`, `ImageOps`, `OneEuroFilter`, `PinchDetector`; 26 tests); `xrs hands eval <xrcam> [--step 2] [--phases]` and `xrs hands live [--window]`. Measured on the 2026-10-29 recording (converted to .xrcam, kept private) at 15 fps — same as MediaPipe on the same frames: still 100 %, pinch 97.8 % (MediaPipe 98.3), near/far, low, look down 100 %, pointing 47 % (MediaPipe 42); 9.2 ms median / 11.9 ms p95 per frame (blur 1.9, landmarks 7.3, palm detector 8.4 when run).
 Deliverables: `tools/Convert-HandModels.ps1` (MediaPipe hand landmarker → ONNX); `HandTracker` (blur → palm detection → landmarks → One Euro filter) on ONNX Runtime; `PinchDetector` (hysteresis 0.35/0.6 + minimum hold); landmark fixtures; `xrs hands live` (preview window with skeleton).
-- [ ] Same hand-found rates as the Python test (≥ 95 % raised/pinch) on a recorded `.xrcam`
-- [ ] ≤ 15 ms per frame at 30 fps on the dev PC; latency camera → landmarks measured
-- [ ] Pinch and hand-found rates measured on a 15 fps recording (Gesture Control off), not only on 60 fps
+- [x] Same hand-found rates as the Python test (≥ 95 % raised/pinch) on a recorded `.xrcam` — still 100 %, pinch 97.8 % at 15 fps (2026-10-31)
+- [ ] ≤ 15 ms per frame at 30 fps on the dev PC; latency camera → landmarks measured — time per frame met (9.2 ms median, 11.9 ms p95, Debug build); end-to-end latency still to measure live
+- [x] Pinch and hand-found rates measured on a 15 fps recording (Gesture Control off), not only on 60 fps — `--step 2` of the 30 fps recording (2026-10-31)
 - [ ] Pinch detector: ≥ 95 % of pinches, ≤ 1 false click per minute with the hand idle in view
 
 **E3 Hand control (pointer + click)**
