@@ -76,7 +76,7 @@ Facts: `docs/findings/xreal-eye-camera.md`. Order: E0 → E1 → E2 → E3 → E
 
 **E0 Camera feed foundation**
 Built (2026-10-29, `feature/eye-camera-e0`): `EyeFrameFramer`, pooled `EyeFrame`, `XrealEyeCameraSource` (reconnect is left to the caller, like `XrealOneImuSource`) and `.xrcam` (`XrcamWriter`/`XrcamReader`) in `Device.XrealOne`; `xrs camera snapshot | record | live`; tests on synthetic frames (no real room images in the repo); **glasses info**: `ControlWire` + `XrealControlClient` (port 52999, read-only GETs) + `GlassesInfo`/`GlassesCalibration` → `xrs device info` and a **Glasses** card on the app's Device page (software + DSP version, serial number, cameras with field of view, calibration date) — **no update check**.
-Open: the `15.1.03.603` part of the firmware (not on the control port; HID?) and an "Eye attached" indicator that does not read the camera.
+Open: the `15.1.03.603` part of the firmware (not on the control port; XREAL's sample shows `GetGlassesSystemVersion` — HID?); wait for "glasses ready" (control port answers, 10–40 s after plug-in) with retries instead of failing after 3 s, as XREAL's SDK does (`xreal-sdk-reference.md` §1) and an "Eye attached" indicator that does not read the camera.
 - [x] Firmware shown in `xrs device info` matches https://www.xreal.com/ota/ for the parts we can read (software + DSP, 2026-10-29); app card built, not yet seen by the user
 - [x] `xrs camera live` receives every frame the glasses send — 2026-10-29: 0 dropped frames over 5 min at 15 fps (Gesture Control off) and over 127 s at 60 fps (Gesture Control on); the rate follows the glasses' Gesture Control switch, not light. Decided (user): E2–E4 at 15 fps with Gesture Control off; 60 fps without it is E10
 - [x] Framer tests: resync after garbage, byte-by-byte and split TCP reads, wrong length, stride < width (`EyeFrameFramerTests`); control wire + fake-server client tests (`ControlPortTests`); `.xrcam` round trip (`XrcamFileTests`)
@@ -123,7 +123,7 @@ Deliverables: camera frames + hand events in `XrealScreen.Sdk` and the local API
 **E9 Colour (RGB) camera — research, low priority, not for hand tracking**
 The Eye's colour camera has no webcam interface; XREAL's SDK starts it with RPCs to the glasses' gRPC server (`docs/findings/xreal-eye-camera.md`). Hand tracking stays on the grayscale feed (ADR-0016).
 Deliverables: decide the legal route first (black-box probing of our glasses vs. reading message definitions in the unlicensed SDK — legal-security-reviewer, ADR-0006); then `xrs camera rgb` (start, receive, decode, save a PNG); then uses in this order: colour peek (E5), **RGB camera Blend Mode** (user, 2026-10-29), first-person virtual webcam (Windows 11 virtual camera for Teams/Zoom/OBS), text/QR reading (Windows OCR), photo key.
-**Blend Mode** = mixed-reality output that combines the colour camera with what the glasses show (our virtual screens), like XREAL's capture blend modes: **Blend** (screens drawn over the camera image, aligned with the camera calibration and head pose), **Camera only**, **Virtual only**, **Side by side**. Used for photos, video recording and the virtual webcam; picked in the app; off by default like every camera feature.
+**Blend Mode** — XREAL's SDK also blends on the **grayscale** cameras (`xreal-sdk-reference.md` §4), so a grayscale Blend Mode can be built before the colour route is solved (Eye feed + calibration intrinsics/extrinsics + head pose); colour replaces the background later. Blend Mode = mixed-reality output that combines the camera image with what the glasses show (our virtual screens), like XREAL's capture blend modes: **Blend** (screens drawn over the camera image, aligned with the camera calibration and head pose), **Camera only**, **Virtual only**, **Side by side**. Used for photos, video recording and the virtual webcam; picked in the app; off by default like every camera feature.
 - [ ] Legal route decided and recorded
 - [ ] One colour frame received on the PC and saved, resolution/format/rate recorded
 - [ ] Colour peek or virtual webcam works with the user
@@ -137,6 +137,8 @@ Deliverables: read-only first — **passive** comparison with Gesture Control on
 - [ ] The glasses are back to their original setting after the test and after an app crash (verified by reading it back)
 
 ## Later
+- Glasses-side reprojection for App head tracking: XREAL renders SBS 3840×1080@60 with 75 ms prediction and 5 % overfill and writes per-frame pose metadata into the top pixel row so the glasses warp to the latest pose (`xreal-sdk-reference.md` §2); needs the metadata format
+- Glasses buttons as app hotkeys (photo, recenter, menu events) and pause on take-off (wear sensor) (`xreal-sdk-reference.md` §6)
 - Own IddCx driver (WDK + EV cert + attestation signing)
 - Air-series HID support
 - SBS stereo
